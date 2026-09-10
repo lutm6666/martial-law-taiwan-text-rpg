@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#171717">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="《霧中的臺灣》— 以1958年戒嚴時期臺灣社會為背景的歷史文字RPG。">
+  <title>霧中的臺灣｜歷史文字 RPG</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">HISTORICAL TEXT RPG</p>
+        <h1>霧中的臺灣</h1>
+      </div>
+      <button id="menuBtn" class="icon-btn" type="button" aria-label="開啟選單">☰</button>
+    </header>
+
+    <section id="startScreen" class="screen">
+      <div class="hero-card paper-card">
+        <p class="date-mark">1958・臺灣</p>
+        <h2>在時代的縫隙裡，做出自己的選擇。</h2>
+        <p>你不是將軍，也不是歷史課本裡的大人物。你只是住在臺灣的一個普通人：上課、工作、交朋友、聽廣播，也在不確定的年代裡判斷什麼能說、什麼該做。</p>
+        <p class="note">本作為歷史題材虛構作品。角色與主要情節為創作，部分制度、社會氛圍與時代背景取材自史實。遊戲不替任何政治立場背書。</p>
+      </div>
+
+      <label class="field">
+        <span>角色姓名</span>
+        <input id="nameInput" maxlength="12" placeholder="例如：林志明" autocomplete="off">
+      </label>
+
+      <div class="section-label">選擇背景</div>
+      <div class="choice-grid" id="backgroundChoices">
+        <button class="bg-choice" data-bg="student" type="button">
+          <strong>學生</strong>
+          <span>觀察 +2・知識 +2</span>
+        </button>
+        <button class="bg-choice" data-bg="worker" type="button">
+          <strong>工人</strong>
+          <span>沉著 +2・人情 +2</span>
+        </button>
+        <button class="bg-choice" data-bg="clerk" type="button">
+          <strong>職員</strong>
+          <span>觀察 +1・人情 +3</span>
+        </button>
+      </div>
+
+      <button id="startBtn" class="primary" type="button" disabled>開始新遊戲</button>
+      <button id="loadStartBtn" class="secondary" type="button">讀取此裝置存檔</button>
+    </section>
+
+    <section id="gameScreen" class="screen hidden">
+      <div class="status-panel">
+        <div class="identity">
+          <strong id="playerName">—</strong>
+          <small id="playerBg">—</small>
+        </div>
+        <div class="stat-row">
+          <span>壓力 <b id="stress">0</b></span>
+          <span>聲望 <b id="rep">0</b></span>
+          <span>疑心 <b id="suspicion">0</b></span>
+        </div>
+      </div>
+
+      <div class="location-strip">
+        <span id="chapter">第一章</span>
+        <span id="location">臺北</span>
+      </div>
+
+      <article class="story-card paper-card">
+        <p id="sceneDate" class="date-mark">1958 年 9 月</p>
+        <h2 id="sceneTitle">—</h2>
+        <div id="sceneText" class="story-text"></div>
+      </article>
+
+      <div id="choices" class="choices"></div>
+
+      <div class="quick-actions">
+        <button id="saveBtn" type="button">保存</button>
+        <button id="logBtn" type="button">事件紀錄</button>
+        <button id="restartBtn" type="button">重新開始</button>
+      </div>
+
+      <section id="logPanel" class="log-panel hidden" aria-live="polite">
+        <div class="panel-title-row">
+          <h3>事件紀錄</h3>
+          <button id="closeLogBtn" type="button">關閉</button>
+        </div>
+        <div id="logList" class="log-list"></div>
+      </section>
+    </section>
+
+    <section id="endingScreen" class="screen hidden">
+      <div class="ending-card paper-card">
+        <p class="eyebrow">THE END</p>
+        <h2 id="endingTitle">—</h2>
+        <p id="endingText"></p>
+        <div id="endingStats" class="ending-stats"></div>
+        <button id="againBtn" class="primary" type="button">重新體驗</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <aside id="menu" class="drawer hidden" aria-label="遊戲選單">
+    <div class="drawer-head">
+      <h2>遊戲選單</h2>
+      <button id="menuClose" class="icon-btn" type="button" aria-label="關閉選單">×</button>
+    </div>
+    <button id="menuSave" type="button">保存目前進度</button>
+    <button id="menuLoad" type="button">讀取進度</button>
+    <button id="menuRestart" type="button">重新開始</button>
+    <p>存檔只保存在你目前裝置的瀏覽器內，不需帳號，也不會把遊戲進度上傳。</p>
+  </aside>
+  <div id="backdrop" class="backdrop hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
