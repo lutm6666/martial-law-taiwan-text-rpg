@@ -1,33 +1,7 @@
 (()=>{'use strict';
 const notes=[
-  {match:/1958 年 9 月/,label:'史實節點・第二次臺海危機',text:'1958 年 8 月 23 日，金門遭到大規模砲擊，八二三戰役／第二次臺海危機進入激烈階段。主要作戰延續至 10 月上旬。遊戲中的阿川、美惠、秋月等人物皆為虛構，但他們所處的 1958 年秋季，確實是在這場危機持續發展的時代背景之中。'},
-  {match:/1958 年 10 月/,label:'史實節點・戰事進入轉折',text:'1958 年 10 月上旬，第二次臺海危機的主要激烈作戰階段逐漸轉變。遊戲將這段歷史視為角色生活的外部環境，而不是讓虛構人物取代或改寫真實歷史人物的行動。'}
-];
+{match:/1958 年 9 月/,label:'史實節點・第二次臺海危機',text:'1958 年 8 月 23 日，金門遭到大規模砲擊，八二三戰役／第二次臺海危機進入激烈階段。主要作戰延續至 10 月上旬。遊戲中的阿川、美惠、秋月等人物皆為虛構，但他們所處的 1958 年秋季，確實是在這場危機持續發展的時代背景之中。'},
+{match:/1958 年 10 月/,label:'史實節點・戰事進入轉折',text:'1958 年 10 月上旬，第二次臺海危機的主要激烈作戰階段逐漸轉變。遊戲將這段歷史視為角色生活的外部環境，而不是讓虛構人物取代或改寫真實歷史人物的行動。'}];
 let lastKey='';
-function render(){
-  const date=document.getElementById('sceneDate');
-  const text=document.getElementById('sceneText');
-  if(!date||!text)return;
-  const key=date.textContent.trim();
-  if(!key||key===lastKey)return;
-  lastKey=key;
-  document.querySelectorAll('.history-note').forEach(n=>n.remove());
-  const n=notes.find(x=>x.match.test(key));
-  if(!n)return;
-  const box=document.createElement('aside');
-  box.className='history-note';
-  const label=document.createElement('span');
-  label.className='history-label';
-  label.textContent=n.label;
-  const p=document.createElement('p');
-  p.textContent=n.text;
-  box.append(label,p);
-  text.after(box);
-}
-const observer=new MutationObserver(render);
-window.addEventListener('DOMContentLoaded',()=>{
-  const target=document.getElementById('gameScreen');
-  if(target)observer.observe(target,{subtree:true,childList:true,characterData:true});
-  render();
-});
-})();
+function render(){const date=document.getElementById('sceneDate'),text=document.getElementById('sceneText');if(!date||!text)return;const key=date.textContent.trim();if(!key||key===lastKey)return;lastKey=key;document.querySelectorAll('.history-note').forEach(n=>n.remove());const n=notes.find(x=>x.match.test(key));if(!n)return;const box=document.createElement('details');box.className='history-note';const summary=document.createElement('summary');summary.innerHTML=`<span class="history-label">${n.label}</span><span class="history-open-hint">點擊查看史實背景</span>`;const p=document.createElement('p');p.textContent=n.text;box.append(summary,p);text.after(box)}
+const observer=new MutationObserver(render);window.addEventListener('DOMContentLoaded',()=>{const target=document.getElementById('gameScreen');if(target)observer.observe(target,{subtree:true,childList:true,characterData:true});render()});})();
