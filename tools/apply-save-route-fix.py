@@ -39,19 +39,34 @@ if old_owner_gate in text:
 elif new_owner_gate not in text:
     raise SystemExit('bookstall first-hand source fix pattern not found')
 
+# BUILD 4.1.4: runner_account can be established either by the runner himself
+# (worker/teacher/common route) or independently by the bookseller who received
+# the pages (clerk/reporter/veteran route). Calling the record "少年說法" falsely
+# claims that every role heard the runner directly. Use source-neutral wording
+# while keeping the same evidence id and all gameplay requirements intact.
+text = text.replace(
+    "runner_account:{name:'少年說法',type:'證詞',desc:'少年把較完整、寫滿字的紙交給舊書攤老闆。'},",
+    "runner_account:{name:'紙張交接確認',type:'證詞',desc:'可確認跑腿少年把較完整、寫滿字的紙交給舊書攤老闆；來源可能是少年本人或收紙老闆的第一手確認。'},",
+    1,
+)
+text = text.replace('少年說法加入案件紀錄。', '紙張交接確認加入案件紀錄。')
+text = text.replace("['runner','少年說法']", "['runner','紙張交接確認']", 1)
+
 # Visible build/diagnostic markers make stale Safari/GitHub Pages caches easy
 # to distinguish while keeping repeated deployments idempotent.
-text = text.replace('BUILD 4.1.2・ROUTE FIX', 'BUILD 4.1.3・SOURCE FIX')
-text = text.replace("。BUILD 4.1.2'", "。BUILD 4.1.3'")
-text = text.replace('BUILD 4.1.1・SAVE FIX', 'BUILD 4.1.3・SOURCE FIX')
-text = text.replace("。BUILD 4.1.1'", "。BUILD 4.1.3'")
+text = text.replace('BUILD 4.1.3・SOURCE FIX', 'BUILD 4.1.4・EVIDENCE FIX')
+text = text.replace("。BUILD 4.1.3'", "。BUILD 4.1.4'")
+text = text.replace('BUILD 4.1.2・ROUTE FIX', 'BUILD 4.1.4・EVIDENCE FIX')
+text = text.replace("。BUILD 4.1.2'", "。BUILD 4.1.4'")
+text = text.replace('BUILD 4.1.1・SAVE FIX', 'BUILD 4.1.4・EVIDENCE FIX')
+text = text.replace("。BUILD 4.1.1'", "。BUILD 4.1.4'")
 # Repair diagnostic strings damaged by the old non-idempotent 4.1-prefix
 # replacement without touching later legitimate versions.
-text = re.sub(r"。BUILD 4\.1\.(?:2|3)(?:\.1)+(?=')", "。BUILD 4.1.3", text)
+text = re.sub(r"。BUILD 4\.1\.(?:2|3|4)(?:\.1)+(?=')", "。BUILD 4.1.4", text)
 
 if text == original:
-    print('Save/route/source fix already present; no changes required')
+    print('Save/route/source/evidence fixes already present; no changes required')
     raise SystemExit(0)
 
 path.write_text(text, encoding='utf-8')
-print('Applied BUILD 4.1.3 source continuity fix')
+print('Applied BUILD 4.1.4 evidence-source continuity fix')
