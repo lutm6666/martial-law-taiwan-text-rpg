@@ -27,6 +27,9 @@ jobs:
       - name: Apply production hotfix
         run: python3 tools/apply-pages-hotfix.py
 
+      - name: Apply role save debug fix
+        run: python3 tools/debug-role-save-fix.py
+
       - name: Persist hotfix to main
         run: |
           if git diff --quiet -- index.html; then
