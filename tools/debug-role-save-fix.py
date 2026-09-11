@@ -29,8 +29,10 @@ if old_clerk in text:
     text = text.replace(old_clerk, new_clerk, 1)
 
 # Visible build marker helps distinguish a stale Safari cache from this fix.
+# Match the complete diagnostic token, not the "4.1" prefix, so repeated
+# deployments cannot turn 4.1.1 into 4.1.1.1, 4.1.1.1.1, etc.
 text = text.replace('BUILD 4.1・ROLE PATHS', 'BUILD 4.1.1・SAVE FIX')
-text = text.replace('。BUILD 4.1', '。BUILD 4.1.1')
+text = text.replace("。BUILD 4.1'", "。BUILD 4.1.1'")
 
 if text == original:
     print('Role/save debug fixes already present; no changes required')
