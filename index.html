@@ -17,7 +17,6 @@
   <div><p class="eyebrow">HISTORICAL INVESTIGATION</p><h1>霧中的臺灣</h1></div>
   <span class="case-chip">CASE 01</span>
 </header>
-
 <section id="startScreen">
   <article class="start-card card paper">
     <p class="eyebrow" style="color:#715c34">1958・臺北</p>
@@ -25,7 +24,6 @@
     <p>阿川整理的訪談筆記少了三頁。你必須自己走訪地點、詢問人物、檢查現場並蒐集證物，再用手上的情報還原紙張真正的去向。</p>
     <p class="note">主要人物與事件為虛構；歷史背景參考 1958 年臺灣。這一版的核心玩法是調查與推理，不需要依固定順序閱讀全部文本。</p>
   </article>
-
   <label class="field"><span>角色姓名</span><input id="nameInput" maxlength="12" placeholder="例如：林志明"></label>
   <p class="screen-title">選擇身分</p>
   <div class="role-grid">
@@ -42,71 +40,21 @@
   <button id="loadBtn" class="secondary">繼續案件</button>
   <button id="legacyLink" class="secondary">開啟舊版文字 RPG</button>
 </section>
-
 <section id="gameScreen" class="hidden">
-  <div class="case-status card">
-    <div><h2 id="playerLabel">—</h2><div class="case-meta"><span>案件一・失落的三頁</span><span>推理專注</span></div></div>
-    <div id="focusDots" class="confidence" aria-label="推理專注"></div>
-  </div>
-
-  <section id="scenePanel">
-    <p class="screen-title">現場調查</p>
-    <article class="scene card">
-      <div class="scene-head"><small id="locationSub"></small><h2 id="locationName"></h2></div>
-      <div id="sceneBody" class="scene-body"></div>
-    </article>
-    <div id="actionGrid" class="action-grid"></div>
-  </section>
-
-  <section id="mapPanel" class="hidden">
-    <p class="screen-title">調查地圖</p>
-    <div class="section-card card">
-      <h3>選擇前往地點</h3>
-      <div id="mapGrid" class="map-grid"></div>
-    </div>
-  </section>
-
-  <section id="recordPanel" class="hidden">
-    <p class="screen-title">案件紀錄</p>
-    <div class="record-switch">
-      <button id="recordEvidenceBtn" class="record-switch-btn active">證物 <span id="evidenceCount" class="badge">0</span></button>
-      <button id="recordPeopleBtn" class="record-switch-btn">人物</button>
-    </div>
-    <div id="evidenceSection" class="section-card card"><h3>證物與情報</h3><div id="evidenceGrid" class="evidence-grid"></div></div>
-    <div id="peopleSection" class="section-card card hidden"><h3>人物紀錄</h3><div id="peopleGrid" class="people-grid"></div></div>
-  </section>
-
-  <section id="deductionPanel" class="hidden">
-    <p class="screen-title">推理</p>
-    <div id="deductionBox" class="deduction-box card"></div>
-  </section>
-
+  <div class="case-status card"><div><h2 id="playerLabel">—</h2><div class="case-meta"><span>案件一・失落的三頁</span><span>推理專注</span></div></div><div id="focusDots" class="confidence" aria-label="推理專注"></div></div>
+  <section id="scenePanel"><p class="screen-title">現場調查</p><article class="scene card"><div class="scene-head"><small id="locationSub"></small><h2 id="locationName"></h2></div><div id="sceneBody" class="scene-body"></div></article><div id="actionGrid" class="action-grid"></div></section>
+  <section id="mapPanel" class="hidden"><p class="screen-title">調查地圖</p><div class="section-card card"><h3>選擇前往地點</h3><div id="mapGrid" class="map-grid"></div></div></section>
+  <section id="recordPanel" class="hidden"><p class="screen-title">案件紀錄</p><div class="record-switch"><button id="recordEvidenceBtn" class="record-switch-btn active">證物 <span id="evidenceCount" class="badge">0</span></button><button id="recordPeopleBtn" class="record-switch-btn">人物</button></div><div id="evidenceSection" class="section-card card"><h3>證物與情報</h3><div id="evidenceGrid" class="evidence-grid"></div></div><div id="peopleSection" class="section-card card hidden"><h3>人物紀錄</h3><div id="peopleGrid" class="people-grid"></div></div></section>
+  <section id="deductionPanel" class="hidden"><p class="screen-title">推理</p><div id="deductionBox" class="deduction-box card"></div></section>
   <button id="restartBtn" class="secondary restart-case">重新開始案件</button>
-
-  <nav class="tabs" aria-label="主要功能">
-    <button class="tab-btn active" data-tab="scene">調查</button>
-    <button class="tab-btn" data-tab="map">地圖</button>
-    <button class="tab-btn" data-tab="record">紀錄</button>
-    <button class="tab-btn" data-tab="deduction">推理</button>
-  </nav>
+  <nav class="tabs" aria-label="主要功能"><button class="tab-btn active" data-tab="scene">調查</button><button class="tab-btn" data-tab="map">地圖</button><button class="tab-btn" data-tab="record">紀錄</button><button class="tab-btn" data-tab="deduction">推理</button></nav>
 </section>
-
 <section id="completeScreen" class="hidden">
-  <article class="case-complete card paper">
-    <p class="eyebrow" style="color:#715c34">CASE CLOSED</p>
-    <h2>失落的三頁</h2>
-    <div id="completeText"></div>
-    <div class="summary-list">
-      <div class="summary-item"><strong>案件核心</strong><br>失頁混入印刷行廢紙，經市場跑腿少年流到舊書攤。</div>
-      <div class="summary-item"><strong>被排除的誤判</strong><br>市場郵務人員正在處理錯投信件，沒有證據顯示與失頁有關。</div>
-      <div class="summary-item"><strong>新的疑問</strong><br>頁邊留下「秋月：不要真名」——下一案將從這句話開始。</div>
-    </div>
-    <button id="nextCaseBtn" class="primary">案件二：秋月的條件</button>
-    <button onclick="location.reload()" class="secondary">回到首頁</button>
-  </article>
+  <article class="case-complete card paper"><p class="eyebrow" style="color:#715c34">CASE CLOSED</p><h2>失落的三頁</h2><div id="completeText"></div><div class="summary-list"><div class="summary-item"><strong>案件核心</strong><br>失頁混入印刷行廢紙，經市場跑腿少年流到舊書攤。</div><div class="summary-item"><strong>被排除的誤判</strong><br>市場郵務人員正在處理錯投信件，沒有證據顯示與失頁有關。</div><div class="summary-item"><strong>新的疑問</strong><br>頁邊留下「秋月：不要真名」——下一案將從這句話開始。</div></div><button id="nextCaseBtn" class="primary">案件二：秋月的條件</button><button onclick="location.reload()" class="secondary">回到首頁</button></article>
 </section>
 </main>
 <div id="toast" class="toast"></div>
+<script src="case-hotfix-v1.js?v=1.0"></script>
 <script src="case-game-v1.js?v=1.0"></script>
 </body>
 </html>
