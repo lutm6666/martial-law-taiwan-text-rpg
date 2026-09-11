@@ -5,6 +5,19 @@ path = Path('index.html')
 text = path.read_text(encoding='utf-8')
 original = text
 
+# Newer builds already contain the fixes this legacy production hotfix used to
+# inject. Treat that state as success so the deploy workflow remains
+# idempotent instead of failing because an old search pattern disappeared.
+current_hotfix_markers = (
+    "zhou_motive:{name:'周老闆的顧慮'",
+    "need:'zhou_motive'",
+    "var first=has('wrapped_scrap')?",
+)
+if all(marker in text for marker in current_hotfix_markers):
+    print('Pages hotfix already present; no changes required')
+    raise SystemExit(0)
+
+
 def replace_once(old, new, label):
     global text
     if old not in text:
@@ -56,6 +69,8 @@ if count != 1:
     raise SystemExit('hotfix pattern not found: loadCase normalization')
 
 if text == original:
-    raise SystemExit('hotfix made no changes')
+    print('Pages hotfix already present; no changes required')
+    raise SystemExit(0)
+
 path.write_text(text, encoding='utf-8')
 print('Applied Pages hotfix to index.html')
