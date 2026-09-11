@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# This patch is intentionally idempotent so repeated Pages deploys are safe.
 path = Path('index.html')
 text = path.read_text(encoding='utf-8')
 original = text
