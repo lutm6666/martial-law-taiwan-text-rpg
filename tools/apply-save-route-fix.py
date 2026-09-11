@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 path = Path('index.html')
 text = path.read_text(encoding='utf-8')
@@ -26,7 +27,10 @@ text = text.replace(
 )
 
 text = text.replace('BUILD 4.1.1・SAVE FIX', 'BUILD 4.1.2・ROUTE FIX')
-text = text.replace('。BUILD 4.1.1', '。BUILD 4.1.2')
+text = text.replace("。BUILD 4.1.1'", "。BUILD 4.1.2'")
+# Repair diagnostic strings damaged by the old non-idempotent 4.1-prefix
+# replacement without touching later legitimate versions such as 4.1.3.
+text = re.sub(r"。BUILD 4\.1\.2(?:\.1)+(?=')", "。BUILD 4.1.2", text)
 
 if text == original:
     print('Save/route fix already present; no changes required')
