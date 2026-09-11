@@ -30,6 +30,9 @@ jobs:
       - name: Apply role save debug fix
         run: python3 tools/debug-role-save-fix.py
 
+      - name: Apply save route fix
+        run: python3 tools/apply-save-route-fix.py
+
       - name: Persist hotfix to main
         run: |
           if git diff --quiet -- index.html; then
