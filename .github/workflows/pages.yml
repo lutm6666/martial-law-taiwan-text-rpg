@@ -50,41 +50,33 @@ jobs:
       - name: Apply Case 2 testimony and recap polish
         run: python3 tools/apply-case2-polish.py
 
-      - name: Bypass broken image cache
-        run: python3 tools/bump-case1-image-cache.py
+      - name: Switch production images to inline assets
+        run: python3 tools/apply-inline-case1-art.py
 
-      - name: Validate Case 2 JavaScript
-        run: node --check case2-engine.js
+      - name: Validate JavaScript
+        run: |
+          node --check case1-art-tea.js
+          node --check case1-art-print.js
+          node --check case1-art-market.js
+          node --check case1-art-bookstall.js
+          node --check case1-art-failed.js
+          node --check case2-engine.js
 
       - name: Install image verifier
         run: python3 -m pip install --disable-pip-version-check --quiet pillow
 
-      - name: Rebuild Case 1 HQ images
-        id: rebuild_images
-        continue-on-error: true
-        run: python3 tools/rebuild-case1-images.py
+      - name: Verify production images decode
+        run: python3 tools/verify-inline-case1-art.py
 
-      - name: Verify rebuilt Case 1 images decode
-        id: verify_images
-        if: steps.rebuild_images.outcome == 'success'
-        continue-on-error: true
-        run: python3 tools/verify-case1-images.py
-
-      - name: Restore committed Case 1 images if rebuild is unsafe
-        if: steps.rebuild_images.outcome != 'success' || steps.verify_images.outcome != 'success'
+      - name: Persist production patches to main
         run: |
-          echo "Case 1 HQ source/rebuild is not independently verified; keeping committed production assets."
-          git checkout -- assets/case1
-
-      - name: Persist verified production files to main
-        run: |
-          if git diff --quiet -- index.html case2-engine.js assets/case1; then
-            echo "No production files changed."
+          if git diff --quiet -- index.html case2-engine.js; then
+            echo "No production patch changes to commit."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add index.html case2-engine.js assets/case1/*.webp
-            git commit -m "Persist verified production assets [skip ci]"
+            git add index.html case2-engine.js
+            git commit -m "Persist inline Case 1 image fix [skip ci]"
             git push origin HEAD:main
           fi
 
