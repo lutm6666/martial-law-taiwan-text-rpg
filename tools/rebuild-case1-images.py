@@ -1,6 +1,8 @@
 from pathlib import Path
 import base64
+import io
 import re
+from PIL import Image
 
 OUT = Path('assets/case1')
 SRC = Path('assets-src/case1')
@@ -8,20 +10,20 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 
 def validate_bytes(name: str, data: bytes) -> None:
-    # File size is not a reliable integrity test for compressed WebP. Keep only
-    # a basic truncation/header guard here; the workflow's Pillow verifier does
-    # a full decode and checks dimensions before deployment.
     if len(data) < 1024:
-        raise SystemExit(f'Case 1 image suspiciously small: {name} ({len(data)} bytes)')
+        raise ValueError(f'Case 1 image suspiciously small: {name} ({len(data)} bytes)')
     if data[:4] != b'RIFF' or data[8:12] != b'WEBP':
-        raise SystemExit(f'Invalid WebP header: {name}')
-
-
-def validate_write(name: str, data: bytes) -> None:
-    validate_bytes(name, data)
-    target = OUT / f'{name}.webp'
-    target.write_bytes(data)
-    print(f'CASE1_IMAGE {name}: {len(data)} bytes -> {target}')
+        raise ValueError(f'Invalid WebP header: {name}')
+    try:
+        with Image.open(io.BytesIO(data)) as img:
+            if img.format != 'WEBP':
+                raise ValueError(f'Unexpected image format: {name} ({img.format})')
+            width, height = img.size
+            img.load()
+    except Exception as exc:
+        raise ValueError(f'WebP decode failed for {name}: {exc}') from exc
+    if width < 640 or height < 480:
+        raise ValueError(f'Image dimensions too small: {name} ({width}x{height})')
 
 
 def keep_existing(name: str, reason: str) -> None:
@@ -29,6 +31,17 @@ def keep_existing(name: str, reason: str) -> None:
     data = target.read_bytes() if target.exists() else b''
     validate_bytes(name, data)
     print(f'CASE1_IMAGE_FALLBACK {name}: keeping {len(data)}-byte committed asset ({reason})')
+
+
+def validate_write(name: str, data: bytes) -> None:
+    try:
+        validate_bytes(name, data)
+    except Exception as exc:
+        keep_existing(name, str(exc))
+        return
+    target = OUT / f'{name}.webp'
+    target.write_bytes(data)
+    print(f'CASE1_IMAGE {name}: {len(data)} bytes -> {target}')
 
 
 def b64_fragment(path: Path) -> str:
@@ -50,15 +63,16 @@ def b64_fragment(path: Path) -> str:
     if runs:
         return ''.join(runs)
 
-    raise SystemExit(f'Cannot parse Base64 image fragment: {path}')
+    raise ValueError(f'Cannot parse Base64 image fragment: {path}')
 
 
 def from_b64_parts(name: str) -> None:
     parts = sorted(SRC.glob(f'{name}-*.b64'))
     if not parts:
-        raise SystemExit(f'Missing Base64 image parts: {name}')
-    payload = ''.join(b64_fragment(p) for p in parts)
+        keep_existing(name, 'missing Base64 source parts')
+        return
     try:
+        payload = ''.join(b64_fragment(p) for p in parts)
         data = base64.b64decode(payload, validate=True)
     except Exception as exc:
         keep_existing(name, f'Base64 source decode failed: {exc}')
@@ -81,10 +95,6 @@ def from_js_parts(name: str, filenames: list[str]) -> None:
         payload = ''.join(js_fragment(Path(fn)) for fn in filenames)
         data = base64.b64decode(payload, validate=True)
     except Exception as exc:
-        # Source fragments are archival build inputs. A malformed fragment must
-        # not take down GitHub Pages when the repository already contains a
-        # valid production asset. The next workflow step performs a full Pillow
-        # decode and dimension check before anything is deployed.
         keep_existing(name, f'HQ source decode failed: {exc}')
         return
     validate_write(name, data)
