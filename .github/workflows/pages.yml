@@ -45,6 +45,9 @@ jobs:
       - name: Apply Case 2 engine
         run: python3 tools/apply-case2.py
 
+      - name: Apply Case 2 testimony and recap polish
+        run: python3 tools/apply-case2-polish.py
+
       - name: Validate Case 2 JavaScript
         run: node --check case2-engine.js
 
