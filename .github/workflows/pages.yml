@@ -42,6 +42,9 @@ jobs:
       - name: Apply visual polish
         run: python3 tools/apply-visual-polish.py
 
+      - name: Rebuild Case 1 HQ images
+        run: python3 tools/rebuild-case1-images.py
+
       - name: Persist hotfix to main
         run: |
           if git diff --quiet -- index.html; then

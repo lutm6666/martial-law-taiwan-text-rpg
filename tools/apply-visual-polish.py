@@ -5,15 +5,14 @@ path = Path('index.html')
 text = path.read_text(encoding='utf-8')
 original = text
 
-# Visible build label. Support both the first visual build and already-polished pages.
-text = re.sub(r'BUILD 4\.(?:3|4|5)・[^<]+', 'BUILD 4.5・HQ VISUALS', text, count=1)
+# Visible build label. Support all visual builds used so far.
+text = re.sub(r'BUILD 4\.(?:3|4|5|6)・[^<]+', 'BUILD 4.6・HQ ASSETS', text, count=1)
 
-# Keep the JavaScript runtime error diagnostic in sync with the visible build.
-text = text.replace("。BUILD 4.2.1'", "。BUILD 4.5'", 1)
-text = text.replace("。BUILD 4.4'", "。BUILD 4.5'", 1)
+# Keep JavaScript runtime diagnostics aligned with the visible build.
+for old in ('4.2.1', '4.4', '4.5'):
+    text = text.replace(f"。BUILD {old}'", "。BUILD 4.6'", 1)
 
-# The earlier visual integration loaded aggressively compressed data-URI JS assets.
-# Remove those runtime tags; the high-quality WebP files below are now the source of truth.
+# Remove the old aggressively compressed data-URI image scripts.
 for tag in (
     '<script src="case1-art-tea.js?v=1"></script>',
     '<script src="case1-art-print.js?v=1"></script>',
@@ -23,24 +22,23 @@ for tag in (
 ):
     text = text.replace(tag + '\n', '').replace(tag, '')
 
-# Use direct, cache-busted image files instead of low-resolution data URIs.
+# Pages rebuilds these WebP files from connector-safe text chunks before upload.
 hq_art = (
     "var art={"
-    "tea:'assets/case1/tea.webp?v=5',"
-    "print:'assets/case1/print.webp?v=5',"
-    "market:'assets/case1/market.webp?v=5',"
-    "bookstall:'assets/case1/bookstall.webp?v=5',"
-    "failed:'assets/case1/failed.webp?v=5'"
+    "tea:'assets/case1/tea.webp?v=6',"
+    "print:'assets/case1/print.webp?v=6',"
+    "market:'assets/case1/market.webp?v=6',"
+    "bookstall:'assets/case1/bookstall.webp?v=6',"
+    "failed:'assets/case1/failed.webp?v=6'"
     "};\nvar visualMeta="
 )
 text, n_art = re.subn(r"var art=.*?;\nvar visualMeta=", hq_art, text, count=1, flags=re.S)
 if n_art != 1:
     raise SystemExit('visual polish: art source marker not found')
 
-# Remove the conspicuous observation button from the visual card.
+# No conspicuous observation button: the scene image itself is interactive.
 text = re.sub(r'<button id="observeSceneBtn" type="button">.*?</button>', '', text, count=1)
 
-# Add/override subtle visual interaction styles.
 marker = '@media(min-width:640px)'
 css = (
     '.scene-visual{cursor:default}.scene-visual img{image-rendering:auto;cursor:pointer;touch-action:manipulation}'
@@ -55,7 +53,6 @@ if css not in text:
         raise SystemExit('visual polish: CSS marker not found')
     text = text.replace(marker, css + marker, 1)
 
-# The whole image is the observation target. Only a quiet line of text sits below it.
 pattern = r"function renderVisual\(\)\{.*?\}\nfunction observeScene\(\)\{"
 replacement = (
     "function renderVisual(){ensureVisualState();var box=$('sceneVisual'),img=$('sceneImage'),note=$('visualNote'),id=state.location,m=visualMeta[id];"
@@ -71,7 +68,7 @@ if n != 1 and "點擊圖片查看細節" not in text:
     raise SystemExit('visual polish: renderVisual marker not found')
 
 if text == original:
-    print('HQ visual polish already applied; no changes.')
+    print('HQ asset visual polish already applied; no changes.')
 else:
     path.write_text(text, encoding='utf-8')
-    print('Applied high-quality Case 1 WebP assets and subtle image observation UI.')
+    print('Applied BUILD 4.6 HQ asset URLs and subtle observation UI.')
