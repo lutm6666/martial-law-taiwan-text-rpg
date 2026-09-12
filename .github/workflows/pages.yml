@@ -33,6 +33,9 @@ jobs:
       - name: Apply save route fix
         run: python3 tools/apply-save-route-fix.py
 
+      - name: Apply discovery visibility cleanup
+        run: python3 tools/apply-discovery-visibility.py
+
       - name: Persist hotfix to main
         run: |
           if git diff --quiet -- index.html; then
