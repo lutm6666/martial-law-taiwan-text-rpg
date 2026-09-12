@@ -8,8 +8,11 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 
 def validate_bytes(name: str, data: bytes) -> None:
-    if len(data) < 20000:
-        raise SystemExit(f'Case 1 image too small: {name} ({len(data)} bytes)')
+    # File size is not a reliable integrity test for compressed WebP. Keep only
+    # a basic truncation/header guard here; the workflow's Pillow verifier does
+    # a full decode and checks dimensions before deployment.
+    if len(data) < 1024:
+        raise SystemExit(f'Case 1 image suspiciously small: {name} ({len(data)} bytes)')
     if data[:4] != b'RIFF' or data[8:12] != b'WEBP':
         raise SystemExit(f'Invalid WebP header: {name}')
 
