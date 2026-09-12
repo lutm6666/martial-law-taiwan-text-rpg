@@ -60,10 +60,21 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check --quiet pillow
 
       - name: Rebuild Case 1 HQ images
+        id: rebuild_images
+        continue-on-error: true
         run: python3 tools/rebuild-case1-images.py
 
-      - name: Verify Case 1 images decode
+      - name: Verify rebuilt Case 1 images decode
+        id: verify_images
+        if: steps.rebuild_images.outcome == 'success'
+        continue-on-error: true
         run: python3 tools/verify-case1-images.py
+
+      - name: Restore committed Case 1 images if rebuild is unsafe
+        if: steps.rebuild_images.outcome != 'success' || steps.verify_images.outcome != 'success'
+        run: |
+          echo "Case 1 HQ source/rebuild is not independently verified; keeping committed production assets."
+          git checkout -- assets/case1
 
       - name: Persist verified production files to main
         run: |
