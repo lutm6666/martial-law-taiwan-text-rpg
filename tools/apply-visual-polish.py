@@ -5,11 +5,37 @@ path = Path('index.html')
 text = path.read_text(encoding='utf-8')
 original = text
 
-# Build label.
-text = re.sub(r'BUILD 4\.3・VISUAL CLUES', 'BUILD 4.4・VISUAL POLISH', text, count=1)
+# Visible build label. Support both the first visual build and already-polished pages.
+text = re.sub(r'BUILD 4\.(?:3|4|5)・[^<]+', 'BUILD 4.5・HQ VISUALS', text, count=1)
+
 # Keep the JavaScript runtime error diagnostic in sync with the visible build.
-# A stale value makes Safari/cache reports look like an older page is loaded.
-text = text.replace("。BUILD 4.2.1'", "。BUILD 4.4'", 1)
+text = text.replace("。BUILD 4.2.1'", "。BUILD 4.5'", 1)
+text = text.replace("。BUILD 4.4'", "。BUILD 4.5'", 1)
+
+# The earlier visual integration loaded aggressively compressed data-URI JS assets.
+# Remove those runtime tags; the high-quality WebP files below are now the source of truth.
+for tag in (
+    '<script src="case1-art-tea.js?v=1"></script>',
+    '<script src="case1-art-print.js?v=1"></script>',
+    '<script src="case1-art-market.js?v=1"></script>',
+    '<script src="case1-art-bookstall.js?v=1"></script>',
+    '<script src="case1-art-failed.js?v=1"></script>',
+):
+    text = text.replace(tag + '\n', '').replace(tag, '')
+
+# Use direct, cache-busted image files instead of low-resolution data URIs.
+hq_art = (
+    "var art={"
+    "tea:'assets/case1/tea.webp?v=5',"
+    "print:'assets/case1/print.webp?v=5',"
+    "market:'assets/case1/market.webp?v=5',"
+    "bookstall:'assets/case1/bookstall.webp?v=5',"
+    "failed:'assets/case1/failed.webp?v=5'"
+    "};\nvar visualMeta="
+)
+text, n_art = re.subn(r"var art=.*?;\nvar visualMeta=", hq_art, text, count=1, flags=re.S)
+if n_art != 1:
+    raise SystemExit('visual polish: art source marker not found')
 
 # Remove the conspicuous observation button from the visual card.
 text = re.sub(r'<button id="observeSceneBtn" type="button">.*?</button>', '', text, count=1)
@@ -29,8 +55,7 @@ if css not in text:
         raise SystemExit('visual polish: CSS marker not found')
     text = text.replace(marker, css + marker, 1)
 
-# Replace renderVisual so the image itself is the interaction target and
-# the only affordance is the quiet caption beneath it.
+# The whole image is the observation target. Only a quiet line of text sits below it.
 pattern = r"function renderVisual\(\)\{.*?\}\nfunction observeScene\(\)\{"
 replacement = (
     "function renderVisual(){ensureVisualState();var box=$('sceneVisual'),img=$('sceneImage'),note=$('visualNote'),id=state.location,m=visualMeta[id];"
@@ -46,7 +71,7 @@ if n != 1 and "點擊圖片查看細節" not in text:
     raise SystemExit('visual polish: renderVisual marker not found')
 
 if text == original:
-    print('Visual polish already applied; no changes.')
+    print('HQ visual polish already applied; no changes.')
 else:
     path.write_text(text, encoding='utf-8')
-    print('Applied subtle image observation UI and visual quality CSS.')
+    print('Applied high-quality Case 1 WebP assets and subtle image observation UI.')
