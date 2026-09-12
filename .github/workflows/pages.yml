@@ -39,6 +39,9 @@ jobs:
       - name: Apply Case 1 visual clues
         run: python3 tools/apply-case1-visuals.py
 
+      - name: Apply visual polish
+        run: python3 tools/apply-visual-polish.py
+
       - name: Persist hotfix to main
         run: |
           if git diff --quiet -- index.html; then
