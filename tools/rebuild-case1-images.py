@@ -17,11 +17,28 @@ def validate_write(name: str, data: bytes) -> None:
     print(f'CASE1_IMAGE {name}: {len(data)} bytes -> {target}')
 
 
+def b64_fragment(path: Path) -> str:
+    """Read either a plain Base64 chunk or a connector-generated JS wrapper."""
+    text = path.read_text(encoding='utf-8').strip()
+    compact = ''.join(text.split())
+    if re.fullmatch(r'[A-Za-z0-9+/]*={0,2}', compact):
+        return compact
+
+    # Some repository chunks were saved in the same wrapper format as the
+    # historical HQ JS fragments: (...||'')+'BASE64';.  Extract only the
+    # quoted payload so JS syntax cannot contaminate the decoder input.
+    matches = re.findall(r"\+'([^']*)'", text)
+    if matches:
+        return ''.join(matches)
+
+    raise SystemExit(f'Cannot parse Base64 image fragment: {path}')
+
+
 def from_b64_parts(name: str) -> None:
     parts = sorted(SRC.glob(f'{name}-*.b64'))
     if not parts:
         raise SystemExit(f'Missing Base64 image parts: {name}')
-    payload = ''.join(p.read_text(encoding='utf-8').strip() for p in parts)
+    payload = ''.join(b64_fragment(p) for p in parts)
     try:
         data = base64.b64decode(payload, validate=True)
     except Exception as exc:
@@ -48,7 +65,8 @@ def from_js_parts(name: str, filenames: list[str]) -> None:
     validate_write(name, data)
 
 
-# Fresh, connector-safe Base64 source chunks.
+# Fresh Base64 source chunks.  b64_fragment accepts both raw chunks and the
+# connector-safe JS-wrapped form, because both formats exist in this folder.
 for image_name in ('tea', 'bookstall', 'failed'):
     from_b64_parts(image_name)
 
