@@ -48,36 +48,30 @@ jobs:
       - name: Apply Case 2 testimony and recap polish
         run: python3 tools/apply-case2-polish.py
 
+      - name: Bypass broken image cache
+        run: python3 tools/bump-case1-image-cache.py
+
       - name: Validate Case 2 JavaScript
         run: node --check case2-engine.js
 
-      - name: Rebuild Case 1 HQ images
-        run: |
-          if python3 tools/rebuild-case1-images.py; then
-            echo "HQ image rebuild completed."
-          else
-            echo "::warning::HQ image source rebuild failed; validating and using committed fallback assets."
-            python3 - <<'PY'
-          from pathlib import Path
-          names = ('tea', 'print', 'market', 'bookstall', 'failed')
-          for name in names:
-              p = Path('assets/case1') / f'{name}.webp'
-              data = p.read_bytes() if p.exists() else b''
-              if len(data) < 1024 or data[:4] != b'RIFF' or data[8:12] != b'WEBP':
-                  raise SystemExit(f'Missing or invalid fallback WebP: {p}')
-              print(f'FALLBACK_IMAGE {name}: {len(data)} bytes')
-          PY
-          fi
+      - name: Install image verifier
+        run: python3 -m pip install --disable-pip-version-check --quiet pillow
 
-      - name: Persist hotfix to main
+      - name: Rebuild Case 1 HQ images
+        run: python3 tools/rebuild-case1-images.py
+
+      - name: Verify Case 1 images decode
+        run: python3 tools/verify-case1-images.py
+
+      - name: Persist verified production files to main
         run: |
-          if git diff --quiet -- index.html case2-engine.js; then
-            echo "No production hotfix changes to commit."
+          if git diff --quiet -- index.html case2-engine.js assets/case1; then
+            echo "No production files changed."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add index.html case2-engine.js
-            git commit -m "Apply production case hotfix [skip ci]"
+            git add index.html case2-engine.js assets/case1/*.webp
+            git commit -m "Persist verified production assets [skip ci]"
             git push origin HEAD:main
           fi
 

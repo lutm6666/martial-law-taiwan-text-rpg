@@ -23,13 +23,14 @@ for tag in (
     text = text.replace(tag + '\n', '').replace(tag, '')
 
 # Pages rebuilds these WebP files from connector-safe text chunks before upload.
+# v=7 intentionally bypasses Safari caches that may still hold the truncated v=6 assets.
 hq_art = (
     "var art={"
-    "tea:'assets/case1/tea.webp?v=6',"
-    "print:'assets/case1/print.webp?v=6',"
-    "market:'assets/case1/market.webp?v=6',"
-    "bookstall:'assets/case1/bookstall.webp?v=6',"
-    "failed:'assets/case1/failed.webp?v=6'"
+    "tea:'assets/case1/tea.webp?v=7',"
+    "print:'assets/case1/print.webp?v=7',"
+    "market:'assets/case1/market.webp?v=7',"
+    "bookstall:'assets/case1/bookstall.webp?v=7',"
+    "failed:'assets/case1/failed.webp?v=7'"
     "};\nvar visualMeta="
 )
 text, n_art = re.subn(r"var art=.*?;\nvar visualMeta=", hq_art, text, count=1, flags=re.S)
@@ -71,4 +72,4 @@ if text == original:
     print('HQ asset visual polish already applied; no changes.')
 else:
     path.write_text(text, encoding='utf-8')
-    print('Applied BUILD 4.6 HQ asset URLs and subtle observation UI.')
+    print('Applied HQ asset URLs v7 and subtle observation UI.')
