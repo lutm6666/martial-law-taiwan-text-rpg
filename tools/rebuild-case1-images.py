@@ -2,11 +2,20 @@ from pathlib import Path
 import base64
 import io
 import re
+import subprocess
 from PIL import Image
 
 OUT = Path('assets/case1')
 SRC = Path('assets-src/case1')
 OUT.mkdir(parents=True, exist_ok=True)
+
+# The most recent successful Pages deployment before the broken asset-source
+# rewrite. These refs are only fallback sources; every byte stream is decoded
+# and dimension-checked before it can be restored.
+FALLBACK_REFS = (
+    'ee6a5a66a987fcae4f549a139f407421b9819712',
+    'b2cc7ac6a9fe3db1ab88e5f76ed83124224f5e35',
+)
 
 
 def validate_bytes(name: str, data: bytes) -> None:
@@ -26,11 +35,32 @@ def validate_bytes(name: str, data: bytes) -> None:
         raise ValueError(f'Image dimensions too small: {name} ({width}x{height})')
 
 
+def historical_bytes(name: str) -> tuple[bytes, str]:
+    path = f'assets/case1/{name}.webp'
+    for ref in FALLBACK_REFS:
+        try:
+            data = subprocess.check_output(['git', 'show', f'{ref}:{path}'])
+            validate_bytes(name, data)
+            return data, ref
+        except Exception:
+            continue
+    raise ValueError(f'No decodable historical fallback found for {name}')
+
+
 def keep_existing(name: str, reason: str) -> None:
     target = OUT / f'{name}.webp'
-    data = target.read_bytes() if target.exists() else b''
-    validate_bytes(name, data)
-    print(f'CASE1_IMAGE_FALLBACK {name}: keeping {len(data)}-byte committed asset ({reason})')
+    if target.exists():
+        data = target.read_bytes()
+        try:
+            validate_bytes(name, data)
+            print(f'CASE1_IMAGE_FALLBACK {name}: keeping {len(data)}-byte committed asset ({reason})')
+            return
+        except Exception:
+            pass
+
+    data, ref = historical_bytes(name)
+    target.write_bytes(data)
+    print(f'CASE1_IMAGE_RESTORE {name}: restored {len(data)} bytes from {ref} ({reason})')
 
 
 def validate_write(name: str, data: bytes) -> None:
@@ -45,7 +75,6 @@ def validate_write(name: str, data: bytes) -> None:
 
 
 def b64_fragment(path: Path) -> str:
-    """Read a raw Base64 chunk or one wrapped in generated JavaScript text."""
     text = path.read_text(encoding='utf-8').strip()
     compact = ''.join(text.split())
     if re.fullmatch(r'[A-Za-z0-9+/]*={0,2}', compact):
