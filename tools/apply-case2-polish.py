@@ -48,7 +48,7 @@ new_record = r'''function renderRecord(){
  html+='<article class="section-card card" style="margin-top:11px"><h3>案件一回顧</h3><p class="c2-recap-note">情境重構・非證物。這些場景圖只幫助回想第一案的調查路線，不會新增線索，也不能直接拿來反駁證詞。</p><div class="c2-recap-strip">'
   +'<figure class="c2-recap-card"><img src="assets/case1/tea.webp?v=6" loading="lazy" alt="案件一茶行情境重構"><figcaption class="c2-recap-caption"><strong>茶行</strong><small>缺頁最初被發現的地方。</small></figcaption></figure>'
   +'<figure class="c2-recap-card"><img src="assets/case1/print.webp?v=6" loading="lazy" alt="案件一印刷行情境重構"><figcaption class="c2-recap-caption"><strong>印刷行</strong><small>借用簿與廢紙去向把調查帶往市場。</small></figcaption></figure>'
-  +'<figure class="c2-recap-card"><img src="assets/case1/market.webp?v=6" loading="lazy" alt="案件一市場情境重構"><figcaption class="c2-recap-caption"><strong>市場</strong><small>紙張流向與跑腿少年的說法在這裡交會。</small></figcaption></figure>'
+  +'<figure class="c2-recap-card"><img src="assets/case1/market.webp?v=6" loading="lazy" alt="案件一市場情境重構"><figcaption class="c2-recap-caption"><strong>市場</strong><small>紙張流向與市場端的交接線索在這裡接上。</small></figcaption></figure>'
   +'<figure class="c2-recap-card"><img src="assets/case1/bookstall.webp?v=6" loading="lazy" alt="案件一舊書攤情境重構"><figcaption class="c2-recap-caption"><strong>舊書攤</strong><small>三頁筆記最後從書堆中被找回。</small></figcaption></figure>'
   +'</div></article>';
  box.innerHTML=html;
