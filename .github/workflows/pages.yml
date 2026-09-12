@@ -36,6 +36,9 @@ jobs:
       - name: Apply discovery visibility cleanup
         run: python3 tools/apply-discovery-visibility.py
 
+      - name: Apply Case 1 visual clues
+        run: python3 tools/apply-case1-visuals.py
+
       - name: Persist hotfix to main
         run: |
           if git diff --quiet -- index.html; then
