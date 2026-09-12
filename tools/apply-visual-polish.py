@@ -7,6 +7,9 @@ original = text
 
 # Build label.
 text = re.sub(r'BUILD 4\.3・VISUAL CLUES', 'BUILD 4.4・VISUAL POLISH', text, count=1)
+# Keep the JavaScript runtime error diagnostic in sync with the visible build.
+# A stale value makes Safari/cache reports look like an older page is loaded.
+text = text.replace("。BUILD 4.2.1'", "。BUILD 4.4'", 1)
 
 # Remove the conspicuous observation button from the visual card.
 text = re.sub(r'<button id="observeSceneBtn" type="button">.*?</button>', '', text, count=1)
