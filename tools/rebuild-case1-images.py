@@ -18,18 +18,30 @@ def validate_write(name: str, data: bytes) -> None:
 
 
 def b64_fragment(path: Path) -> str:
-    """Read either a plain Base64 chunk or a connector-generated JS wrapper."""
+    """Read a raw Base64 chunk or one wrapped in generated JavaScript text."""
     text = path.read_text(encoding='utf-8').strip()
     compact = ''.join(text.split())
     if re.fullmatch(r'[A-Za-z0-9+/]*={0,2}', compact):
         return compact
 
-    # Some repository chunks were saved in the same wrapper format as the
-    # historical HQ JS fragments: (...||'')+'BASE64';.  Extract only the
-    # quoted payload so JS syntax cannot contaminate the decoder input.
-    matches = re.findall(r"\+'([^']*)'", text)
-    if matches:
-        return ''.join(matches)
+    # Prefer explicitly quoted payloads.  Older connector/export passes used
+    # slightly different spacing, quote styles and trailing punctuation, so do
+    # not require the historical exact `+'...';` wrapper.
+    quoted = re.findall(
+        r"\+\s*(['\"])([A-Za-z0-9+/=]+)\1",
+        text,
+        flags=re.MULTILINE,
+    )
+    if quoted:
+        return ''.join(payload for _quote, payload in quoted)
+
+    # Recovery path for a raw chunk contaminated by a short wrapper/prefix.
+    # A real image fragment is thousands of Base64 characters, whereas wrapper
+    # identifiers are short.  Taking only long runs avoids feeding JS syntax to
+    # base64.b64decode while preserving split image chunks.
+    runs = re.findall(r'[A-Za-z0-9+/=]{256,}', text)
+    if runs:
+        return ''.join(runs)
 
     raise SystemExit(f'Cannot parse Base64 image fragment: {path}')
 
@@ -65,8 +77,8 @@ def from_js_parts(name: str, filenames: list[str]) -> None:
     validate_write(name, data)
 
 
-# Fresh Base64 source chunks.  b64_fragment accepts both raw chunks and the
-# connector-safe JS-wrapped form, because both formats exist in this folder.
+# Fresh Base64 source chunks. b64_fragment intentionally accepts both raw
+# chunks and historical connector-generated wrapper variants.
 for image_name in ('tea', 'bookstall', 'failed'):
     from_b64_parts(image_name)
 
