@@ -27,13 +27,20 @@ if 'function actionVisible(id)' not in text:
 
 text = text.replace('loc.actions.forEach(function(id){', 'loc.actions.filter(actionVisible).forEach(function(id){', 1)
 
+# Re-checking the bookseller must not invent a prior statement from the runner.
+# Some routes establish runner_account from the bookseller himself, so keep the
+# confirmation source-neutral on repeated visits.
+text = text.replace('這和少年的說法一致。', '這和目前已確認的紙張交接一致。')
+
 # Visible build marker for cache/debug verification.
-text = re.sub(r'BUILD 4\.1(?:\.\d+)?・[A-Z ]+', 'BUILD 4.2・DISCOVERY', text)
-text = re.sub(r'。BUILD 4\.1(?:\.\d+)?', '。BUILD 4.2', text)
+text = re.sub(r'BUILD 4\.2(?:\.\d+)?・[A-Z ]+', 'BUILD 4.2.1・CONTINUITY', text)
+text = re.sub(r'。BUILD 4\.2(?:\.\d+)?', '。BUILD 4.2.1', text)
+text = re.sub(r'BUILD 4\.1(?:\.\d+)?・[A-Z ]+', 'BUILD 4.2.1・CONTINUITY', text)
+text = re.sub(r'。BUILD 4\.1(?:\.\d+)?', '。BUILD 4.2.1', text)
 
 if text == original:
-    print('Discovery visibility cleanup already present; no changes required')
+    print('Discovery/continuity cleanup already present; no changes required')
     raise SystemExit(0)
 
 path.write_text(text, encoding='utf-8')
-print('Applied discovery-gated actions and removed legacy entry point')
+print('Applied discovery-gated actions, continuity wording fix, and removed legacy entry point')
