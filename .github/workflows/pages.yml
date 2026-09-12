@@ -43,7 +43,22 @@ jobs:
         run: python3 tools/apply-visual-polish.py
 
       - name: Rebuild Case 1 HQ images
-        run: python3 tools/rebuild-case1-images.py
+        run: |
+          if python3 tools/rebuild-case1-images.py; then
+            echo "HQ image rebuild completed."
+          else
+            echo "::warning::HQ image source rebuild failed; validating and using committed fallback assets."
+            python3 - <<'PY'
+          from pathlib import Path
+          names = ('tea', 'print', 'market', 'bookstall', 'failed')
+          for name in names:
+              p = Path('assets/case1') / f'{name}.webp'
+              data = p.read_bytes() if p.exists() else b''
+              if len(data) < 1024 or data[:4] != b'RIFF' or data[8:12] != b'WEBP':
+                  raise SystemExit(f'Missing or invalid fallback WebP: {p}')
+              print(f'FALLBACK_IMAGE {name}: {len(data)} bytes')
+          PY
+          fi
 
       - name: Persist hotfix to main
         run: |
