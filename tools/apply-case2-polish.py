@@ -13,17 +13,21 @@ if old_actions in text:
 elif 'disabled>先追問</button>' in text:
     raise SystemExit('case2 polish: testimony action markup changed unexpectedly')
 
-# 2) Make the single-action layout actually span the available mobile width.
-text = text.replace(
-    '.c2-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}',
-    '.c2-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.c2-actions.single{grid-template-columns:1fr}',
-    1,
-)
-text = text.replace(
-    '@media(min-width:640px){.c2-actions{grid-template-columns:160px 160px}.c2-statement-list{gap:10px}}',
-    '@media(min-width:640px){.c2-actions{grid-template-columns:160px 160px}.c2-actions.single{grid-template-columns:minmax(0,320px)}.c2-statement-list{gap:10px}}',
-    1,
-)
+# 2) Make the single-action layout span the available mobile width. This step
+# must be idempotent: an earlier implementation matched the base .c2-actions
+# rule on every deployment and kept appending the same .single rule, causing
+# case2-engine.js to grow indefinitely. Collapse any historical duplicates,
+# then add the rule only if it is missing.
+base_actions_rule = '.c2-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}'
+single_actions_rule = '.c2-actions.single{grid-template-columns:1fr}'
+text = re.sub(r'(?:' + re.escape(single_actions_rule) + r')+', single_actions_rule, text)
+if single_actions_rule not in text:
+    text = text.replace(base_actions_rule, base_actions_rule + single_actions_rule, 1)
+
+media_old = '@media(min-width:640px){.c2-actions{grid-template-columns:160px 160px}.c2-statement-list{gap:10px}}'
+media_new = '@media(min-width:640px){.c2-actions{grid-template-columns:160px 160px}.c2-actions.single{grid-template-columns:minmax(0,320px)}.c2-statement-list{gap:10px}}'
+if media_new not in text:
+    text = text.replace(media_old, media_new, 1)
 
 # 3) Add a mobile horizontal Case 1 visual recap to Records. These are context art,
 # not evidence, so the UI says so explicitly and they never enter s.evidence.
@@ -67,4 +71,4 @@ if text == original:
     print('Case 2 polish already applied; no changes.')
 else:
     path.write_text(text, encoding='utf-8')
-    print('Applied Case 2 testimony UI polish and Case 1 visual recap.')
+    print('Applied idempotent Case 2 testimony UI polish and Case 1 visual recap.')
