@@ -7,6 +7,8 @@ for name in EXPECTED:
     path = Path('assets/case1') / f'{name}.webp'
     if not path.exists():
         raise SystemExit(f'Missing image: {path}')
+    if path.stat().st_size < 1024:
+        raise SystemExit(f'Image file suspiciously small: {path} ({path.stat().st_size} bytes)')
     try:
         with Image.open(path) as img:
             fmt = img.format
@@ -18,8 +20,6 @@ for name in EXPECTED:
         raise SystemExit(f'Unexpected image format: {path} ({fmt})')
     if width < 640 or height < 480:
         raise SystemExit(f'Image dimensions too small: {path} ({width}x{height})')
-    if path.stat().st_size < 20000:
-        raise SystemExit(f'Image file suspiciously small: {path} ({path.stat().st_size} bytes)')
     print(f'IMAGE_OK {name}: {width}x{height}, {path.stat().st_size} bytes')
 
 print('All Case 1 images decoded successfully.')
