@@ -7,7 +7,7 @@ original = text
 
 # Case 2 is a new gameplay stage, not a replacement for Case 1. Keep the
 # visible build marker and runtime error diagnostic on the same version.
-BUILD = '5.1.1'
+BUILD = '5.1.2'
 text = re.sub(r'BUILD (?:4\.6|5\.0(?:\.\d+)?|5\.1(?:\.\d+)?)・[^<]+', f'BUILD {BUILD}・CASE 02', text, count=1)
 text = re.sub(r'(偵測到執行錯誤：[^\n]*?。BUILD )(?:4\.6|5\.0(?:\.\d+)?|5\.1(?:\.\d+)?)', rf'\g<1>{BUILD}', text, count=1)
 
@@ -51,7 +51,7 @@ if engine != engine_original:
 # GitHub Pages/browser caches can retain an old external JS file even after
 # index.html changes. Normalize to one versioned script tag so Safari always
 # receives the engine that belongs to this build.
-script_tag = '<script src="case2-engine.js?v=7"></script>'
+script_tag = '<script src="case2-engine.js?v=8"></script>'
 script_pattern = r'\s*<script src="case2-engine\.js\?v=\d+"></script>\s*'
 text = re.sub(script_pattern, '\n', text)
 marker = '</body>'
