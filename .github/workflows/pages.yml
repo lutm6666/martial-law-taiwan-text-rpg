@@ -87,6 +87,9 @@ jobs:
           save_tool.write_text(save, encoding='utf-8')
           PY
 
+      - name: Harden Case 1 save route recovery
+        run: python3 tools/apply-save-route-fix.py
+
       - name: Persist runtime fix to main
         run: |
           if git diff --quiet -- index.html case2-engine.js tools/apply-case2.py tools/apply-save-route-fix.py; then
@@ -95,7 +98,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add index.html case2-engine.js tools/apply-case2.py tools/apply-save-route-fix.py
-            git commit -m "Persist Case 2 reset-path save fix [skip ci]"
+            git commit -m "Persist Case 1 save-route recovery [skip ci]"
             git push origin HEAD:main
           fi
 
