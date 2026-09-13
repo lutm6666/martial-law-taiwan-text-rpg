@@ -78,6 +78,18 @@ text = text.replace(
 text = text.replace('少年說法加入案件紀錄。', '紙張交接確認加入案件紀錄。')
 text = text.replace("['runner','少年說法']", "['runner','紙張交接確認']", 1)
 
+# Recover from partially-written saves where a completed non-dynamic action
+# survived but one of the evidence records it deterministically awards did not.
+# Such an action normally replays cached text instead of executing again, so the
+# missing evidence can permanently block later investigation unless the stale
+# completion marker is cleared and the action is allowed to run again.
+recovery_anchor = "if(typeof state.name!=='string'||!state.name.trim())state.name='無名調查者';if(typeof state.focus!=='number'||!isFinite(state.focus))state.focus=MAX_FOCUS;"
+recovery_block = "if(typeof state.name!=='string'||!state.name.trim())state.name='無名調查者';var requiredEvidence={tea_index:['missing_index'],print_ledger:['print_ledger'],print_zhou:['waste_route','zhou_motive'],market_stalls:['wrapped_scrap'],market_runner:['runner_account'],book_search:['archive_pages'],book_stub:['postal_stub'],book_pages:['consent_note']};Object.keys(requiredEvidence).forEach(function(id){if(state.done.indexOf(id)===-1)return;var missing=requiredEvidence[id].some(function(eid){return state.evidence.indexOf(eid)===-1});if(missing){state.done=state.done.filter(function(doneId){return doneId!==id});delete state.flags.actionResults[id];}});if(state.done.indexOf('tea_ask')!==-1)know('achuan');if(state.done.indexOf('print_zhou')!==-1){know('zhou');state.flags.zhouCracked=true}if(state.done.indexOf('market_runner')!==-1)know('runner');if(state.done.indexOf('market_postman')!==-1)state.flags.postmanRumor=true;if(typeof state.focus!=='number'||!isFinite(state.focus))state.focus=MAX_FOCUS;"
+if recovery_anchor in text:
+    text = text.replace(recovery_anchor, recovery_block, 1)
+elif recovery_block not in text:
+    raise SystemExit('case1 completed-action evidence recovery pattern not found')
+
 # Case 1 save integrity: `deductionReady`, `finished`, and `failed` are derived
 # states. Deduction is valid only after the pages were actually found and the
 # player completed the explicit read action that reveals the margin note.
