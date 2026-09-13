@@ -41,7 +41,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          engine_path = Path('case2-engine.js')
+          engine_path = Path('case2-engine-core.js')
           engine = engine_path.read_text(encoding='utf-8')
           old_failed = "v.failed=v.finished?false:(!!v.failed||v.focus<=0);"
           new_failed = "v.failed=!v.finished&&v.focus<=0;"
@@ -64,8 +64,6 @@ jobs:
           index = index_path.read_text(encoding='utf-8').replace('BUILD 5.1.4', 'BUILD 5.1.6')
           index_path.write_text(index, encoding='utf-8')
 
-          # Keep generator sources synchronized so a later maintenance run
-          # cannot restore stale save rules, reset hooks, or an older build label.
           case2_tool = Path('tools/apply-case2.py')
           tool = case2_tool.read_text(encoding='utf-8')
           tool = tool.replace("BUILD = '5.1.4'", "BUILD = '5.1.6'")
@@ -92,12 +90,12 @@ jobs:
 
       - name: Persist runtime fix to main
         run: |
-          if git diff --quiet -- index.html case2-engine.js tools/apply-case2.py tools/apply-save-route-fix.py; then
+          if git diff --quiet -- index.html case2-engine-core.js tools/apply-case2.py tools/apply-save-route-fix.py; then
             echo "Runtime fix already persisted."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add index.html case2-engine.js tools/apply-case2.py tools/apply-save-route-fix.py
+            git add index.html case2-engine-core.js tools/apply-case2.py tools/apply-save-route-fix.py
             git commit -m "Persist Case 1 save-route recovery [skip ci]"
             git push origin HEAD:main
           fi
@@ -112,7 +110,7 @@ jobs:
           stamp = os.environ['GITHUB_SHA'][:12]
           asset_pattern = r'(assets/case1/(?:tea|print|market|bookstall|failed)\.webp)\?v=[^"\']+'
 
-          for filename in ('index.html', 'case2-engine.js'):
+          for filename in ('index.html', 'case2-engine-core.js'):
               path = Path(filename)
               text = path.read_text(encoding='utf-8')
               text = re.sub(asset_pattern, rf'\1?v={stamp}', text)
@@ -120,12 +118,20 @@ jobs:
                   text = re.sub(r'(case2-engine\.js)\?v=[^"\']+', rf'\1?v={stamp}', text)
               path.write_text(text, encoding='utf-8')
 
+          wrapper_path = Path('case2-engine.js')
+          wrapper = wrapper_path.read_text(encoding='utf-8')
+          wrapper = re.sub(r'(image-lightbox\.js)\?v=[^"\']+', rf'\1?v={stamp}', wrapper)
+          wrapper = re.sub(r'(case2-engine-core\.js)\?v=[^"\']+', rf'\1?v={stamp}', wrapper)
+          wrapper_path.write_text(wrapper, encoding='utf-8')
+
           print(f'CACHE_STAMP {stamp}')
           PY
 
       - name: Validate JavaScript
         run: |
           node --check case2-engine.js
+          node --check case2-engine-core.js
+          node --check image-lightbox.js
           node tools/verify-javascript.js
 
       - name: Install image verifier
