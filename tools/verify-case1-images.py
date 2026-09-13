@@ -2,11 +2,9 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-# Preserve the best available source sizes without upscaling/recompression.
-MIN_SIZES = {'tea': (512, 384), 'print': (640, 480), 'market': (640, 480),
-             'bookstall': (512, 384), 'failed': (512, 384)}
-
 EXPECTED = ('tea', 'print', 'market', 'bookstall', 'failed')
+# Require high-resolution assets for all five Case 1 scenes.
+MIN_SIZES = {name: (1200, 900) for name in EXPECTED}
 
 for name in EXPECTED:
     path = ROOT / 'assets/case1' / f'{name}.webp'
