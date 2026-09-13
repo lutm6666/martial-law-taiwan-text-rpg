@@ -32,9 +32,13 @@ elif new_route not in text:
 # player into a future scene or strand them somewhere the map says is locked.
 # Reconcile current/visited locations only after route reconstruction.
 location_guard = "if(state.unlocked.indexOf(state.location)===-1){state.location='tea';for(var vi=state.visited.length-1;vi>=0;vi--){if(state.unlocked.indexOf(state.visited[vi])!==-1){state.location=state.visited[vi];break}}}state.visited=state.visited.filter(function(id){return state.unlocked.indexOf(id)!==-1});if(state.visited.indexOf(state.location)===-1)state.visited.push(state.location);"
-route_anchor = new_route + "state.evidence.indexOf('consent_note')!==-1||state.done.indexOf('book_pages')!==-1;"
+route_anchors = [
+    new_route + "state.evidence.indexOf('consent_note')!==-1||state.done.indexOf('book_pages')!==-1;",
+    new_route + "state.done.indexOf('book_pages')!==-1&&state.evidence.indexOf('archive_pages')!==-1&&state.evidence.indexOf('consent_note')!==-1;",
+]
 if location_guard not in text:
-    if route_anchor not in text:
+    route_anchor = next((anchor for anchor in route_anchors if anchor in text), None)
+    if route_anchor is None:
         raise SystemExit('case1 location reconciliation anchor not found')
     text = text.replace(route_anchor, route_anchor + location_guard, 1)
 
@@ -78,11 +82,14 @@ text = text.replace("['runner','少年說法']", "['runner','紙張交接確認'
 # states. Older/partially-written localStorage snapshots must not be able to
 # open deduction early, jump straight to the ending, or remain failed with
 # positive focus. Rebuild those states from facts the player actually has.
-old_integrity = "if(state.evidence.indexOf('consent_note')!==-1||state.done.indexOf('book_pages')!==-1)state.flags.deductionReady=true;if(state.focus<=0&&!state.finished)state.failed=true;if(state.finished){finishCase();return}if(state.failed){failCase();return}"
-new_integrity = "state.flags.deductionReady=state.evidence.indexOf('consent_note')!==-1||state.done.indexOf('book_pages')!==-1;var canFinish=state.flags.deductionReady&&state.deductionStep>=deduction.length&&deduction.every(function(step){return state.evidence.indexOf(step.need)!==-1});state.finished=!!canFinish;state.failed=!state.finished&&state.focus<=0;if(state.finished){finishCase();return}if(state.failed){failCase();return}"
-if old_integrity in text:
-    text = text.replace(old_integrity, new_integrity, 1)
-elif "var canFinish=state.flags.deductionReady&&state.deductionStep>=deduction.length&&deduction.every(function(step){return state.evidence.indexOf(step.need)!==-1});state.finished=!!canFinish;state.failed=!state.finished&&state.focus<=0;if(state.finished){finishCase();return}if(state.failed){failCase();return}" not in text:
+legacy_integrity = "if(state.evidence.indexOf('consent_note')!==-1||state.done.indexOf('book_pages')!==-1)state.flags.deductionReady=true;if(state.focus<=0&&!state.finished)state.failed=true;if(state.finished){finishCase();return}if(state.failed){failCase();return}"
+weak_integrity = "state.flags.deductionReady=state.evidence.indexOf('consent_note')!==-1||state.done.indexOf('book_pages')!==-1;var canFinish=state.flags.deductionReady&&state.deductionStep>=deduction.length&&deduction.every(function(step){return state.evidence.indexOf(step.need)!==-1});state.finished=!!canFinish;state.failed=!state.finished&&state.focus<=0;if(state.finished){finishCase();return}if(state.failed){failCase();return}"
+strong_integrity = "state.flags.deductionReady=state.done.indexOf('book_pages')!==-1&&state.evidence.indexOf('archive_pages')!==-1&&state.evidence.indexOf('consent_note')!==-1;var canFinish=state.flags.deductionReady&&state.deductionStep>=deduction.length&&deduction.every(function(step){return state.evidence.indexOf(step.need)!==-1});state.finished=!!canFinish;state.failed=!state.finished&&state.focus<=0;if(state.finished){finishCase();return}if(state.failed){failCase();return}"
+if legacy_integrity in text:
+    text = text.replace(legacy_integrity, strong_integrity, 1)
+elif weak_integrity in text:
+    text = text.replace(weak_integrity, strong_integrity, 1)
+elif strong_integrity not in text:
     raise SystemExit('case1 derived-state normalization pattern not found')
 
 # Visible build/diagnostic markers make stale Safari/GitHub Pages caches easy
