@@ -36,7 +36,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Harden Case 2 failed-save recovery
+      - name: Harden Case 2 save recovery and reset paths
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -49,6 +49,14 @@ jobs:
               engine = engine.replace(old_failed, new_failed, 1)
           elif new_failed not in engine:
               raise SystemExit('Case 2 failed-state normalization hook not found')
+
+          old_reset_hooks = "wrapClear('startBtn');wrapClear('restartBtn');wrapClear('retryBtn');}"
+          new_reset_hooks = "wrapClear('startBtn');wrapClear('restartBtn');wrapClear('retryBtn');wrapClear('failHomeBtn');wrapClear('homeBtn');}"
+          if old_reset_hooks in engine:
+              engine = engine.replace(old_reset_hooks, new_reset_hooks, 1)
+          elif new_reset_hooks not in engine:
+              raise SystemExit('Case 2 reset hooks not found')
+
           engine = engine.replace('BUILD 5.1.4', 'BUILD 5.1.6')
           engine_path.write_text(engine, encoding='utf-8')
 
@@ -57,12 +65,18 @@ jobs:
           index_path.write_text(index, encoding='utf-8')
 
           # Keep generator sources synchronized so a later maintenance run
-          # cannot restore the stale failed-state rule or an older build label.
+          # cannot restore stale save rules, reset hooks, or an older build label.
           case2_tool = Path('tools/apply-case2.py')
           tool = case2_tool.read_text(encoding='utf-8')
           tool = tool.replace("BUILD = '5.1.4'", "BUILD = '5.1.6'")
           tool = tool.replace("v.failed=v.finished?false:(!!v.failed||v.focus<=0);", new_failed)
           tool = tool.replace('case2-engine.js?v=10', 'case2-engine.js?v=12')
+          if 'old_reset_hooks = "wrapClear' not in tool:
+              marker = "if engine != engine_original:\n    engine_path.write_text(engine, encoding='utf-8')\n"
+              persistent = """# Any Case 1 action that explicitly resets that case must also clear a stale\n# downstream Case 2 save. Otherwise returning home after a failed/completed\n# Case 1 can leave the title screen offering an unrelated older Case 2 run.\nold_reset_hooks = \"wrapClear('startBtn');wrapClear('restartBtn');wrapClear('retryBtn');}\"\nnew_reset_hooks = \"wrapClear('startBtn');wrapClear('restartBtn');wrapClear('retryBtn');wrapClear('failHomeBtn');wrapClear('homeBtn');}\"\nif old_reset_hooks in engine:\n    engine = engine.replace(old_reset_hooks, new_reset_hooks, 1)\nelif new_reset_hooks not in engine:\n    raise SystemExit('case2: Case 1 reset hooks not found')\n\n"""
+              if marker not in tool:
+                  raise SystemExit('Case 2 generator persistence marker not found')
+              tool = tool.replace(marker, persistent + marker, 1)
           case2_tool.write_text(tool, encoding='utf-8')
 
           save_tool = Path('tools/apply-save-route-fix.py')
@@ -81,7 +95,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add index.html case2-engine.js tools/apply-case2.py tools/apply-save-route-fix.py
-            git commit -m "Persist Case 2 failed-save recovery [skip ci]"
+            git commit -m "Persist Case 2 reset-path save fix [skip ci]"
             git push origin HEAD:main
           fi
 
