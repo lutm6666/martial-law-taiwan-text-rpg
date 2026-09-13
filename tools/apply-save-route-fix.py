@@ -65,9 +65,9 @@ elif new_integrity not in text:
 
 # Visible build/diagnostic markers make stale Safari/GitHub Pages caches easy
 # to distinguish while keeping repeated deployments idempotent.
-text = text.replace('BUILD 5.1.4・CASE 02', 'BUILD 5.1.5・CASE 02')
-text = text.replace("。BUILD 5.1.4'", "。BUILD 5.1.5'")
-text = text.replace('case2-engine.js?v=10', 'case2-engine.js?v=11')
+text = text.replace('BUILD 5.1.4・CASE 02', 'BUILD 5.1.6・CASE 02')
+text = text.replace("。BUILD 5.1.4'", "。BUILD 5.1.6'")
+text = text.replace('case2-engine.js?v=10', 'case2-engine.js?v=12')
 text = text.replace('BUILD 4.1.3・SOURCE FIX', 'BUILD 4.1.4・EVIDENCE FIX')
 text = text.replace("。BUILD 4.1.3'", "。BUILD 4.1.4'")
 text = text.replace('BUILD 4.1.2・ROUTE FIX', 'BUILD 4.1.4・EVIDENCE FIX')
