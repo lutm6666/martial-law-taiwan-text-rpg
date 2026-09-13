@@ -16,6 +16,28 @@ if old in text:
 elif "if(state.done.indexOf('market_role')!==-1)unlock('bookstall');" not in text:
     raise SystemExit('save-route fix pattern not found')
 
+# Recover every route that can be proven from already-completed actions.
+# Without this, a partially-written Safari/localStorage snapshot can retain
+# `done` while losing `unlocked`; replaying a completed non-dynamic action does
+# not execute its unlock side effect again, which can permanently trap a save.
+old_route = "if(state.evidence.indexOf('waste_route')!==-1||state.evidence.indexOf('zhou_motive')!==-1)unlock('market');if(state.evidence.indexOf('runner_account')!==-1)unlock('bookstall');if(state.done.indexOf('market_role')!==-1)unlock('bookstall');state.flags.deductionReady="
+new_route = "if(state.done.indexOf('tea_ask')!==-1)unlock('print');if(state.evidence.indexOf('waste_route')!==-1||state.evidence.indexOf('zhou_motive')!==-1||state.done.indexOf('print_zhou')!==-1)unlock('market');if(state.evidence.indexOf('runner_account')!==-1||state.done.indexOf('market_runner')!==-1||state.done.indexOf('market_role')!==-1||state.done.indexOf('book_owner')!==-1||state.done.indexOf('book_search')!==-1||state.done.indexOf('book_stub')!==-1||state.done.indexOf('book_pages')!==-1)unlock('bookstall');state.flags.deductionReady="
+if old_route in text:
+    text = text.replace(old_route, new_route, 1)
+elif new_route not in text:
+    raise SystemExit('case1 completed-action route recovery pattern not found')
+
+# A valid location is not necessarily an unlocked location. If the `unlocked`
+# array was partially written, loading a stale location could either jump the
+# player into a future scene or strand them somewhere the map says is locked.
+# Reconcile current/visited locations only after route reconstruction.
+location_guard = "if(state.unlocked.indexOf(state.location)===-1){state.location='tea';for(var vi=state.visited.length-1;vi>=0;vi--){if(state.unlocked.indexOf(state.visited[vi])!==-1){state.location=state.visited[vi];break}}}state.visited=state.visited.filter(function(id){return state.unlocked.indexOf(id)!==-1});if(state.visited.indexOf(state.location)===-1)state.visited.push(state.location);"
+route_anchor = new_route + "state.evidence.indexOf('consent_note')!==-1||state.done.indexOf('book_pages')!==-1;"
+if location_guard not in text:
+    if route_anchor not in text:
+        raise SystemExit('case1 location reconciliation anchor not found')
+    text = text.replace(route_anchor, route_anchor + location_guard, 1)
+
 # Guard against an older role-patch template accidentally restoring a clerk
 # branch that labels second-hand market routine information as direct runner
 # testimony. Current narrative intentionally delays runner_account until the
@@ -83,4 +105,4 @@ if text == original:
     raise SystemExit(0)
 
 path.write_text(text, encoding='utf-8')
-print('Applied Case 1 derived-state normalization and continuity fixes')
+print('Applied Case 1 route/save integrity and continuity fixes')
