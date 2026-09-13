@@ -140,7 +140,7 @@ function startCase2(reset){mount();if(reset){try{localStorage.removeItem(CASE2_K
 function resumeCase2(){s=load();if(!s){startCase2(true);return}activeTab=s.finished||s.failed?'testimony':(s.flags&&s.flags.finalReady?'final':'testimony');selectedStatement=null;render()}
 
 function wrapClear(id){var el=$(id);if(!el||el.__c2Wrapped)return;var old=el.onclick;el.onclick=function(e){try{localStorage.removeItem(CASE2_KEY)}catch(err){}if(typeof old==='function')return old.call(el,e)};el.__c2Wrapped=true}
-function install(){mount();var next=$('nextCaseBtn');if(next)next.onclick=function(){startCase2(false)};var loadBtn=$('loadBtn'),saved=load();if(loadBtn&&saved){loadBtn.disabled=false;loadBtn.textContent=saved.finished?'查看案件二結案':'繼續案件二';var boot=$('bootStatus');if(boot)boot.textContent=saved.finished?'案件二已有結案紀錄。':'找到案件二進度。';loadBtn.onclick=resumeCase2}wrapClear('startBtn');wrapClear('restartBtn');wrapClear('retryBtn');}
+function install(){mount();var next=$('nextCaseBtn');if(next)next.onclick=function(){startCase2(false)};var loadBtn=$('loadBtn'),saved=load();if(loadBtn&&saved){loadBtn.disabled=false;loadBtn.textContent=saved.finished?'查看案件二結案':'繼續案件二';var boot=$('bootStatus');if(boot)boot.textContent=saved.finished?'案件二已有結案紀錄。':'找到案件二進度。';loadBtn.onclick=resumeCase2}wrapClear('startBtn');wrapClear('restartBtn');wrapClear('retryBtn');wrapClear('failHomeBtn');wrapClear('homeBtn');}
 
 install();
 })();

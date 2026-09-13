@@ -46,6 +46,16 @@ else:
     if count != 1:
         raise SystemExit('case2: save loader hook not found')
 
+# Any Case 1 action that explicitly resets that case must also clear a stale
+# downstream Case 2 save. Otherwise returning home after a failed/completed
+# Case 1 can leave the title screen offering an unrelated older Case 2 run.
+old_reset_hooks = "wrapClear('startBtn');wrapClear('restartBtn');wrapClear('retryBtn');}"
+new_reset_hooks = "wrapClear('startBtn');wrapClear('restartBtn');wrapClear('retryBtn');wrapClear('failHomeBtn');wrapClear('homeBtn');}"
+if old_reset_hooks in engine:
+    engine = engine.replace(old_reset_hooks, new_reset_hooks, 1)
+elif new_reset_hooks not in engine:
+    raise SystemExit('case2: Case 1 reset hooks not found')
+
 if engine != engine_original:
     engine_path.write_text(engine, encoding='utf-8')
 
