@@ -122,20 +122,12 @@ function renderRecord(){
  s.people.forEach(function(id){var p=people[id];if(!p)return;var desc=p.desc;if(id==='qiuyue'&&s.flags.qContact)desc='美惠已替你轉達。秋月願意親自說明：她當時允許保留什麼，又沒有允許什麼。';html+='<div class="c2-record"><strong>'+esc(p.name)+'</strong><small>'+esc(desc)+'</small></div>'});
  html+='</div></article>';
  html+='<article class="section-card card" style="margin-top:11px"><h3>案件一回顧</h3><p class="c2-recap-note">情境重構・非證物。這些場景圖只幫助回想第一案的調查路線，不會新增線索，也不能直接拿來反駁證詞。</p><div class="c2-recap-strip">'
-  +'<figure class="c2-recap-card"><img src="assets/case1/tea.webp?v=6" loading="lazy" alt="案件一茶行情境重構"><figcaption class="c2-recap-caption"><strong>茶行</strong><small>缺頁最初被發現的地方。</small></figcaption></figure>'
-  +'<figure class="c2-recap-card"><img src="assets/case1/print.webp?v=6" loading="lazy" alt="案件一印刷行情境重構"><figcaption class="c2-recap-caption"><strong>印刷行</strong><small>借用簿與廢紙去向把調查帶往市場。</small></figcaption></figure>'
-  +'<figure class="c2-recap-card"><img src="assets/case1/market.webp?v=6" loading="lazy" alt="案件一市場情境重構"><figcaption class="c2-recap-caption"><strong>市場</strong><small>紙張流向與市場端的交接線索在這裡接上。</small></figcaption></figure>'
-  +'<figure class="c2-recap-card"><img src="assets/case1/bookstall.webp?v=6" loading="lazy" alt="案件一舊書攤情境重構"><figcaption class="c2-recap-caption"><strong>舊書攤</strong><small>三頁筆記最後從書堆中被找回。</small></figcaption></figure>'
+  +'<figure class="c2-recap-card"><img src="assets/case1/tea.webp?v=9" loading="lazy" alt="案件一茶行情境重構"><figcaption class="c2-recap-caption"><strong>茶行</strong><small>缺頁最初被發現的地方。</small></figcaption></figure>'
+  +'<figure class="c2-recap-card"><img src="assets/case1/print.webp?v=9" loading="lazy" alt="案件一印刷行情境重構"><figcaption class="c2-recap-caption"><strong>印刷行</strong><small>借用簿與廢紙去向把調查帶往市場。</small></figcaption></figure>'
+  +'<figure class="c2-recap-card"><img src="assets/case1/market.webp?v=9" loading="lazy" alt="案件一市場情境重構"><figcaption class="c2-recap-caption"><strong>市場</strong><small>紙張流向與市場端的交接線索在這裡接上。</small></figcaption></figure>'
+  +'<figure class="c2-recap-card"><img src="assets/case1/bookstall.webp?v=9" loading="lazy" alt="案件一舊書攤情境重構"><figcaption class="c2-recap-caption"><strong>舊書攤</strong><small>三頁筆記最後從書堆中被找回。</small></figcaption></figure>'
   +'</div></article>';
  box.innerHTML=html;
- /* CASE1_ART_RECAP_START */
- var recapArt=window.CASE1_ART||{};
- var recapIds=['tea','print','market','bookstall'];
- box.querySelectorAll('.c2-recap-card img').forEach(function(img,i){
-  var id=recapIds[i];
-  if(id&&recapArt[id]) img.src=recapArt[id];
- });
- /* CASE1_ART_RECAP_END */
 }
 
 function renderFinal(){var box=$('c2Final');if(!s.flags.finalReady){box.innerHTML='<p class="c2-panel-title">案件結論</p><article class="c2-final card"><h2>還不能下結論</h2><p>目前還有證詞沒有整理完。案件二不會先把尚未發現的問題列給你看。</p><button id="c2BackTestimony" class="c2-next" type="button">回到證詞</button></article>';$('c2BackTestimony').onclick=function(){setTab('testimony')};return}if(s.finalStep>=finalQuestions.length){finish();return}var q=finalQuestions[s.finalStep],html='<p class="c2-panel-title">案件結論 '+(s.finalStep+1)+' / '+finalQuestions.length+'</p><article class="c2-final card"><h2>'+esc(q.prompt)+'</h2><p>選擇你現在能用證詞與紀錄支持的結論。</p><div class="c2-options">';q.options.forEach(function(o){html+='<button class="c2-option" type="button" data-final="'+o.id+'">'+esc(o.text)+'</button>'});html+='</div>';if(s.feedback)html+='<div class="c2-feedback">'+esc(s.feedback)+'</div>';html+='</article>';box.innerHTML=html;box.querySelectorAll('[data-final]').forEach(function(b){b.onclick=function(){answerFinal(b.getAttribute('data-final'))}})}

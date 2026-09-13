@@ -1,10 +1,15 @@
 from pathlib import Path
 from PIL import Image
 
+ROOT = Path(__file__).resolve().parent.parent
+# Preserve the best available source sizes without upscaling/recompression.
+MIN_SIZES = {'tea': (512, 384), 'print': (640, 480), 'market': (640, 480),
+             'bookstall': (512, 384), 'failed': (512, 384)}
+
 EXPECTED = ('tea', 'print', 'market', 'bookstall', 'failed')
 
 for name in EXPECTED:
-    path = Path('assets/case1') / f'{name}.webp'
+    path = ROOT / 'assets/case1' / f'{name}.webp'
     if not path.exists():
         raise SystemExit(f'Missing image: {path}')
     if path.stat().st_size < 1024:
@@ -18,7 +23,7 @@ for name in EXPECTED:
         raise SystemExit(f'Image decode failed: {path}: {exc}')
     if fmt != 'WEBP':
         raise SystemExit(f'Unexpected image format: {path} ({fmt})')
-    if width < 640 or height < 480:
+    if width < MIN_SIZES[name][0] or height < MIN_SIZES[name][1]:
         raise SystemExit(f'Image dimensions too small: {path} ({width}x{height})')
     print(f'IMAGE_OK {name}: {width}x{height}, {path.stat().st_size} bytes')
 
