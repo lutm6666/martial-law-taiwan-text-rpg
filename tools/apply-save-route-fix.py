@@ -52,8 +52,22 @@ text = text.replace(
 text = text.replace('少年說法加入案件紀錄。', '紙張交接確認加入案件紀錄。')
 text = text.replace("['runner','少年說法']", "['runner','紙張交接確認']", 1)
 
+# Case 1 save integrity: `deductionReady`, `finished`, and `failed` are derived
+# states. Older/partially-written localStorage snapshots must not be able to
+# open deduction early, jump straight to the ending, or remain failed with
+# positive focus. Rebuild those states from facts the player actually has.
+old_integrity = "if(state.evidence.indexOf('consent_note')!==-1||state.done.indexOf('book_pages')!==-1)state.flags.deductionReady=true;if(state.focus<=0&&!state.finished)state.failed=true;if(state.finished){finishCase();return}if(state.failed){failCase();return}"
+new_integrity = "state.flags.deductionReady=state.evidence.indexOf('consent_note')!==-1||state.done.indexOf('book_pages')!==-1;var canFinish=state.flags.deductionReady&&state.deductionStep>=deduction.length&&deduction.every(function(step){return state.evidence.indexOf(step.need)!==-1});state.finished=!!canFinish;state.failed=!state.finished&&state.focus<=0;if(state.finished){finishCase();return}if(state.failed){failCase();return}"
+if old_integrity in text:
+    text = text.replace(old_integrity, new_integrity, 1)
+elif new_integrity not in text:
+    raise SystemExit('case1 derived-state normalization pattern not found')
+
 # Visible build/diagnostic markers make stale Safari/GitHub Pages caches easy
 # to distinguish while keeping repeated deployments idempotent.
+text = text.replace('BUILD 5.1.4・CASE 02', 'BUILD 5.1.5・CASE 02')
+text = text.replace("。BUILD 5.1.4'", "。BUILD 5.1.5'")
+text = text.replace('case2-engine.js?v=10', 'case2-engine.js?v=11')
 text = text.replace('BUILD 4.1.3・SOURCE FIX', 'BUILD 4.1.4・EVIDENCE FIX')
 text = text.replace("。BUILD 4.1.3'", "。BUILD 4.1.4'")
 text = text.replace('BUILD 4.1.2・ROUTE FIX', 'BUILD 4.1.4・EVIDENCE FIX')
@@ -69,4 +83,4 @@ if text == original:
     raise SystemExit(0)
 
 path.write_text(text, encoding='utf-8')
-print('Applied BUILD 4.1.4 evidence-source continuity fix')
+print('Applied Case 1 derived-state normalization and continuity fixes')
