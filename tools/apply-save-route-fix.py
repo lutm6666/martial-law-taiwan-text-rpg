@@ -79,18 +79,23 @@ text = text.replace('少年說法加入案件紀錄。', '紙張交接確認加�
 text = text.replace("['runner','少年說法']", "['runner','紙張交接確認']", 1)
 
 # Case 1 save integrity: `deductionReady`, `finished`, and `failed` are derived
-# states. Older/partially-written localStorage snapshots must not be able to
-# open deduction early, jump straight to the ending, or remain failed with
-# positive focus. Rebuild those states from facts the player actually has.
+# states. Deduction is valid only after the pages were actually found and the
+# player completed the explicit read action that reveals the margin note.
+weak_ready = "state.flags.deductionReady=state.evidence.indexOf('consent_note')!==-1||state.done.indexOf('book_pages')!==-1;"
+strong_ready = "state.flags.deductionReady=state.done.indexOf('book_pages')!==-1&&state.evidence.indexOf('archive_pages')!==-1&&state.evidence.indexOf('consent_note')!==-1;"
+if weak_ready in text:
+    text = text.replace(weak_ready, strong_ready, 1)
+elif strong_ready not in text:
+    raise SystemExit('case1 deduction-ready normalization pattern not found')
+
 legacy_integrity = "if(state.evidence.indexOf('consent_note')!==-1||state.done.indexOf('book_pages')!==-1)state.flags.deductionReady=true;if(state.focus<=0&&!state.finished)state.failed=true;if(state.finished){finishCase();return}if(state.failed){failCase();return}"
-weak_integrity = "state.flags.deductionReady=state.evidence.indexOf('consent_note')!==-1||state.done.indexOf('book_pages')!==-1;var canFinish=state.flags.deductionReady&&state.deductionStep>=deduction.length&&deduction.every(function(step){return state.evidence.indexOf(step.need)!==-1});state.finished=!!canFinish;state.failed=!state.finished&&state.focus<=0;if(state.finished){finishCase();return}if(state.failed){failCase();return}"
-strong_integrity = "state.flags.deductionReady=state.done.indexOf('book_pages')!==-1&&state.evidence.indexOf('archive_pages')!==-1&&state.evidence.indexOf('consent_note')!==-1;var canFinish=state.flags.deductionReady&&state.deductionStep>=deduction.length&&deduction.every(function(step){return state.evidence.indexOf(step.need)!==-1});state.finished=!!canFinish;state.failed=!state.finished&&state.focus<=0;if(state.finished){finishCase();return}if(state.failed){failCase();return}"
 if legacy_integrity in text:
-    text = text.replace(legacy_integrity, strong_integrity, 1)
-elif weak_integrity in text:
-    text = text.replace(weak_integrity, strong_integrity, 1)
-elif strong_integrity not in text:
-    raise SystemExit('case1 derived-state normalization pattern not found')
+    replacement = strong_ready + "var canFinish=state.flags.deductionReady&&state.deductionStep>=deduction.length&&deduction.every(function(step){return state.evidence.indexOf(step.need)!==-1});state.finished=!!canFinish;state.failed=!state.finished&&state.focus<=0;if(state.finished){finishCase();return}if(state.failed){failCase();return}"
+    text = text.replace(legacy_integrity, replacement, 1)
+
+finish_guard = "var canFinish=state.flags.deductionReady&&state.deductionStep>=deduction.length&&deduction.every(function(step){return state.evidence.indexOf(step.need)!==-1});state.finished=!!canFinish;state.failed=!state.finished&&state.focus<=0;if(state.finished){finishCase();return}if(state.failed){failCase();return}"
+if finish_guard not in text:
+    raise SystemExit('case1 finish-state normalization pattern not found')
 
 # Visible build/diagnostic markers make stale Safari/GitHub Pages caches easy
 # to distinguish while keeping repeated deployments idempotent.
