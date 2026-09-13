@@ -3,10 +3,19 @@
 
 function loadScript(src,next){
  var script=document.createElement('script');
+ var settled=false;
+ function finish(){
+  if(settled)return;
+  settled=true;
+  if(typeof next==='function')next();
+ }
  script.src=src;
  script.async=false;
- if(typeof next==='function')script.onload=next;
- script.onerror=function(){console.error('Script load failed:',src)};
+ script.onload=finish;
+ script.onerror=function(){
+  console.error('Script load failed:',src);
+  finish();
+ };
  document.head.appendChild(script);
 }
 
