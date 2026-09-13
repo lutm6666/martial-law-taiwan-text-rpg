@@ -123,9 +123,31 @@ jobs:
           print(f'CACHE_STAMP {stamp}')
           PY
 
+      - name: Inject shared image lightbox
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          import re
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          stamp = os.environ['GITHUB_SHA'][:12]
+          lightbox = f'<script src="image-lightbox.js?v={stamp}"></script>'
+
+          if 'image-lightbox.js?' not in text:
+              pattern = r'(<script\s+src="case2-engine\.js\?v=[^"]+"\s*></script>)'
+              text, count = re.subn(pattern, lightbox + r'\n\1', text, count=1)
+              if count != 1:
+                  raise SystemExit('Unable to locate Case 2 script tag for lightbox injection')
+          path.write_text(text, encoding='utf-8')
+          print('LIGHTBOX_INJECTED')
+          PY
+
       - name: Validate JavaScript
         run: |
           node --check case2-engine.js
+          node --check image-lightbox.js
           node tools/verify-javascript.js
 
       - name: Install image verifier
