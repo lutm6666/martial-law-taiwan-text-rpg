@@ -34,6 +34,27 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Stamp deployment cache keys
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          import re
+
+          stamp = os.environ['GITHUB_SHA'][:12]
+          asset_pattern = r'(assets/case1/(?:tea|print|market|bookstall|failed)\.webp)\?v=[^"\']+'
+
+          for filename in ('index.html', 'case2-engine.js'):
+              path = Path(filename)
+              text = path.read_text(encoding='utf-8')
+              text = re.sub(asset_pattern, rf'\1?v={stamp}', text)
+              if filename == 'index.html':
+                  text = re.sub(r'(case2-engine\.js)\?v=[^"\']+', rf'\1?v={stamp}', text)
+              path.write_text(text, encoding='utf-8')
+
+          print(f'CACHE_STAMP {stamp}')
+          PY
+
       - name: Validate JavaScript
         run: |
           node --check case2-engine.js
