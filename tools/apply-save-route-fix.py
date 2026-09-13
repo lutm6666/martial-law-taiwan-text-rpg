@@ -13,7 +13,7 @@ old = "if(state.evidence.indexOf('runner_account')!==-1)unlock('bookstall');if(s
 new = "if(state.evidence.indexOf('runner_account')!==-1)unlock('bookstall');if(state.done.indexOf('market_role')!==-1)unlock('bookstall');if(state.evidence.indexOf('consent_note')!==-1||state.done.indexOf('book_pages')!==-1)state.flags.deductionReady=true;"
 if old in text:
     text = text.replace(old, new, 1)
-elif "if(state.done.indexOf('market_role')!==-1)unlock('bookstall');" not in text:
+elif new not in text and "state.done.indexOf('market_role')!==-1||state.done.indexOf('book_owner')!==-1" not in text:
     raise SystemExit('save-route fix pattern not found')
 
 # Recover every route that can be proven from already-completed actions.
