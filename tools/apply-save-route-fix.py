@@ -120,6 +120,25 @@ if old_numeric in text:
 elif new_numeric not in text:
     raise SystemExit('case1 numeric save normalization pattern not found')
 
+# Nested Case 1 save integrity: legacy/partially-written Safari snapshots can
+# contain truthy primitive values for flags/actionResults/visualSeen. The old
+# guards only checked truthiness, so later property writes could throw a
+# TypeError and make "continue" unusable. Normalize these containers to plain
+# objects before any gameplay code writes through them.
+old_visual_guard = "function ensureVisualState(){if(!state.flags)state.flags={actionResults:{},mistakes:0};if(!state.flags.actionResults)state.flags.actionResults={};if(!state.flags.visualSeen)state.flags.visualSeen={};}"
+new_visual_guard = "function ensureVisualState(){if(!state.flags||typeof state.flags!=='object'||Array.isArray(state.flags))state.flags={actionResults:{},mistakes:0,visualSeen:{}};if(!state.flags.actionResults||typeof state.flags.actionResults!=='object'||Array.isArray(state.flags.actionResults))state.flags.actionResults={};if(!state.flags.visualSeen||typeof state.flags.visualSeen!=='object'||Array.isArray(state.flags.visualSeen))state.flags.visualSeen={};}"
+if old_visual_guard in text:
+    text = text.replace(old_visual_guard, new_visual_guard, 1)
+elif new_visual_guard not in text:
+    raise SystemExit('case1 nested visual-state guard not found')
+
+old_load_flags = "state=s;if(!state.flags)state.flags={};if(!state.flags.actionResults)state.flags.actionResults={};if(typeof state.flags.mistakes!=='number')state.flags.mistakes=0;"
+new_load_flags = "state=s;if(!state.flags||typeof state.flags!=='object'||Array.isArray(state.flags))state.flags={};if(!state.flags.actionResults||typeof state.flags.actionResults!=='object'||Array.isArray(state.flags.actionResults))state.flags.actionResults={};if(!state.flags.visualSeen||typeof state.flags.visualSeen!=='object'||Array.isArray(state.flags.visualSeen))state.flags.visualSeen={};if(typeof state.flags.mistakes!=='number'||!isFinite(state.flags.mistakes))state.flags.mistakes=0;"
+if old_load_flags in text:
+    text = text.replace(old_load_flags, new_load_flags, 1)
+elif new_load_flags not in text:
+    raise SystemExit('case1 nested load-state guard not found')
+
 # Visible build/diagnostic markers make stale Safari/GitHub Pages caches easy
 # to distinguish while keeping repeated deployments idempotent.
 text = text.replace('BUILD 5.1.4・CASE 02', 'BUILD 5.1.6・CASE 02')
