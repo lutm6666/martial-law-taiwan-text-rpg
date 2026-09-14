@@ -48,7 +48,7 @@
 <section id="case2Screen" class="hidden"></section>
 <div id="toast" class="toast"></div>
 </main>
-<script src="v2-rain-engine.js?v=3"></script>
+<script src="v2-rain-engine.js?v=4"></script>
 <script>
 (function(){
  var b=document.getElementById('loadBtn');
@@ -56,6 +56,37 @@
    var n=document.getElementById('nextCaseBtn');
    if(n)n.click();
  }}
+
+ var fallback='assets/v2/rain-ch1-scene.svg?v=1';
+ function repairRainArt(root){
+   var scope=root&&root.querySelectorAll?root:document;
+   var imgs=scope.querySelectorAll('img');
+   for(var i=0;i<imgs.length;i++){
+     var img=imgs[i];
+     var src=img.getAttribute('src')||'';
+     if(src.indexOf('assets/v2/rain-ch1-concept.webp')!==-1){
+       img.onerror=function(){
+         if(this.getAttribute('data-rain-fallback')==='1')return;
+         this.setAttribute('data-rain-fallback','1');
+         this.src=fallback;
+       };
+       if(img.complete&&img.naturalWidth===0){
+         img.setAttribute('data-rain-fallback','1');
+         img.src=fallback;
+       }
+     }
+   }
+ }
+ repairRainArt(document);
+ var observer=new MutationObserver(function(records){
+   for(var i=0;i<records.length;i++){
+     for(var j=0;j<records[i].addedNodes.length;j++){
+       var node=records[i].addedNodes[j];
+       if(node.nodeType===1)repairRainArt(node);
+     }
+   }
+ });
+ observer.observe(document.body,{childList:true,subtree:true});
 })();
 </script>
 </body>
