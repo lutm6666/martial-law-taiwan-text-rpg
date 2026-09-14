@@ -63,8 +63,12 @@
    };
  }
 
- var primary='assets/v2/rain-house-front.jpg?v=1';
- var fallback='assets/v2/rain-ch1-scene.svg?v=1';
+ var engineScript=document.querySelector('script[src*="v2-rain-engine.js"]');
+ var engineSrc=engineScript?engineScript.getAttribute('src')||'':'';
+ var versionMatch=engineSrc.match(/[?&]v=([^&]+)/);
+ var assetVersion=versionMatch?versionMatch[1]:'1';
+ var primary='assets/v2/rain-house-front.jpg?v='+encodeURIComponent(assetVersion);
+ var fallback='assets/v2/rain-ch1-scene.svg?v='+encodeURIComponent(assetVersion);
  function repairRainArt(root){
    var scope=root&&root.querySelectorAll?root:document;
    var imgs=scope.querySelectorAll('img');
