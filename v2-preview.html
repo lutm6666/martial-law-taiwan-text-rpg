@@ -51,11 +51,14 @@
 <script src="v2-rain-engine.js?v=4"></script>
 <script>
 (function(){
- var b=document.getElementById('loadBtn');
- if(b){b.onclick=function(){
-   var n=document.getElementById('nextCaseBtn');
-   if(n)n.click();
- }}
+ var n=document.getElementById('nextCaseBtn');
+ var startHandler=n&&n.onclick;
+ if(n&&startHandler){
+   n.onclick=function(){
+     try{localStorage.removeItem('mist-taiwan-v2-rain-ch1-v2')}catch(e){}
+     startHandler.call(this);
+   };
+ }
 
  var fallback='assets/v2/rain-ch1-scene.svg?v=1';
  function repairRainArt(root){
