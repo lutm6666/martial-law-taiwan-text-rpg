@@ -6,7 +6,7 @@ var OLD_SAVE_KEY='mist-taiwan-v2-rain-ch1';
 var CASE1_KEY='mist-taiwan-case-save-v4';
 var MAX_FOCUS=4;
 var s=null;
-var ART='assets/v2/rain-ch1-concept.webp';
+var ART='assets/v2/rain-ch1-scene.svg';
 
 function $(id){return document.getElementById(id)}
 function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
