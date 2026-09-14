@@ -85,18 +85,34 @@ jobs:
           save_tool.write_text(save, encoding='utf-8')
           PY
 
+      - name: Harden V2 expanded save recovery
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('v2-rain-engine.js')
+          text = path.read_text(encoding='utf-8')
+          if 'function normalize(v){' not in text:
+              old = "function migrateOld(){var old=parse(OLD_SAVE_KEY);if(!old)return null;var n=fresh();var map={low_scratches:'door_marks',rain_channel:'rain_line',torn_talisman:'torn_talisman',small_print:'small_print',son_account:'son_account',neighbor_version:'neighbor_version',timing_gap:'timing_gap'};(old.evidence||[]).forEach(function(id){var m=map[id];if(m&&n.evidence.indexOf(m)<0)n.evidence.push(m)});return n}\nfunction load(){var v=parse(SAVE_KEY);if(!v||v.caseId!=='rain-ch1-v2')v=migrateOld();return v&&v.caseId==='rain-ch1-v2'?v:null}"
+              new = "function migrateOld(){var old=parse(OLD_SAVE_KEY);if(!old)return null;var n=fresh();var map={low_scratches:'door_marks',rain_channel:'rain_line',torn_talisman:'torn_talisman',small_print:'small_print',son_account:'son_account',neighbor_version:'neighbor_version',timing_gap:'timing_gap'};var oldEvidence=Array.isArray(old.evidence)?old.evidence:[];oldEvidence.forEach(function(id){var m=map[id];if(m&&n.evidence.indexOf(m)<0)n.evidence.push(m)});return n}\nfunction normalize(v){if(!v||typeof v!=='object'||v.caseId!=='rain-ch1-v2')return null;var n=fresh(),validEvidence={},validActions={},actionById={};Object.keys(evidence).forEach(function(id){validEvidence[id]=true});Object.keys(locations).forEach(function(locId){locations[locId].actions.forEach(function(a){validActions[a.id]=true;actionById[a.id]=a})});n.name=typeof v.name==='string'&&v.name.trim()?v.name.trim():n.name;var f=Number(v.focus);n.focus=Number.isFinite(f)?Math.max(1,Math.min(MAX_FOCUS,Math.floor(f))):MAX_FOCUS;n.evidence=[];(Array.isArray(v.evidence)?v.evidence:[]).forEach(function(id){if(validEvidence[id]&&n.evidence.indexOf(id)<0)n.evidence.push(id)});function hasN(id){return n.evidence.indexOf(id)!==-1}n.done={};if(v.done&&typeof v.done==='object'){Object.keys(v.done).forEach(function(id){var a=actionById[id];if(!a||!v.done[id])return;if(a.requires&&!a.requires.every(hasN))return;if(a.gain&&!hasN(a.gain))return;n.done[id]=true})}n.visited={house:true};if(v.visited&&typeof v.visited==='object'){Object.keys(v.visited).forEach(function(id){var l=locations[id];if(!l||!v.visited[id])return;if(!l.lockedBy||l.lockedBy.every(hasN))n.visited[id]=true})}n.loc=typeof v.loc==='string'&&locations[v.loc]&&(!locations[v.loc].lockedBy||locations[v.loc].lockedBy.every(hasN))?v.loc:'house';n.visited[n.loc]=true;n.feedback=typeof v.feedback==='string'?v.feedback:'';var step=Number(v.deduction);n.deduction=Number.isFinite(step)?Math.max(0,Math.min(deductions.length,Math.floor(step))):0;n.answers=(Array.isArray(v.answers)?v.answers:[]).filter(function(x){return Number.isInteger(x)&&x>=0&&x<3}).slice(0,n.deduction);var core=['door_marks','rain_line','torn_talisman','talisman_age','client_timeline','son_account','umbrella_mud','small_print','nail_mark','son_excluded','neighbor_version','source_elder','bell_time','route_window','timing_gap'].every(hasN);n.finished=core&&n.deduction>=deductions.length;if(n.finished){n.phase='done';n.deduction=deductions.length}else if(v.phase==='deduction'&&core){n.phase='deduction'}else{n.phase='investigate';if(!core)n.deduction=0}return n}\nfunction load(){var v=parse(SAVE_KEY);if(!v||v.caseId!=='rain-ch1-v2')v=migrateOld();return normalize(v)}"
+              if old not in text:
+                  raise SystemExit('V2 save normalization hook not found')
+              text = text.replace(old, new, 1)
+              path.write_text(text, encoding='utf-8')
+          PY
+
       - name: Harden Case 1 save route recovery
         run: python3 tools/apply-save-route-fix.py
 
       - name: Persist runtime fix to main
         run: |
-          if git diff --quiet -- index.html case2-engine-core.js tools/apply-case2.py tools/apply-save-route-fix.py; then
+          if git diff --quiet -- index.html case2-engine-core.js tools/apply-case2.py tools/apply-save-route-fix.py v2-rain-engine.js; then
             echo "Runtime fix already persisted."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add index.html case2-engine-core.js tools/apply-case2.py tools/apply-save-route-fix.py
-            git commit -m "Persist Case 1 save-route recovery [skip ci]"
+            git add index.html case2-engine-core.js tools/apply-case2.py tools/apply-save-route-fix.py v2-rain-engine.js
+            git commit -m "Persist runtime recovery fixes [skip ci]"
             git push origin HEAD:main
           fi
 
