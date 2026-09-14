@@ -124,6 +124,11 @@ jobs:
           wrapper = re.sub(r'(case2-engine-core\.js)\?v=[^"\']+', rf'\1?v={stamp}', wrapper)
           wrapper_path.write_text(wrapper, encoding='utf-8')
 
+          preview_path = Path('v2-preview.html')
+          preview = preview_path.read_text(encoding='utf-8')
+          preview = re.sub(r'(v2-rain-engine\.js)\?v=[^"\']+', rf'\1?v={stamp}', preview)
+          preview_path.write_text(preview, encoding='utf-8')
+
           print(f'CACHE_STAMP {stamp}')
           PY
 
@@ -132,6 +137,7 @@ jobs:
           node --check case2-engine.js
           node --check case2-engine-core.js
           node --check image-lightbox.js
+          node --check v2-rain-engine.js
           node tools/verify-javascript.js
 
       - name: Install image verifier
