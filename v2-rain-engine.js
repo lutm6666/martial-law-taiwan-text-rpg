@@ -9,7 +9,7 @@ var s=null;
 var ART='assets/v2/rain-ch1-concept.webp';
 
 function $(id){return document.getElementById(id)}
-function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]})}
+function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function parse(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(e){return null}}
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(s))}catch(e){}}
 function profile(){var p=parse(CASE1_KEY)||{};return{name:typeof p.name==='string'&&p.name.trim()?p.name.trim():'林默'}}
