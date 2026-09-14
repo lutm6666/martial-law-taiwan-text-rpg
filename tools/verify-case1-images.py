@@ -36,30 +36,21 @@ for name in CASE1_EXPECTED:
         label=f'case1/{name}',
     )
 
-# V2 currently renders this WebP as the primary Rain Knocking scene on GitHub Pages.
-# Keep it inside the production gate so a corrupt scene asset cannot deploy successfully.
-verify_raster(
-    ROOT / 'assets' / 'v2' / 'rain-ch1-concept.webp',
-    expected_format='WEBP',
-    min_size=(320, 200),
-    label='v2/rain-ch1-concept',
-)
-
-# Safari falls back to this SVG if the raster scene cannot load. Parse it during deployment
-# so malformed/truncated XML cannot silently ship as the only remaining scene asset.
-fallback = ROOT / 'assets' / 'v2' / 'rain-ch1-scene.svg'
-if not fallback.exists():
-    raise SystemExit(f'Missing fallback image: {fallback}')
-if fallback.stat().st_size < 256:
-    raise SystemExit(f'Fallback SVG suspiciously small: {fallback} ({fallback.stat().st_size} bytes)')
+# V2 currently uses this SVG as the Rain Knocking scene. Parse the production asset so
+# malformed/truncated XML cannot be published as a successful deployment.
+v2_scene = ROOT / 'assets' / 'v2' / 'rain-ch1-scene.svg'
+if not v2_scene.exists():
+    raise SystemExit(f'Missing V2 scene image: {v2_scene}')
+if v2_scene.stat().st_size < 256:
+    raise SystemExit(f'V2 scene SVG suspiciously small: {v2_scene} ({v2_scene.stat().st_size} bytes)')
 try:
-    root = ET.parse(fallback).getroot()
+    root = ET.parse(v2_scene).getroot()
 except Exception as exc:
-    raise SystemExit(f'Fallback SVG parse failed: {fallback}: {exc}')
+    raise SystemExit(f'V2 scene SVG parse failed: {v2_scene}: {exc}')
 if root.tag.split('}')[-1].lower() != 'svg':
-    raise SystemExit(f'Fallback image is not an SVG root: {fallback} ({root.tag})')
+    raise SystemExit(f'V2 scene image is not an SVG root: {v2_scene} ({root.tag})')
 if not (root.get('viewBox') or (root.get('width') and root.get('height'))):
-    raise SystemExit(f'Fallback SVG has no usable dimensions/viewBox: {fallback}')
-print(f'IMAGE_OK v2/rain-ch1-scene fallback: {fallback.stat().st_size} bytes')
+    raise SystemExit(f'V2 scene SVG has no usable dimensions/viewBox: {v2_scene}')
+print(f'IMAGE_OK v2/rain-ch1-scene: {v2_scene.stat().st_size} bytes')
 
 print('All production scene images decoded or parsed successfully.')
