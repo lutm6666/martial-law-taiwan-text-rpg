@@ -98,7 +98,20 @@ jobs:
               if old not in text:
                   raise SystemExit('V2 save normalization hook not found')
               text = text.replace(old, new, 1)
-              path.write_text(text, encoding='utf-8')
+
+          continuity_fixes = {
+              "從雜貨店到林宅後巷最快仍需約四分鐘；第一夜的已知可疑人物沒有足夠時間完成往返。": "從雜貨店到林宅後巷最快仍需約四分鐘；若第一夜有人從街口出發並完成後巷往返，時間會非常吃緊。",
+              "人為路線可以解釋部分敲門，但第一夜目前無法由同一名已知行動者完成。": "人為路線可以解釋部分敲門，但第一夜的外部時間點仍和完整往返所需時間對不上。",
+              "如果把第一夜最可疑的人放在街口，他從鐘聲後離開、繞到後巷、製造敲門再回到原處，時間不夠。人為手法存在，但「同一個人解釋全部三夜」這個說法站不住。": "把第一夜的鐘聲時間和實際步行路線疊在一起後，若有人要從街口出發、繞到後巷製造敲門再返回，時間明顯不足。這表示第一夜不能直接套用目前觀察到的同一套往返路線。",
+              "銅鈴時間與步行時間把第一夜卡住了：同一名已知行動者無法同時出現在兩處。": "銅鈴時間與步行時間把第一夜卡住了：目前已知的街口—後巷往返方式無法在這段時間內完成。"
+          }
+          for old_text, new_text in continuity_fixes.items():
+              if old_text in text:
+                  text = text.replace(old_text, new_text, 1)
+              elif new_text not in text:
+                  raise SystemExit('V2 continuity wording hook not found: ' + old_text)
+
+          path.write_text(text, encoding='utf-8')
           PY
 
       - name: Harden Case 1 save route recovery
