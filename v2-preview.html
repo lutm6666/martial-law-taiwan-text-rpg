@@ -55,7 +55,10 @@
  var startHandler=n&&n.onclick;
  if(n&&startHandler){
    n.onclick=function(){
-     try{localStorage.removeItem('mist-taiwan-v2-rain-ch1-v2')}catch(e){}
+     try{
+       localStorage.removeItem('mist-taiwan-v2-rain-ch1-v2');
+       localStorage.removeItem('mist-taiwan-v2-rain-ch1');
+     }catch(e){}
      startHandler.call(this);
    };
  }
