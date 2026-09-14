@@ -1,100 +1,117 @@
 (function(){
 'use strict';
 
-var SAVE_KEY='mist-taiwan-v2-rain-ch1';
+var SAVE_KEY='mist-taiwan-v2-rain-ch1-v2';
+var OLD_SAVE_KEY='mist-taiwan-v2-rain-ch1';
 var CASE1_KEY='mist-taiwan-case-save-v4';
 var MAX_FOCUS=4;
 var s=null;
+var ART='assets/v2/rain-ch1-concept.webp';
 
 function $(id){return document.getElementById(id)}
-function esc(t){return String(t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function parse(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(e){return null}}
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(s))}catch(e){}}
-function case1Profile(){var p=parse(CASE1_KEY)||{};return{name:typeof p.name==='string'&&p.name.trim()?p.name.trim():'林默',role:p.role||'student'}}
-function notify(msg){var t=$('toast');if(!t)return;t.textContent=msg;t.className='toast show';clearTimeout(window.__v2toast);window.__v2toast=setTimeout(function(){t.className='toast'},1700)}
+function profile(){var p=parse(CASE1_KEY)||{};return{name:typeof p.name==='string'&&p.name.trim()?p.name.trim():'林默'}}
+function has(id){return s.evidence.indexOf(id)!==-1}
+function notify(msg){var t=$('toast');if(!t)return;t.textContent=msg;t.className='toast show';clearTimeout(window.__v2toast);window.__v2toast=setTimeout(function(){t.className='toast'},1800)}
+function addEvidence(id){if(evidence[id]&&!has(id)){s.evidence.push(id);notify('新增紀錄：'+evidence[id].name)}}
+function requirementsMet(a){return !a.requires||a.requires.every(has)}
+function unlocked(id){var l=locations[id];return !!l&&(!l.lockedBy||l.lockedBy.every(has))}
 
 var evidence={
- low_scratches:{name:'門框低位刮痕',type:'物證',desc:'幾道新刮痕集中在門框下緣，位置低於一般成年人手部高度。'},
- rain_channel:{name:'屋簷落水線',type:'現場紀錄',desc:'雨水會沿屋簷固定落在門前右側；昨夜泥痕有一段不在自然落水區內。'},
- torn_talisman:{name:'被撕動的鎮宅符',type:'家學觀察',desc:'符紙不是自行脫落，而是自下緣被拉扯；符式屬鎮宅用途，但不能因此證明存在鬼祟。'},
- small_print:{name:'窄底鞋印',type:'物證',desc:'巷口泥面留有一組較窄鞋印，步幅偏短，從後巷方向接近委託人住宅。'},
- son_account:{name:'阿信的說法',type:'證詞',desc:'阿信承認第三次敲門後曾開門，只看到巷尾像有人影轉過去；他沒有看清臉。'},
- neighbor_version:{name:'鄰居的怪談版本',type:'證詞',desc:'鄰居說「三更三叩不可應門」，但承認這個說法是最近兩週才在附近傳開。'},
- timing_gap:{name:'時間缺口',type:'推理紀錄',desc:'有人確實能從後巷接近門口，但第一晚的敲門發生時，已知可疑人物仍在另一處被多人看見。'}
+ door_marks:{name:'門框低位刮痕',type:'物證',desc:'新刮痕集中在門框下緣，位置低於成人自然敲門高度。'},
+ rain_line:{name:'屋簷落水線',type:'現場紀錄',desc:'自然雨水會向門前右側匯流，但昨夜有一段泥痕逆著落水方向。'},
+ torn_talisman:{name:'被撕動的鎮宅符',type:'家學觀察',desc:'紙纖維由下往上拉裂，較像外力撕動，而不是受潮自行脫落。'},
+ talisman_age:{name:'黃符張貼時間',type:'證詞核對',desc:'林太太說黃符兩個月前就已貼上；新裂口卻明顯較近期。'},
+ client_timeline:{name:'林太太的三夜時間表',type:'證詞',desc:'敲門分別出現在三個雨夜；第三夜阿信開門，第一夜則比其他兩次早了近半小時。'},
+ son_account:{name:'阿信的說法',type:'證詞',desc:'阿信第三夜開門後只看到巷尾有人影轉過去，沒有看清臉。'},
+ umbrella_mud:{name:'黑傘上的灰白泥點',type:'物證',desc:'阿信黑傘下緣沾的是偏灰白細泥，與林宅後巷的深褐泥不同。'},
+ small_print:{name:'後巷窄底鞋印',type:'物證',desc:'一組窄底鞋印由巷尾靠近林宅再折返，步幅偏短。'},
+ nail_mark:{name:'鞋跟缺釘痕',type:'物證',desc:'其中一隻鞋跟留下不完整方形凹痕，像鞋跟少了一枚釘。'},
+ son_excluded:{name:'阿信鞋泥不符',type:'交叉比對',desc:'阿信的鞋與雨傘泥色都和後巷鞋印不同，現階段不能把他當成後巷那名行動者。'},
+ neighbor_version:{name:'陳太太的怪談版本',type:'證詞',desc:'「三更三叩不可應門」這個完整說法，其實是最近兩週才在附近傳開。'},
+ source_elder:{name:'傳聞來源：送香燭老人',type:'人物線索',desc:'陳太太承認，最早把完整說法帶進巷子的是一名替附近廟宇送香燭的老人。'},
+ bell_time:{name:'雜貨店打烊鐘聲',type:'時間證詞',desc:'第一夜敲門前後，街口雜貨店剛敲過打烊鐘；多人可互相作證。'},
+ route_window:{name:'後巷往返時間',type:'現場紀錄',desc:'從雜貨店到林宅後巷最快仍需約四分鐘；第一夜的已知可疑人物沒有足夠時間完成往返。'},
+ timing_gap:{name:'第一夜時間缺口',type:'推理紀錄',desc:'人為路線可以解釋部分敲門，但第一夜目前無法由同一名已知行動者完成。'}
 };
 
 var locations={
- house:{name:'林宅門前',sub:'委託人住宅',intro:'雨剛停。木門下緣發黑，屋簷仍一滴一滴落水。門框右側貼著一張舊黃符，底角被撕開。',actions:[
-  {id:'door',name:'檢查門板與門框',desc:'確認敲門與刮痕是否留下實體痕跡。',gain:'low_scratches',text:'你蹲下來看。新的刮痕集中在門框下緣，沒有形成規律敲擊痕。有人或某件東西曾在很低的位置碰撞門框。'},
-  {id:'eaves',name:'查看屋簷與積水',desc:'比對雨水與昨夜泥痕。',gain:'rain_channel',text:'屋簷右側的落水很集中。自然形成的濕痕應向外散開，但門前有一小段泥印逆著水流方向。'},
-  {id:'talisman',name:'用家學檢查黃符',desc:'辨識符式與破損方式。',gain:'torn_talisman',text:'你沒有先談鬼神，只看紙纖維。裂口朝上，像是有人從下方拉過。符式本身是常見的鎮宅用法，並沒有任何東西能單憑這張紙證明「門外有鬼」。'}]},
- alley:{name:'後巷',sub:'住宅後方',intro:'巷子比正門窄得多。牆腳積著泥，幾戶人家的後門幾乎貼在一起。',lockedBy:['low_scratches','rain_channel'],actions:[
-  {id:'prints',name:'沿泥痕找腳印',desc:'確認是否有人從後巷接近。',gain:'small_print',text:'在排水溝旁，你找到一組較窄的鞋印。步幅不大，方向從後巷往林宅，再折回巷尾。'},
-  {id:'route',name:'重走可疑路線',desc:'估算從巷口到門前所需時間。',text:'從巷尾繞到林宅門前只要不到兩分鐘。若有人刻意裝神弄鬼，這條路線很方便。'}]},
- room:{name:'阿信房間',sub:'林宅內側',intro:'房間不大，桌上放著課本和一把還沒乾的黑傘。阿信不太願意談那晚。',lockedBy:['torn_talisman'],actions:[
-  {id:'askson',name:'詢問阿信開門那晚',desc:'追問第三次敲門後發生了什麼。',gain:'son_account',text:'阿信最後承認，他確實在第三次敲門後開了門。門外沒有人站著，但巷尾像有一道身影轉了過去。他沒有看清是誰。'},
-  {id:'umbrella',name:'檢查黑傘',desc:'確認阿信昨晚是否外出。',text:'傘面仍濕，但泥點只在外側。這只能證明昨晚有人用過它，不能直接說明敲門者是誰。'}]},
- neighbor:{name:'隔壁騎樓',sub:'鄰居住處',intro:'隔壁陳太太一看到你就壓低聲音，說這條巷子以前就「不乾淨」。',lockedBy:['son_account'],actions:[
-  {id:'legend',name:'追問「三次敲門」傳聞',desc:'確認傳聞流傳多久、從哪裡開始。',gain:'neighbor_version',text:'她說「三更三叩不可應門」是老人家的規矩，但追問之後承認：至少這個版本，是最近兩週才有人開始在附近講。'},
-  {id:'firstnight',name:'核對第一次敲門時間',desc:'找出第一晚是否有人能作證。',gain:'timing_gap',requires:['small_print','neighbor_version'],text:'你把幾個人的時間重新排過。後巷確實有人走動，但第一晚敲門發生時，最可疑的那個人仍在街口雜貨店，被三個人同時看見。人為路線存在，卻無法解釋所有敲門。'}]}
+ house:{name:'林宅門前',sub:'第一現場',intro:'雨剛停。舊木門被水氣浸得發黑，門框右側貼著一張褪色黃符。林太太說，第三次敲門後，她已不敢再讓兒子靠近這扇門。',actions:[
+  {id:'door',name:'檢查門板與門框',desc:'先找實體接觸痕跡，而不是先猜敲門者。',gain:'door_marks',text:'門板正中央沒有新痕，反而是下緣靠右的位置有幾道新刮痕。若真有人用手敲門，這個高度顯得異常；但也可能是器物、繩索或低矮物件碰撞。'},
+  {id:'rain',name:'沿屋簷查看積水',desc:'比對雨水自然流向與泥痕。',gain:'rain_line',text:'屋簷右側漏水最重，正常泥水應往巷心散開；門邊卻有一道短泥痕逆向靠近門框，像有東西在雨停前被拖過。'},
+  {id:'talisman',name:'用家學檢查黃符',desc:'看紙、墨與破損，不把符本身當成鬼神證明。',gain:'torn_talisman',text:'符式屬常見鎮宅用途，真正值得注意的是裂口：紙纖維朝上翻，受力方向由下往上。這不像受潮脫落，而像有人從下方拉過。'},
+  {id:'age',name:'追問黃符何時貼上',desc:'確認破損是否和敲門事件同時發生。',gain:'talisman_age',requires:['torn_talisman'],text:'林太太說，這張符兩個月前就貼好了，之前一直完整。她是在第二次敲門隔天才發現底角翹起。符本身很舊，裂口卻很新。'}]},
+ parlor:{name:'林宅客廳',sub:'委託人陳述',intro:'煤油燈照著桌面。林太太把三個雨夜一再重述，但每次說到第一夜，她都會停一下，像是在確認自己是否記錯。',lockedBy:['door_marks'],actions:[
+  {id:'timeline',name:'逐夜重建敲門時間',desc:'把三次事件拆開，不把它們當成同一件事。',gain:'client_timeline',text:'第一夜約十一點四十分；第二夜接近午夜；第三夜則在午夜後不久。林太太原本一直說「都是半夜」，但寫成時間表後，第一夜其實早了不少。'},
+  {id:'sound',name:'追問敲門聲的差異',desc:'確認三次聲音是否真的完全一樣。',text:'她想了很久才承認：第二、三夜是清楚的三下木響；第一夜比較悶，像隔著門板或牆傳來。這個差異之前被她自己忽略了。'},
+  {id:'fear',name:'詢問為何找上私家偵探',desc:'了解委託人的判斷與顧慮。',text:'她先問過鄰居，也去廟裡求過平安。真正讓她害怕的不是傳聞，而是第三夜阿信真的開了門。她想知道究竟有人盯上這個家，還是自己漏看了什麼。'}]},
+ room:{name:'阿信房間',sub:'家屬證詞',intro:'課本壓著一張作業紙，床邊靠著還沒全乾的黑傘。阿信不太願意讓母親聽見自己說了什麼。',lockedBy:['client_timeline'],actions:[
+  {id:'son',name:'單獨詢問阿信',desc:'讓他按自己的順序描述第三夜。',gain:'son_account',text:'阿信說，第三下之後他立刻開門。門前沒人，但巷尾似乎有一道影子轉過牆角。他追到門外兩步就被母親拉回。他沒看清臉，也不能確定那是不是人。'},
+  {id:'umbrella',name:'檢查黑傘與鞋底',desc:'確認阿信昨夜是否走過後巷。',gain:'umbrella_mud',text:'黑傘下緣和鞋側沾著灰白細泥，像大路邊較乾的土。林宅後巷則是深褐黏泥。阿信昨夜確實外出過，但這組泥色還不能把他連到後巷。'},
+  {id:'pressure',name:'追問他為何開門',desc:'確認是否有人事先誘導他。',text:'阿信說，他前兩天就聽同學講過「第三次不能開門」，反而更想知道是誰在惡作劇。這表示怪談已經離開巷子，傳到孩子之間。'}]},
+ alley:{name:'林宅後巷',sub:'可能的接近路線',intro:'後巷比正門窄得多。牆腳積著深褐色黏泥，幾戶後門彼此很近；如果有人想靠近林宅又不被正街看見，這裡確實方便。',lockedBy:['door_marks','rain_line'],actions:[
+  {id:'prints',name:'沿泥面找鞋印',desc:'確認是否有人從後巷靠近林宅。',gain:'small_print',text:'排水溝旁有一組較窄鞋印，從巷尾進來，在林宅後方停過，再折回去。它不是昨夜所有行人的唯一鞋印，但保存得最完整。'},
+  {id:'nail',name:'細看鞋跟壓痕',desc:'找能區分鞋子的細節。',gain:'nail_mark',requires:['small_print'],text:'其中一腳鞋跟有個小缺口：方形釘痕少了一角。這比鞋印大小更有辨識力，日後若找到鞋，可以直接比對。'},
+  {id:'route',name:'實際重走巷口路線',desc:'估算從街口到林宅需要多久。',gain:'route_window',requires:['client_timeline'],text:'你從街口雜貨店走到後巷，再到林宅門前，快走仍要約四分鐘；若還要折返，時間更長。這條路可用來裝神弄鬼，但不是瞬間能完成。'},
+  {id:'compare',name:'比對阿信鞋泥與後巷',desc:'避免因為「他開過門」就直接懷疑他。',gain:'son_excluded',requires:['umbrella_mud','small_print'],text:'後巷泥土深褐、顆粒粗；阿信鞋側與傘上的泥偏灰白，質地也細。兩者不符。至少目前，沒有證據支持阿信就是後巷那名行動者。'}]},
+ neighbor:{name:'陳太太騎樓',sub:'街坊傳聞',intro:'陳太太一開始堅稱這條巷子「以前就不乾淨」。但當你要求她分清楚「以前聽過什麼」和「最近才有人怎麼說」時，她的版本開始鬆動。',lockedBy:['son_account'],actions:[
+  {id:'legend',name:'拆開怪談的每一句話',desc:'確認哪些是舊禁忌，哪些是新說法。',gain:'neighbor_version',text:'她承認，小時候只聽過夜裡不要隨便應門；「三更三叩不可應門」這句完整說法，是最近兩週才有人講得這麼具體。'},
+  {id:'source',name:'追問最早是誰這樣說',desc:'找到傳聞的可追查來源。',gain:'source_elder',requires:['neighbor_version'],text:'她最後想起，是一名替附近廟宇送香燭的老人先說的。老人沒住這條巷子，只在下雨天來過幾次。'},
+  {id:'bell',name:'核對第一夜的街口時間',desc:'找外部事件固定時間點。',gain:'bell_time',requires:['client_timeline'],text:'第一夜她正好在街口買醬油。雜貨店打烊前敲過一次銅鈴，店主和兩名客人都在。她說林宅的第一聲敲門大約就在那之後不久。'},
+  {id:'gap',name:'把鐘聲與路線時間疊在一起',desc:'檢查同一人是否能完成第一夜行動。',gain:'timing_gap',requires:['bell_time','route_window','source_elder'],text:'如果把第一夜最可疑的人放在街口，他從鐘聲後離開、繞到後巷、製造敲門再回到原處，時間不夠。人為手法存在，但「同一個人解釋全部三夜」這個說法站不住。'}]}
 };
 
-function fresh(){var p=case1Profile();return{caseId:'rain-ch1',name:p.name,focus:MAX_FOCUS,loc:'house',visited:{house:true},done:{},evidence:[],feedback:'',phase:'investigate',deduction:0,answers:[],finished:false}}
-function normalize(v){
- if(!v||typeof v!=='object'||v.caseId!=='rain-ch1')return null;
- var p=case1Profile(),validEvidence=[],seen={};
- if(Array.isArray(v.evidence))v.evidence.forEach(function(id){if(evidence[id]&&!seen[id]){seen[id]=true;validEvidence.push(id)}});
- var validActions={};Object.keys(locations).forEach(function(locId){locations[locId].actions.forEach(function(a){validActions[a.id]=a})});
- var done={};if(v.done&&typeof v.done==='object'&&!Array.isArray(v.done))Object.keys(v.done).forEach(function(id){var a=validActions[id];if(a&&v.done[id]===true&&(!a.gain||seen[a.gain]))done[id]=true});
- var canVisit=function(id){var l=locations[id];return !!l&&(!l.lockedBy||l.lockedBy.every(function(req){return !!seen[req]}))};
- var loc=typeof v.loc==='string'&&canVisit(v.loc)?v.loc:'house';
- var visited={house:true};if(v.visited&&typeof v.visited==='object'&&!Array.isArray(v.visited))Object.keys(locations).forEach(function(id){if(v.visited[id]&&canVisit(id))visited[id]=true});visited[loc]=true;
- var focus=Number(v.focus);focus=Number.isFinite(focus)?Math.floor(focus):MAX_FOCUS;focus=Math.max(1,Math.min(MAX_FOCUS,focus));
- var deduction=Number(v.deduction);deduction=Number.isFinite(deduction)?Math.floor(deduction):0;deduction=Math.max(0,Math.min(deductions.length,deduction));
- var core=['low_scratches','rain_channel','torn_talisman','small_print','son_account','neighbor_version','timing_gap'].every(function(id){return !!seen[id]});
- var finished=v.finished===true&&core&&deduction>=deductions.length;
- var phase=!finished&&core&&v.phase==='deduction'?'deduction':'investigate';
- return{caseId:'rain-ch1',name:typeof v.name==='string'&&v.name.trim()?v.name.trim():p.name,focus:focus,loc:loc,visited:visited,done:done,evidence:validEvidence,feedback:typeof v.feedback==='string'?v.feedback:'',phase:phase,deduction:finished?deductions.length:(phase==='deduction'?Math.min(deduction,deductions.length-1):0),answers:Array.isArray(v.answers)?v.answers.slice(0,deductions.length):[],finished:finished};
-}
-function load(){return normalize(parse(SAVE_KEY))}
-function has(id){return s.evidence.indexOf(id)!==-1}
-function gain(id){if(id&&evidence[id]&&!has(id)){s.evidence.push(id);notify('新增紀錄：'+evidence[id].name)}}
-function unlocked(id){var l=locations[id];if(!l.lockedBy)return true;return l.lockedBy.every(has)}
-function requirementsMet(a){return !a.requires||a.requires.every(has)}
+var deductions=[
+ {q:'目前最能確定的是什麼？',opts:[
+  {t:'三次敲門都已證實是鬼神現象',ok:false,fb:'你有家學線索，但家學只能解讀符式與習俗，不能把未知直接當成鬼。'},
+  {t:'至少有一部分現場曾被人為接近或操作',ok:true,fb:'門框、逆向泥痕、被拉扯的黃符與後巷鞋印，彼此支持「有人介入」。'},
+  {t:'阿信在自導自演',ok:false,fb:'阿信的泥色與後巷不符，現階段沒有足夠證據把他指認為行動者。'}]},
+ {q:'後巷鞋印和阿信的證詞，能推出什麼？',opts:[
+  {t:'看到人影就代表那一定是留下鞋印的人',ok:false,fb:'阿信只看到模糊身影，鞋印只能證明有人走過，兩者還不能直接鎖成同一人。'},
+  {t:'阿信很可疑，所以泥色差異可以忽略',ok:false,fb:'物證不應因懷疑對象而被忽略。泥色不符正是需要保留的反證。'},
+  {t:'第三夜可能有人從後巷撤離，但身份仍未確定',ok:true,fb:'這個結論同時尊重鞋印與目擊證詞，也沒有超出它們能證明的範圍。'}]},
+ {q:'為什麼第一夜仍然是一個缺口？',opts:[
+  {t:'因為第一夜沒有下雨',ok:false,fb:'第一夜同樣是雨夜。真正的問題是外部時間點和往返路線對不上。'},
+  {t:'已知人為路線需要的時間，和第一夜的外部證詞衝突',ok:true,fb:'銅鈴時間與步行時間把第一夜卡住了：同一名已知行動者無法同時出現在兩處。'},
+  {t:'因為黃符證明有另一個靈體',ok:false,fb:'黃符只證明被人拉扯過，不能直接證明存在另一個靈體。'}]},
+ {q:'第一章結束時，最合理的下一步是？',opts:[
+  {t:'立即對林宅作法驅邪，案件就能結束',ok:false,fb:'你還不知道誰在散播具體怪談，也沒解開第一夜。現在結案太早。'},
+  {t:'追查送香燭老人與附近廟宇，確認怪談來源及其來巷子的理由',ok:true,fb:'這條線索同時連到傳聞、人員流動與家學背景，是下一章最具資訊價值的方向。'},
+  {t:'公開說阿信在說謊',ok:false,fb:'現有證據反而替阿信排除了部分嫌疑，公開指控沒有依據。'}]}
+];
+
+function fresh(){return{caseId:'rain-ch1-v2',name:profile().name,focus:MAX_FOCUS,loc:'house',visited:{house:true},done:{},evidence:[],feedback:'',phase:'investigate',deduction:0,answers:[],finished:false}}
+function migrateOld(){var old=parse(OLD_SAVE_KEY);if(!old)return null;var n=fresh();var map={low_scratches:'door_marks',rain_channel:'rain_line',torn_talisman:'torn_talisman',small_print:'small_print',son_account:'son_account',neighbor_version:'neighbor_version',timing_gap:'timing_gap'};(old.evidence||[]).forEach(function(id){var m=map[id];if(m&&n.evidence.indexOf(m)<0)n.evidence.push(m)});return n}
+function load(){var v=parse(SAVE_KEY);if(!v||v.caseId!=='rain-ch1-v2')v=migrateOld();return v&&v.caseId==='rain-ch1-v2'?v:null}
+function allCore(){return ['door_marks','rain_line','torn_talisman','talisman_age','client_timeline','son_account','umbrella_mud','small_print','nail_mark','son_excluded','neighbor_version','source_elder','bell_time','route_window','timing_gap'].every(has)}
 
 function injectStyle(){if($('v2RainStyle'))return;var st=document.createElement('style');st.id='v2RainStyle';st.textContent='\
-#v2Rain{padding-bottom:86px}.v2-head{padding:14px 15px;margin-bottom:12px}.v2-head h2{margin:0 0 5px;font-size:1rem}.v2-meta{font-size:.72rem;color:#9b988b}.v2-dots{display:flex;gap:5px;margin-top:8px}.v2-dots i{width:10px;height:10px;border-radius:50%;background:#44473e}.v2-dots i.on{background:#c7b16f}.v2-grid{display:grid;gap:9px}.v2-scene{padding:17px}.v2-scene h2{margin:4px 0 10px}.v2-scene p{line-height:1.72}.v2-actions{display:grid;gap:9px;margin-top:12px}.v2-btn{border:1px solid #3d4036;background:#1b1d18;color:#ece8dc;border-radius:13px;padding:12px;text-align:left}.v2-btn strong{display:block}.v2-btn small{display:block;color:#969386;margin-top:4px;line-height:1.45}.v2-btn.done{opacity:.58}.v2-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.v2-map button{border:1px solid #3a3d33;background:#191b17;color:#ded9cb;border-radius:12px;padding:11px;text-align:left}.v2-map button.locked{display:none}.v2-map button.current{border-color:#9b8754;background:#292719}.v2-note{margin-top:12px;padding:11px 12px;border-left:3px solid #8d7853;background:#211e18;line-height:1.62;color:#c8c1b1}.v2-records{margin-top:12px}.v2-rec{padding:11px;border:1px solid #35382f;border-radius:11px;background:#171914;margin-top:8px}.v2-rec strong{display:block}.v2-rec small{display:block;margin-top:4px;color:#9c998d;line-height:1.5}.v2-deduction{padding:17px}.v2-deduction h2{margin:4px 0 10px}.v2-option{display:block;width:100%;margin-top:9px;border:1px solid #41443a;background:#1b1e18;color:#eee9dc;border-radius:12px;padding:12px;text-align:left;line-height:1.55}.v2-chapter-end{padding:19px}.v2-chapter-end h2{margin:5px 0 10px}.v2-chapter-end p{line-height:1.75}@media(min-width:640px){.v2-actions{grid-template-columns:1fr 1fr}.v2-map{grid-template-columns:repeat(4,1fr)}}';document.head.appendChild(st)}
-
+#v2Rain{padding-bottom:86px}.v2-head{padding:14px 15px;margin-bottom:12px}.v2-head h2{margin:0 0 5px;font-size:1rem}.v2-meta{font-size:.72rem;color:#9b988b;line-height:1.5}.v2-dots{display:flex;gap:5px;margin-top:8px}.v2-dots i{width:10px;height:10px;border-radius:50%;background:#44473e}.v2-dots i.on{background:#c7b16f}.v2-scene{padding:0;overflow:hidden}.v2-art{width:100%;display:block;aspect-ratio:3/2;object-fit:cover;filter:saturate(.78) contrast(1.05)}.v2-scene-body{padding:17px}.v2-scene h2{margin:4px 0 10px}.v2-scene p{line-height:1.78}.v2-actions{display:grid;gap:9px;margin-top:12px}.v2-btn{border:1px solid #3d4036;background:#1b1d18;color:#ece8dc;border-radius:13px;padding:12px;text-align:left}.v2-btn strong{display:block}.v2-btn small{display:block;color:#969386;margin-top:4px;line-height:1.48}.v2-btn.done{opacity:.56}.v2-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.v2-map button{border:1px solid #3a3d33;background:#191b17;color:#ded9cb;border-radius:12px;padding:11px;text-align:left}.v2-map button.locked{display:none}.v2-map button.current{border-color:#9b8754;background:#292719}.v2-note{margin-top:12px;padding:11px 12px;border-left:3px solid #8d7853;background:#211e18;line-height:1.68;color:#c8c1b1}.v2-records{margin-top:12px}.v2-rec{padding:11px;border:1px solid #35382f;border-radius:11px;background:#171914;margin-top:8px}.v2-rec strong{display:block}.v2-rec small{display:block;margin-top:4px;color:#9c998d;line-height:1.55}.v2-deduction,.v2-chapter-end{padding:18px}.v2-option{display:block;width:100%;margin-top:9px;border:1px solid #41443a;background:#1b1e18;color:#eee9dc;border-radius:12px;padding:12px;text-align:left;line-height:1.58}.v2-chapter-end p{line-height:1.78}@media(min-width:640px){.v2-actions{grid-template-columns:1fr 1fr}.v2-map{grid-template-columns:repeat(5,1fr)}}';document.head.appendChild(st)}
 function mount(){if($('v2Rain'))return;injectStyle();var root=document.createElement('section');root.id='v2Rain';root.className='hidden';root.innerHTML='<div id="v2RainMain"></div>';document.querySelector('main.app').appendChild(root)}
 function hideBase(){['startScreen','prologueScreen','gameScreen','completeScreen','failScreen','case2Screen'].forEach(function(id){var el=$(id);if(el)el.classList.add('hidden')})}
-function showRoot(){mount();hideBase();$('v2Rain').classList.remove('hidden');$('caseChip').textContent='CASE 02・雨夜敲門';var build=document.querySelector('.build');if(build)build.textContent='V2 PREVIEW・CHAPTER 01'}
-function renderFocus(){var out='';for(var i=0;i<MAX_FOCUS;i++)out+='<i class="'+(i<s.focus?'on':'')+'"></i>';return out}
-function allCore(){return ['low_scratches','rain_channel','torn_talisman','small_print','son_account','neighbor_version','timing_gap'].every(has)}
+function showRoot(){mount();hideBase();$('v2Rain').classList.remove('hidden');$('caseChip').textContent='CASE 02・雨夜敲門';var build=document.querySelector('.build');if(build)build.textContent='V2・CHAPTER 01 EXPANDED'}
+function focusDots(){var out='';for(var i=0;i<MAX_FOCUS;i++)out+='<i class="'+(i<s.focus?'on':'')+'"></i>';return out}
 
-function render(){showRoot();var box=$('v2RainMain');if(s.finished){box.innerHTML='<article class="v2-chapter-end card paper"><p class="eyebrow" style="color:#715c34">CHAPTER 01 COMPLETE</p><h2>門外不只有一種答案</h2><p>你已確認：有人確實能利用後巷與新近流傳的怪談製造敲門；但第一晚的時間線仍留下缺口。現有證據不足以把所有異常都歸給同一個人，也不足以宣告真的有鬼。</p><p>陳太太最後提到，最早說起「第三次不要開門」的人，並不是這條巷子的住戶，而是一名替附近廟宇送香燭的老人。</p><p class="note">下一章將開放新的地點與人物。這個預覽版先停在第一章結尾。</p><button id="v2Home" class="primary" type="button">回到標題</button></article>';$('v2Home').onclick=function(){location.reload()};return}
+function render(){showRoot();var box=$('v2RainMain');if(s.finished){box.innerHTML='<article class="v2-chapter-end card paper"><p class="eyebrow" style="color:#715c34">CHAPTER 01 COMPLETE</p><h2>有人在利用怪談，但怪談沒有解釋完一切</h2><p>你已能確認，林宅周邊存在人為操作：後巷有人進出、黃符被外力撕動，傳聞也在近期被重新塑造成「三次敲門」的具體版本。</p><p>然而第一夜仍留下時間缺口。這不代表鬼神成立，只表示目前的「同一個人、同一套手法」不足以解釋全部三夜。</p><p>下一條最值得追的線，指向那名送香燭的老人，以及他替哪一間廟宇辦事。</p><p class="note">下一章：香火從哪裡來。將開放香舖、廟宇側殿與更完整的家學調查。</p><button id="v2Home" class="primary" type="button">回到標題</button></article>';$('v2Home').onclick=function(){location.reload()};return}
  if(s.phase==='deduction'){renderDeduction();return}
- var l=locations[s.loc],html='<div class="v2-head card"><h2>'+esc(s.name)+'・私家偵探</h2><div class="v2-meta">案件二《雨夜敲門》・第一章｜先查明發生了什麼，再決定要不要相信有鬼。</div><div class="v2-dots">'+renderFocus()+'</div></div>';
- html+='<article class="v2-scene card"><small>'+esc(l.sub)+'</small><h2>'+esc(l.name)+'</h2><p>'+esc(l.intro)+'</p><div class="v2-actions">';
- l.actions.forEach(function(a){var done=!!s.done[a.id],ok=requirementsMet(a);if(!ok)return;html+='<button class="v2-btn '+(done?'done':'')+'" data-act="'+a.id+'"><strong>'+esc(a.name)+'</strong><small>'+esc(done?'已調查':a.desc)+'</small></button>'});
- html+='</div>'+(s.feedback?'<div class="v2-note">'+esc(s.feedback)+'</div>':'')+'</article>';
- html+='<article class="section-card card" style="margin-top:11px"><h3>地點</h3><div class="v2-map">';Object.keys(locations).forEach(function(id){var loc=locations[id];html+='<button data-loc="'+id+'" class="'+(unlocked(id)?'':'locked')+' '+(s.loc===id?'current':'')+'"><strong>'+esc(loc.name)+'</strong></button>'});html+='</div></article>';
- html+='<article class="section-card card v2-records"><h3>案件紀錄</h3>';if(!s.evidence.length)html+='<p class="note">目前還沒有可保存的關鍵紀錄。</p>';s.evidence.forEach(function(id){var e=evidence[id];html+='<div class="v2-rec"><strong>'+esc(e.name)+'</strong><small>'+esc(e.type)+'｜'+esc(e.desc)+'</small></div>'});html+='</article>';
+ var l=locations[s.loc];var html='<div class="v2-head card"><h2>'+esc(s.name)+'・私家偵探</h2><div class="v2-meta">案件二《雨夜敲門》・第一章｜物證、證詞、時間線與家學觀察必須互相對得上。</div><div class="v2-dots">'+focusDots()+'</div></div>';
+ html+='<article class="v2-scene card">'+(s.loc==='house'?'<img class="v2-art" src="'+ART+'" alt="雨夜中的林宅與臺北巷道">':'')+'<div class="v2-scene-body"><small>'+esc(l.sub)+'</small><h2>'+esc(l.name)+'</h2><p>'+esc(l.intro)+'</p><div class="v2-actions">';
+ l.actions.forEach(function(a){if(!requirementsMet(a))return;var done=!!s.done[a.id];html+='<button class="v2-btn '+(done?'done':'')+'" data-action="'+esc(a.id)+'"><strong>'+esc(a.name)+'</strong><small>'+esc(done?'已調查｜可再次查看':a.desc)+'</small></button>'});
+ html+='</div><div id="v2Feedback" class="v2-note">'+esc(s.feedback||'先查現場，再談怪異。新的資訊會開放新的地點與追問。')+'</div></div></article>';
+ html+='<div class="v2-map">';Object.keys(locations).forEach(function(id){if(!unlocked(id))return;html+='<button data-loc="'+id+'" class="'+(id===s.loc?'current':'')+'">'+esc(locations[id].name)+'</button>'});html+='</div>';
+ html+='<section class="v2-records"><h3>案件筆記 '+s.evidence.length+'/15</h3>';s.evidence.slice().reverse().forEach(function(id){var e=evidence[id];html+='<div class="v2-rec"><strong>'+esc(e.name)+'｜'+esc(e.type)+'</strong><small>'+esc(e.desc)+'</small></div>'});html+='</section>';
  if(allCore())html+='<button id="v2Deduce" class="primary" type="button">整理第一章推理</button>';
- box.innerHTML=html;box.querySelectorAll('[data-act]').forEach(function(b){b.onclick=function(){doAction(b.getAttribute('data-act'))}});box.querySelectorAll('[data-loc]').forEach(function(b){b.onclick=function(){var id=b.getAttribute('data-loc');if(unlocked(id)){s.loc=id;s.feedback='';s.visited[id]=true;save();render()}}});var d=$('v2Deduce');if(d)d.onclick=function(){s.phase='deduction';s.deduction=0;s.feedback='';save();render()};
+ box.innerHTML=html;
+ Array.prototype.forEach.call(box.querySelectorAll('[data-action]'),function(b){b.onclick=function(){doAction(this.getAttribute('data-action'))}});
+ Array.prototype.forEach.call(box.querySelectorAll('[data-loc]'),function(b){b.onclick=function(){s.loc=this.getAttribute('data-loc');s.visited[s.loc]=true;s.feedback='';save();render()}});
+ var d=$('v2Deduce');if(d)d.onclick=function(){s.phase='deduction';s.deduction=0;s.feedback='';save();render()};
 }
-
-function doAction(id){var l=locations[s.loc],a=l.actions.find(function(x){return x.id===id});if(!a||!requirementsMet(a))return;s.done[id]=true;if(a.gain)gain(a.gain);s.feedback=a.text;save();render()}
-
-var deductions=[
- {q:'目前能否證明敲門事件全部都是鬼怪造成？',correct:'no',opts:[['yes','可以，鎮宅符被撕就是直接證據。'],['no','不可以；目前已有明確的人為行動痕跡。']]},
- {q:'目前能否把所有敲門都歸給同一名裝神弄鬼者？',correct:'gap',opts:[['same','可以，後巷鞋印已足以解釋全部事件。'],['gap','不可以；第一晚的時間線仍留下無法由目前嫌疑人解釋的缺口。']]},
- {q:'第一章最合理的暫時結論是？',correct:'both',opts:[['ghost','已證實真正的鬼在敲門。'],['fake','已證實所有怪事都是人為。'],['both','人為假象確實存在，但仍有一部分異常尚未解釋。']]}
-];
-function renderDeduction(){var box=$('v2RainMain'),q=deductions[s.deduction],html='<div class="v2-head card"><h2>第一章推理</h2><div class="v2-meta">'+(s.deduction+1)+' / '+deductions.length+'</div><div class="v2-dots">'+renderFocus()+'</div></div><article class="v2-deduction card"><h2>'+esc(q.q)+'</h2>';q.opts.forEach(function(o){html+='<button class="v2-option" data-answer="'+o[0]+'">'+esc(o[1])+'</button>'});if(s.feedback)html+='<div class="v2-note">'+esc(s.feedback)+'</div>';html+='</article>';box.innerHTML=html;box.querySelectorAll('[data-answer]').forEach(function(b){b.onclick=function(){answer(b.getAttribute('data-answer'))}})}
-function answer(id){var q=deductions[s.deduction];if(id!==q.correct){s.focus=Math.max(0,s.focus-1);s.feedback='這個結論超出了目前證據。把「存在異常」直接當成「已證實鬼怪」，或把一條人為線索擴張成全部答案，都會漏掉時間線中的矛盾。';if(s.focus===0){s.focus=1;s.feedback+=' 本章預覽不會讓你因教學推理失敗而重置進度。'}save();renderDeduction();return}s.deduction++;s.feedback='';if(s.deduction>=deductions.length){s.finished=true;save();render();return}save();renderDeduction()}
-
-function start(reset){mount();if(reset){try{localStorage.removeItem(SAVE_KEY)}catch(e){}}s=load()||fresh();save();render()}
-function install(){mount();var next=$('nextCaseBtn');if(next){next.textContent='進入案件二《雨夜敲門》';next.onclick=function(){start(false)}}var oldLoad=$('loadBtn'),saved=load();if(oldLoad&&saved&&!parse(CASE1_KEY)){oldLoad.disabled=false;oldLoad.textContent='繼續《雨夜敲門》';oldLoad.onclick=function(){start(false)}}}
-
+function doAction(id){var l=locations[s.loc],a=l.actions.filter(function(x){return x.id===id})[0];if(!a||!requirementsMet(a))return;s.done[id]=true;if(a.gain)addEvidence(a.gain);s.feedback=a.text;save();render()}
+function renderDeduction(){var box=$('v2RainMain'),d=deductions[s.deduction];var html='<article class="v2-deduction card"><p class="eyebrow">第一章推理 '+(s.deduction+1)+' / '+deductions.length+'</p><h2>'+esc(d.q)+'</h2><div class="v2-dots">'+focusDots()+'</div>';if(s.feedback)html+='<div class="v2-note">'+esc(s.feedback)+'</div>';d.opts.forEach(function(o,i){html+='<button class="v2-option" data-opt="'+i+'">'+esc(o.t)+'</button>'});html+='</article>';box.innerHTML=html;Array.prototype.forEach.call(box.querySelectorAll('[data-opt]'),function(b){b.onclick=function(){answer(Number(this.getAttribute('data-opt')))}})}
+function answer(i){var d=deductions[s.deduction],o=d.opts[i];if(!o)return;if(o.ok){s.answers.push(i);s.feedback=o.fb;s.deduction+=1;if(s.deduction>=deductions.length){s.finished=true;s.phase='done';s.feedback=''}save();render();return}s.focus=Math.max(1,s.focus-1);s.feedback='推理過度：'+o.fb;save();renderDeduction()}
+function start(reset){s=reset?fresh():(load()||fresh());save();render()}
+function install(){mount();var n=$('nextCaseBtn');if(n){n.textContent='開始《雨夜敲門》擴充第一章';n.onclick=function(){start(false)}}var l=$('loadBtn');if(l)l.onclick=function(){start(false)}}
 install();
 })();
