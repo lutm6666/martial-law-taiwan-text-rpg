@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10110e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>霧中的臺灣 2.0｜雨夜敲門預覽</title>
+<style>
+:root{--bg:#10110e;--panel:#191b16;--paper:#e8dec6;--paperInk:#2b291f;--ink:#ece8dc;--muted:#a8a596;--line:#3a3d33;--accent:#b69b5f;--shadow:0 12px 30px rgba(0,0,0,.24)}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;background:radial-gradient(circle at top,#1b1e17 0,#10110e 48%);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;min-height:100vh}.hidden{display:none!important}button{font:inherit}.app{max-width:760px;margin:auto;padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 96px)}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px}.topbar h1{font-size:1.52rem;margin:1px 0 0}.eyebrow{font-size:.68rem;letter-spacing:.14em;margin:0 0 4px;color:#999686}.chip{display:inline-block;border:1px solid #56594c;border-radius:999px;padding:6px 10px;font-size:.69rem;color:#c6c1b2;background:#171914}.build{font-size:.58rem;color:#77786e;margin-top:5px;text-align:right}.card{background:linear-gradient(180deg,#1e211a,#181a16);border:1px solid #33362d;border-radius:18px;box-shadow:var(--shadow)}.paper{background:linear-gradient(145deg,#eee4cd,#ddd0b2);color:var(--paperInk);border-color:#c3b58f}.section-card{padding:17px}.start-card{padding:19px}.start-card h2{margin:4px 0 10px}.start-card p{line-height:1.75}.note{font-size:.85rem;color:#8e8b7f;line-height:1.55}.paper .note{color:#6f6654}.primary,.secondary{display:block;width:100%;border:1px solid #3a3d33;border-radius:14px;padding:13px;text-align:center;margin-top:11px;font-weight:650}.primary{background:#d4c18e;color:#242116;border-color:#d4c18e}.secondary{background:transparent;color:#b8b5a8}.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#ece0c2;color:#28251c;padding:10px 14px;border-radius:999px;font-size:.82rem;transition:.2s;z-index:40;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}.toast.show{opacity:1;transform:translate(-50%,0)}
+.preview-note{margin-top:12px;padding:12px;border-left:3px solid #8d7853;background:#211e18;color:#c8c1b1;line-height:1.65}.profile-box{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.profile-box div{padding:11px;border:1px solid #3a3d33;border-radius:12px;background:#171914}.profile-box strong{display:block;font-size:.78rem}.profile-box span{display:block;color:#aaa799;font-size:.76rem;margin-top:4px;line-height:1.45}
+@media(min-width:640px){.app{padding-left:22px;padding-right:22px}}
+</style>
+</head>
+<body>
+<main class="app">
+<header class="topbar">
+  <div><p class="eyebrow">OCCULT DETECTIVE PREVIEW</p><h1>霧中的臺灣</h1></div>
+  <div style="text-align:right"><span id="caseChip" class="chip">2.0・開發預覽</span><div class="build">V2 PREVIEW</div></div>
+</header>
+<section id="startScreen">
+  <article class="start-card card paper">
+    <p class="eyebrow" style="color:#715c34">1958・臺北</p>
+    <h2>案件二《雨夜敲門》</h2>
+    <p>《失落的三頁》仍保留為正式序章與教學案件。這個頁面則直接進入新版第一個靈異委託，用來測試「第一案式調查」能否自然延伸到新的長篇案件。</p>
+    <p class="note">核心原則：先查明發生了什麼，再決定要不要相信有鬼。</p>
+  </article>
+  <article class="section-card card" style="margin-top:12px">
+    <p class="eyebrow">主角設定</p>
+    <div class="profile-box">
+      <div><strong>職業</strong><span>私家偵探</span></div>
+      <div><strong>家學</strong><span>道士家族傳承</span></div>
+      <div><strong>調查方式</strong><span>物證、證詞、時間線</span></div>
+      <div><strong>第二視角</strong><span>符式、祭祀與民俗脈絡</span></div>
+    </div>
+    <div class="preview-note">家學只提供額外觀察，不會直接把任何現象判定成「真的鬼」。</div>
+    <button id="nextCaseBtn" class="primary" type="button">開始《雨夜敲門》第一章</button>
+    <button id="loadBtn" class="secondary" type="button">繼續預覽進度</button>
+  </article>
+</section>
+<section id="prologueScreen" class="hidden"></section>
+<section id="gameScreen" class="hidden"></section>
+<section id="completeScreen" class="hidden"></section>
+<section id="failScreen" class="hidden"></section>
+<section id="case2Screen" class="hidden"></section>
+<div id="toast" class="toast"></div>
+</main>
+<script src="v2-rain-engine.js?v=2"></script>
+<script>
+(function(){
+ var b=document.getElementById('loadBtn');
+ if(b){b.onclick=function(){
+   var n=document.getElementById('nextCaseBtn');
+   if(n)n.click();
+ }}
+})();
+</script>
+</body>
+</html>
