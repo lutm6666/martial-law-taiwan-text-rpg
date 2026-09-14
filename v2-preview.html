@@ -36,7 +36,7 @@
       <div><strong>調查方式</strong><span>物證、證詞、時間線</span></div>
       <div><strong>第二視角</strong><span>符式、祭祀與民俗脈絡</span></div>
     </div>
-    <div class="preview-note">家學提供第二層觀察，但不能直接證明鬼神。這一版已加入第一張場景圖與更完整的證據鏈，後續會逐步補齊其他場景與證物圖。</div>
+    <div class="preview-note">家學提供第二層觀察，但不能直接證明鬼神。這一版已換上第一張正式寫實場景圖；若圖片載入失敗，才會自動改用簡化備援圖。</div>
     <button id="nextCaseBtn" class="primary" type="button">開始《雨夜敲門》擴充第一章</button>
     <button id="loadBtn" class="secondary" type="button">繼續預覽進度</button>
   </article>
@@ -48,7 +48,7 @@
 <section id="case2Screen" class="hidden"></section>
 <div id="toast" class="toast"></div>
 </main>
-<script src="v2-rain-engine.js?v=4"></script>
+<script src="v2-rain-engine.js?v=5"></script>
 <script>
 (function(){
  var n=document.getElementById('nextCaseBtn');
@@ -63,6 +63,7 @@
    };
  }
 
+ var primary='assets/v2/rain-house-front.jpg?v=1';
  var fallback='assets/v2/rain-ch1-scene.svg?v=1';
  function repairRainArt(root){
    var scope=root&&root.querySelectorAll?root:document;
@@ -70,15 +71,16 @@
    for(var i=0;i<imgs.length;i++){
      var img=imgs[i];
      var src=img.getAttribute('src')||'';
-     if(src.indexOf('assets/v2/rain-ch1-concept.webp')!==-1){
+     var alt=img.getAttribute('alt')||'';
+     if(src.indexOf('assets/v2/rain-ch1-concept.webp')!==-1||alt.indexOf('雨夜中的林宅')!==-1){
        img.onerror=function(){
          if(this.getAttribute('data-rain-fallback')==='1')return;
          this.setAttribute('data-rain-fallback','1');
          this.src=fallback;
        };
-       if(img.complete&&img.naturalWidth===0){
-         img.setAttribute('data-rain-fallback','1');
-         img.src=fallback;
+       if(img.getAttribute('data-rain-primary')!=='1'){
+         img.setAttribute('data-rain-primary','1');
+         img.src=primary;
        }
      }
    }
