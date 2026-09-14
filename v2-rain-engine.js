@@ -40,7 +40,23 @@ var locations={
 };
 
 function fresh(){var p=case1Profile();return{caseId:'rain-ch1',name:p.name,focus:MAX_FOCUS,loc:'house',visited:{house:true},done:{},evidence:[],feedback:'',phase:'investigate',deduction:0,answers:[],finished:false}}
-function load(){var v=parse(SAVE_KEY);if(!v||v.caseId!=='rain-ch1')return null;return v}
+function normalize(v){
+ if(!v||typeof v!=='object'||v.caseId!=='rain-ch1')return null;
+ var p=case1Profile(),validEvidence=[],seen={};
+ if(Array.isArray(v.evidence))v.evidence.forEach(function(id){if(evidence[id]&&!seen[id]){seen[id]=true;validEvidence.push(id)}});
+ var validActions={};Object.keys(locations).forEach(function(locId){locations[locId].actions.forEach(function(a){validActions[a.id]=a})});
+ var done={};if(v.done&&typeof v.done==='object'&&!Array.isArray(v.done))Object.keys(v.done).forEach(function(id){var a=validActions[id];if(a&&v.done[id]===true&&(!a.gain||seen[a.gain]))done[id]=true});
+ var canVisit=function(id){var l=locations[id];return !!l&&(!l.lockedBy||l.lockedBy.every(function(req){return !!seen[req]}))};
+ var loc=typeof v.loc==='string'&&canVisit(v.loc)?v.loc:'house';
+ var visited={house:true};if(v.visited&&typeof v.visited==='object'&&!Array.isArray(v.visited))Object.keys(locations).forEach(function(id){if(v.visited[id]&&canVisit(id))visited[id]=true});visited[loc]=true;
+ var focus=Number(v.focus);focus=Number.isFinite(focus)?Math.floor(focus):MAX_FOCUS;focus=Math.max(1,Math.min(MAX_FOCUS,focus));
+ var deduction=Number(v.deduction);deduction=Number.isFinite(deduction)?Math.floor(deduction):0;deduction=Math.max(0,Math.min(deductions.length,deduction));
+ var core=['low_scratches','rain_channel','torn_talisman','small_print','son_account','neighbor_version','timing_gap'].every(function(id){return !!seen[id]});
+ var finished=v.finished===true&&core&&deduction>=deductions.length;
+ var phase=!finished&&core&&v.phase==='deduction'?'deduction':'investigate';
+ return{caseId:'rain-ch1',name:typeof v.name==='string'&&v.name.trim()?v.name.trim():p.name,focus:focus,loc:loc,visited:visited,done:done,evidence:validEvidence,feedback:typeof v.feedback==='string'?v.feedback:'',phase:phase,deduction:finished?deductions.length:(phase==='deduction'?Math.min(deduction,deductions.length-1):0),answers:Array.isArray(v.answers)?v.answers.slice(0,deductions.length):[],finished:finished};
+}
+function load(){return normalize(parse(SAVE_KEY))}
 function has(id){return s.evidence.indexOf(id)!==-1}
 function gain(id){if(id&&evidence[id]&&!has(id)){s.evidence.push(id);notify('新增紀錄：'+evidence[id].name)}}
 function unlocked(id){var l=locations[id];if(!l.lockedBy)return true;return l.lockedBy.every(has)}
