@@ -109,6 +109,17 @@ finish_guard = "var canFinish=state.flags.deductionReady&&state.deductionStep>=d
 if finish_guard not in text:
     raise SystemExit('case1 finish-state normalization pattern not found')
 
+# Case 1 numeric save integrity: focus and deductionStep are discrete counters.
+# A malformed/legacy save containing fractional or non-finite values must not
+# index the deduction array with a non-existent key; renderDeduction treats a
+# missing step as completion. Normalize both counters to bounded integers.
+old_numeric = "if(typeof state.focus!=='number'||!isFinite(state.focus))state.focus=MAX_FOCUS;state.focus=Math.max(0,Math.min(MAX_FOCUS,state.focus));if(typeof state.deductionStep!=='number'||state.deductionStep<0||state.deductionStep>deduction.length)state.deductionStep=0;"
+new_numeric = "if(typeof state.focus!=='number'||!isFinite(state.focus))state.focus=MAX_FOCUS;state.focus=Math.max(0,Math.min(MAX_FOCUS,Math.floor(state.focus)));if(typeof state.deductionStep!=='number'||!isFinite(state.deductionStep)||state.deductionStep<0)state.deductionStep=0;else state.deductionStep=Math.min(deduction.length,Math.floor(state.deductionStep));"
+if old_numeric in text:
+    text = text.replace(old_numeric, new_numeric, 1)
+elif new_numeric not in text:
+    raise SystemExit('case1 numeric save normalization pattern not found')
+
 # Visible build/diagnostic markers make stale Safari/GitHub Pages caches easy
 # to distinguish while keeping repeated deployments idempotent.
 text = text.replace('BUILD 5.1.4・CASE 02', 'BUILD 5.1.6・CASE 02')
