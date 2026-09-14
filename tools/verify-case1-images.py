@@ -36,17 +36,17 @@ for name in CASE1_EXPECTED:
         label=f'case1/{name}',
     )
 
-# V2 currently renders this JPEG as the primary Rain Knocking scene on GitHub Pages.
-# It previously broke without failing deployment, so keep it inside the production gate.
+# V2 currently renders this WebP as the primary Rain Knocking scene on GitHub Pages.
+# Keep it inside the production gate so a corrupt scene asset cannot deploy successfully.
 verify_raster(
-    ROOT / 'assets' / 'v2' / 'rain-house-front.jpg',
-    expected_format='JPEG',
+    ROOT / 'assets' / 'v2' / 'rain-ch1-concept.webp',
+    expected_format='WEBP',
     min_size=(320, 200),
-    label='v2/rain-house-front',
+    label='v2/rain-ch1-concept',
 )
 
-# Safari falls back to this SVG if the JPEG cannot load. Parse it during deployment so
-# malformed/truncated XML cannot silently ship as the only remaining scene asset.
+# Safari falls back to this SVG if the raster scene cannot load. Parse it during deployment
+# so malformed/truncated XML cannot silently ship as the only remaining scene asset.
 fallback = ROOT / 'assets' / 'v2' / 'rain-ch1-scene.svg'
 if not fallback.exists():
     raise SystemExit(f'Missing fallback image: {fallback}')
