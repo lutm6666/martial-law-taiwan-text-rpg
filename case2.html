@@ -45,7 +45,8 @@
 (function(){
   function boot(){
     var b=document.getElementById('nextCaseBtn');
-    if(b&&typeof b.onclick==='function'&&!document.getElementById('case2Screen')?.classList.contains('hidden'))return;
+    var screen=document.getElementById('case2Screen');
+    if(screen&&!screen.classList.contains('hidden'))return;
     if(b&&typeof b.onclick==='function')b.click();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(boot,80)});
