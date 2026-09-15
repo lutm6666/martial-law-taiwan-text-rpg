@@ -46,7 +46,7 @@ loadScript('image-lightbox.js?v=1',function(){
   patchCaseTwoCopy();
   loadScript('v2-rain-art-override.js?v=9',function(){
    patchCaseTwoCopy();
-   loadScript('v2-rain-presentation.js?v=1',patchCaseTwoCopy);
+   loadScript('v2-rain-presentation.js?v=2',patchCaseTwoCopy);
   });
  });
 });
