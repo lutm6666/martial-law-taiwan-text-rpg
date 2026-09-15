@@ -20,6 +20,8 @@ function loadScript(src,next){
 }
 
 loadScript('image-lightbox.js?v=1',function(){
- loadScript('case2-engine-core.js?v=1');
+ loadScript('case2-engine-core.js?v=12',function(){
+  loadScript('case2-runtime.js?v=1');
+ });
 });
 })();
