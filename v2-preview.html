@@ -19,7 +19,7 @@
 <main class="app">
 <header class="topbar">
   <div><p class="eyebrow">OCCULT DETECTIVE PREVIEW</p><h1>霧中的臺灣</h1></div>
-  <div style="text-align:right"><span id="caseChip" class="chip">2.0・開發預覽</span><div class="build">V2 PREVIEW</div></div>
+  <div style="text-align:right"><span id="caseChip" class="chip">2.0・開發預覽</span><div class="build">V2 PREVIEW・ART 06</div></div>
 </header>
 <section id="startScreen">
   <article class="start-card card paper">
@@ -36,7 +36,7 @@
       <div><strong>調查方式</strong><span>物證、證詞、時間線</span></div>
       <div><strong>第二視角</strong><span>符式、祭祀與民俗脈絡</span></div>
     </div>
-    <div class="preview-note">家學提供第二層觀察，但不能直接證明鬼神。這一版已加入可穩定載入的場景圖；後續替換正式寫實圖時會先經過部署完整性驗證。</div>
+    <div class="preview-note">家學提供第二層觀察，但不能直接證明鬼神。現有圖片優先接入遊戲；只有缺少必要場景時才補製作新圖。</div>
     <button id="nextCaseBtn" class="primary" type="button">開始《雨夜敲門》擴充第一章</button>
     <button id="loadBtn" class="secondary" type="button">繼續預覽進度</button>
   </article>
@@ -48,7 +48,7 @@
 <section id="case2Screen" class="hidden"></section>
 <div id="toast" class="toast"></div>
 </main>
-<script src="v2-rain-engine.js?v=5"></script>
+<script src="v2-rain-engine.js?v=6"></script>
 <script>
 (function(){
  var n=document.getElementById('nextCaseBtn');
@@ -62,13 +62,8 @@
      startHandler.call(this);
    };
  }
-
- var engineScript=document.querySelector('script[src*="v2-rain-engine.js"]');
- var engineSrc=engineScript?engineScript.getAttribute('src')||'':'';
- var versionMatch=engineSrc.match(/[?&]v=([^&]+)/);
- var assetVersion=versionMatch?versionMatch[1]:'1';
- var primary='assets/v2/rain-ch1-scene.svg?v='+encodeURIComponent(assetVersion);
- var fallback=primary;
+ var primary='assets/v2/rain-house-front.jpg?v=6';
+ var fallback='assets/v2/rain-ch1-scene.svg?v=6';
  function repairRainArt(root){
    var scope=root&&root.querySelectorAll?root:document;
    var imgs=scope.querySelectorAll('img');
@@ -76,7 +71,7 @@
      var img=imgs[i];
      var src=img.getAttribute('src')||'';
      var alt=img.getAttribute('alt')||'';
-     if(src.indexOf('assets/v2/rain-ch1-concept.webp')!==-1||alt.indexOf('雨夜中的林宅')!==-1){
+     if(src.indexOf('assets/v2/rain-ch1-scene.svg')!==-1||src.indexOf('assets/v2/rain-ch1-concept.webp')!==-1||alt.indexOf('雨夜中的林宅')!==-1){
        img.onerror=function(){
          if(this.getAttribute('data-rain-fallback')==='1')return;
          this.setAttribute('data-rain-fallback','1');
