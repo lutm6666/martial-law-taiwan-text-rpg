@@ -42,9 +42,12 @@ function patchCaseTwoCopy(){
 patchCaseTwoCopy();
 
 loadScript('image-lightbox.js?v=1',function(){
- loadScript('v2-rain-engine.js?v=10',function(){
+ loadScript('v2-rain-engine.js?v=11',function(){
   patchCaseTwoCopy();
-  loadScript('v2-rain-art-override.js?v=8',patchCaseTwoCopy);
+  loadScript('v2-rain-art-override.js?v=9',function(){
+   patchCaseTwoCopy();
+   loadScript('v2-rain-presentation.js?v=1',patchCaseTwoCopy);
+  });
  });
 });
 
