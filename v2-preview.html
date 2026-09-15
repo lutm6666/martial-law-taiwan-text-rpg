@@ -62,38 +62,6 @@
      startHandler.call(this);
    };
  }
- var primary='assets/v2/rain-house-front.jpg?v=6';
- var fallback='assets/v2/rain-ch1-scene.svg?v=6';
- function repairRainArt(root){
-   var scope=root&&root.querySelectorAll?root:document;
-   var imgs=scope.querySelectorAll('img');
-   for(var i=0;i<imgs.length;i++){
-     var img=imgs[i];
-     var src=img.getAttribute('src')||'';
-     var alt=img.getAttribute('alt')||'';
-     if(src.indexOf('assets/v2/rain-ch1-scene.svg')!==-1||src.indexOf('assets/v2/rain-ch1-concept.webp')!==-1||alt.indexOf('雨夜中的林宅')!==-1){
-       img.onerror=function(){
-         if(this.getAttribute('data-rain-fallback')==='1')return;
-         this.setAttribute('data-rain-fallback','1');
-         this.src=fallback;
-       };
-       if(img.getAttribute('data-rain-primary')!=='1'){
-         img.setAttribute('data-rain-primary','1');
-         img.src=primary;
-       }
-     }
-   }
- }
- repairRainArt(document);
- var observer=new MutationObserver(function(records){
-   for(var i=0;i<records.length;i++){
-     for(var j=0;j<records[i].addedNodes.length;j++){
-       var node=records[i].addedNodes[j];
-       if(node.nodeType===1)repairRainArt(node);
-     }
-   }
- });
- observer.observe(document.body,{childList:true,subtree:true});
 })();
 </script>
 </body>
