@@ -30,22 +30,19 @@ function patchCaseTwoCopy(){
   Array.prototype.forEach.call(complete.querySelectorAll('.summary-item'),function(item){
    var strong=item.querySelector('strong');
    if(strong&&strong.textContent.trim()==='下一案'){
-    item.innerHTML='<strong>下一案</strong><br>《雨夜敲門》。臺北一戶人家連續三個雨夜聽見敲門聲；有人在利用怪談，但第一夜仍留下無法用同一套手法解釋的時間缺口。';
+    item.innerHTML='<strong>下一案</strong><br>《雨夜敲門》。臺北一戶人家連續三個雨夜聽見敲門聲；越像同一件怪事的三個晚上，越需要先證明它們是否真的有同一個原因。';
    }
   });
  }
 
  var chip=$('caseChip');
  if(chip&&$('v2Rain')&&!$('v2Rain').classList.contains('hidden'))chip.textContent='CASE 02・雨夜敲門';
-
- var build=document.querySelector('.build');
- if(build&&build.textContent.indexOf('V2・CHAPTER 01 EXPANDED')!==-1)build.textContent='BUILD 5.2・CASE 02';
 }
 
 patchCaseTwoCopy();
 
 loadScript('image-lightbox.js?v=1',function(){
- loadScript('v2-rain-engine.js?v=9',function(){
+ loadScript('v2-rain-engine.js?v=10',function(){
   patchCaseTwoCopy();
   loadScript('v2-rain-art-override.js?v=8',patchCaseTwoCopy);
  });
