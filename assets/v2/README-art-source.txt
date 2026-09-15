@@ -1,0 +1,1 @@
+Rain Knocking v2 art source note: the production scene image is derived from the already-generated conversation artwork `a_moody_cinematic_photorealistic_night_scene_of.png` (generated 2026-09-14), cropped to remove mock UI. Do not replace with newly generated art unless a required scene has no existing source.
