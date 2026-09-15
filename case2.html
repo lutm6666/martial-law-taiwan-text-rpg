@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10110e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>霧中的臺灣｜案件二：秋月的條件</title>
+<style>
+:root{--bg:#10110e;--panel:#191b16;--paper:#e8dec6;--paperInk:#2b291f;--ink:#ece8dc;--muted:#a8a596;--line:#3a3d33;--accent:#b69b5f;--shadow:0 12px 30px rgba(0,0,0,.24)}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;background:radial-gradient(circle at top,#1b1e17 0,#10110e 48%);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;min-height:100vh}.hidden{display:none!important}button{font:inherit}.app{max-width:760px;margin:auto;padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 96px)}.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px}.topbar h1{font-size:1.52rem;margin:1px 0 0}.eyebrow{font-size:.68rem;letter-spacing:.14em;margin:0 0 4px;color:#999686}.chip{display:inline-block;border:1px solid #56594c;border-radius:999px;padding:6px 10px;font-size:.69rem;color:#c6c1b2;background:#171914}.build{font-size:.58rem;color:#77786e;margin-top:5px;text-align:right}.card{background:linear-gradient(180deg,#1e211a,#181a16);border:1px solid #33362d;border-radius:18px;box-shadow:var(--shadow)}.paper{background:linear-gradient(145deg,#eee4cd,#ddd0b2);color:var(--paperInk);border-color:#c3b58f}.start-card{padding:19px}.start-card h2{margin:4px 0 10px}.start-card p{line-height:1.75}.note{font-size:.85rem;color:#6f6654;line-height:1.55}.primary,.secondary{display:block;width:100%;border:1px solid #3a3d33;border-radius:14px;padding:13px;text-align:center;margin-top:11px;font-weight:650;cursor:pointer}.primary{background:#d4c18e;color:#242116;border-color:#d4c18e}.secondary{background:transparent;color:#b8b5a8}.status-line{margin-top:10px;color:#aaa799;font-size:.78rem;text-align:center}.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#ece0c2;color:#28251c;padding:10px 14px;border-radius:999px;font-size:.82rem;transition:.2s;z-index:120;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}.toast.show{opacity:1;transform:translate(-50%,0)}@media(min-width:640px){.app{padding-left:22px;padding-right:22px}}
+</style>
+</head>
+<body>
+<main class="app">
+<header class="topbar">
+  <div><p class="eyebrow">HISTORICAL INVESTIGATION</p><h1>霧中的臺灣</h1></div>
+  <div style="text-align:right"><span id="caseChip" class="chip">CASE 02・秋月的條件</span><div class="build">BUILD 5.1.7・DIRECT CASE 02</div></div>
+</header>
+<section id="startScreen">
+  <article class="start-card card paper">
+    <p class="eyebrow" style="color:#715c34">1958・臺北</p>
+    <h2>案件二：秋月的條件</h2>
+    <p>第一案找回的三頁裡，留下了一句很淡的鉛筆字：「秋月：不要真名。」這一次，問題不是紙去了哪裡，而是每個人究竟同意了什麼、又替別人多想了什麼。</p>
+    <p class="note">這是正式第二案的直接入口。角色姓名與身分會沿用第一案存檔；若找不到第一案資料，會使用安全的預設角色開始。</p>
+  </article>
+  <button id="nextCaseBtn" class="primary" type="button">開始案件二</button>
+  <button id="loadBtn" class="secondary" type="button">繼續案件二</button>
+  <button id="homeBtn" class="secondary" type="button" onclick="location.href='index.html'">返回第一案</button>
+  <p id="bootStatus" class="status-line">第二案會使用獨立存檔，不會覆蓋第一案。</p>
+</section>
+<section id="prologueScreen" class="hidden"></section>
+<section id="gameScreen" class="hidden"></section>
+<section id="completeScreen" class="hidden"></section>
+<section id="failScreen" class="hidden"></section>
+<div id="toast" class="toast"></div>
+<button id="startBtn" class="hidden" type="button"></button>
+<button id="restartBtn" class="hidden" type="button"></button>
+<button id="retryBtn" class="hidden" type="button"></button>
+<button id="failHomeBtn" class="hidden" type="button"></button>
+</main>
+<script src="case2-engine.js?v=12"></script>
+<script>
+(function(){
+  function boot(){
+    var b=document.getElementById('nextCaseBtn');
+    var screen=document.getElementById('case2Screen');
+    if(screen&&!screen.classList.contains('hidden'))return;
+    if(b&&typeof b.onclick==='function')b.click();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(boot,80)});
+  else setTimeout(boot,80);
+})();
+</script>
+</body>
+</html>
