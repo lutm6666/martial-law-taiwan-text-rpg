@@ -4,122 +4,43 @@
 function $(id){return document.getElementById(id)}
 
 var caseOneLoadHandler=$('loadBtn')&&$('loadBtn').onclick;
-var RAIN_SAVE='mist-taiwan-rain-full-v3';
-var RAIN_CASE='rain-full-v3';
+var RAIN_SAVE='mist-taiwan-rain-canon-v1';
+var RAIN_CASE='rain-door-1958-v1';
 
 function loadScript(src,next){
  var script=document.createElement('script');
  var settled=false;
- function finish(){
-  if(settled)return;
-  settled=true;
-  if(typeof next==='function')next();
- }
- script.src=src;
- script.async=false;
- script.onload=finish;
- script.onerror=function(){
-  console.error('Script load failed:',src);
-  finish();
- };
+ function finish(){if(settled)return;settled=true;if(typeof next==='function')next()}
+ script.src=src;script.async=false;script.onload=finish;script.onerror=function(){console.error('Script load failed:',src);finish()};
  document.head.appendChild(script);
 }
-
-function rainSave(){
- try{return JSON.parse(localStorage.getItem(RAIN_SAVE)||'null')}catch(e){return null}
-}
-
-function sanitizeRainSave(){
- var v=rainSave();
- if(v&&v.caseId!==RAIN_CASE){try{localStorage.removeItem(RAIN_SAVE)}catch(e){}}
-}
-
-function restoreCaseOneLoad(){
- var load=$('loadBtn');
- if(load&&typeof caseOneLoadHandler==='function'&&load.onclick!==caseOneLoadHandler)load.onclick=caseOneLoadHandler;
-}
-
-function startRainFromHiddenButton(){
- var next=$('nextCaseBtn');
- if(next&&typeof next.onclick==='function')next.onclick();
-}
+function parse(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(e){return null}}
+function restoreCaseOneLoad(){var load=$('loadBtn');if(load&&typeof caseOneLoadHandler==='function')load.onclick=caseOneLoadHandler}
+function startRain(){if(window.Case2RainCanon&&typeof window.Case2RainCanon.start==='function')window.Case2RainCanon.start()}
+function hasRainSave(){var v=parse(RAIN_SAVE);return !!(v&&v.caseId===RAIN_CASE)}
 
 function ensureRainResume(){
- var start=$('startScreen'),load=$('loadBtn'),old=$('rainResumeBtn'),v=rainSave();
- if(!start||!load)return;
- if(!v||v.caseId!==RAIN_CASE){if(old)old.remove();return}
- var label=v.finished?'查看案件二《雨夜敲門》':'繼續案件二《雨夜敲門》';
- if(old){
-  if(old.textContent!==label)old.textContent=label;
-  if(old.onclick!==startRainFromHiddenButton)old.onclick=startRainFromHiddenButton;
-  return;
- }
- var b=document.createElement('button');
- b.id='rainResumeBtn';b.type='button';b.className='secondary';b.textContent=label;b.onclick=startRainFromHiddenButton;
- load.insertAdjacentElement('afterend',b);
+ var start=$('startScreen'),load=$('loadBtn'),old=$('rainResumeBtn');if(!start||!load)return;
+ if(!hasRainSave()){if(old)old.remove();return}
+ var v=parse(RAIN_SAVE)||{};var label=v.finished?'查看案件二《雨夜敲門》':'繼續案件二《雨夜敲門》';
+ if(old){old.textContent=label;old.onclick=startRain;return}
+ var b=document.createElement('button');b.id='rainResumeBtn';b.type='button';b.className='secondary';b.textContent=label;b.onclick=startRain;load.insertAdjacentElement('afterend',b);
 }
 
-function replaceLegacyText(root){
- if(!root)return;
- var walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);
- var node;
- while((node=walker.nextNode())){
-  var p=node.parentElement;if(!p||/^(SCRIPT|STYLE)$/.test(p.tagName))continue;
-  var t=node.nodeValue||'';
-  if(t.indexOf('秋月：不要真名。')>=0)t=t.replace(/秋月：不要真名。/g,'受訪者：不要真名。');
-  if(t.indexOf('秋月的名字')>=0)t=t.replace(/秋月的名字/g,'那名受訪者的名字');
-  if(t.indexOf('案件二：秋月的條件')>=0)t=t.replace(/案件二：秋月的條件/g,'案件二：雨夜敲門');
-  if(t.indexOf('《秋月的條件》')>=0)t=t.replace(/《秋月的條件》/g,'《雨夜敲門》');
-  if(t!==node.nodeValue)node.nodeValue=t;
- }
+function patchCopy(){
+ var next=$('nextCaseBtn');if(next){next.textContent='開始案件二：《雨夜敲門》';next.onclick=startRain}
+ var complete=$('completeScreen');if(complete){Array.prototype.forEach.call(complete.querySelectorAll('.summary-item'),function(item){var strong=item.querySelector('strong');if(strong&&strong.textContent.trim()==='下一案')item.innerHTML='<strong>下一案</strong><br>《雨夜敲門》。1958年的雨夜，一名女子反覆來到201號門前；你必須把眼前的敲門者，和三年前被抹去的前住戶分開調查。'})}
+ var chip=$('caseChip');if(chip&&$('v2Rain')&&!$('v2Rain').classList.contains('hidden'))chip.textContent='CASE 02・雨夜敲門';
+ restoreCaseOneLoad();ensureRainResume();
 }
 
-function patchCaseTwoCopy(){
- var next=$('nextCaseBtn');
- if(next&&next.textContent!=='案件二：雨夜敲門')next.textContent='案件二：雨夜敲門';
-
- var complete=$('completeScreen');
- if(complete){
-  Array.prototype.forEach.call(complete.querySelectorAll('.summary-item'),function(item){
-   var strong=item.querySelector('strong');
-   if(strong&&strong.textContent.trim()==='下一案'){
-    item.innerHTML='<strong>下一案</strong><br>《雨夜敲門》。臺北一戶人家連續三個雨夜聽見敲門聲；越像同一件怪事的三個晚上，越需要先證明它們是否真的有同一個原因。';
-   }
-  });
- }
-
- replaceLegacyText($('gameScreen'));
- replaceLegacyText($('completeScreen'));
- replaceLegacyText($('failScreen'));
-
- var chip=$('caseChip');
- if(chip&&$('v2Rain')&&!$('v2Rain').classList.contains('hidden'))chip.textContent='CASE 02・雨夜敲門';
- restoreCaseOneLoad();
- ensureRainResume();
-}
-
-sanitizeRainSave();
-patchCaseTwoCopy();
-
-loadScript('image-lightbox.js?v=1',function(){
- loadScript('v2-rain-engine.js?v=11',function(){
-  restoreCaseOneLoad();
-  patchCaseTwoCopy();
-  loadScript('v2-rain-art-override.js?v=9',function(){
-   patchCaseTwoCopy();
-   loadScript('v2-rain-presentation.js?v=2',function(){
-    patchCaseTwoCopy();
-    loadScript('v2-rain-dialogue.js?v=1',function(){
-     patchCaseTwoCopy();
-     loadScript('v2-rain-dialogue-reset.js?v=1',function(){
-      patchCaseTwoCopy();
-      loadScript('v2-rain-evidence-confrontation.js?v=2',patchCaseTwoCopy);
-     });
-    });
-   });
-  });
+patchCopy();
+loadScript('case2-rain-canon.js?v=1',function(){
+ loadScript('case2-rain-canon-engine.js?v=1',function(){
+  patchCopy();
+  loadScript('image-lightbox.js?v=1',patchCopy);
  });
 });
 
-new MutationObserver(function(){patchCaseTwoCopy()}).observe(document.documentElement,{childList:true,subtree:true});
+new MutationObserver(function(){patchCopy()}).observe(document.documentElement,{childList:true,subtree:true});
 })();
