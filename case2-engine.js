@@ -52,7 +52,7 @@ loadScript('image-lightbox.js?v=1',function(){
      patchCaseTwoCopy();
      loadScript('v2-rain-dialogue-reset.js?v=1',function(){
       patchCaseTwoCopy();
-      loadScript('v2-rain-evidence-confrontation.js?v=1',patchCaseTwoCopy);
+      loadScript('v2-rain-evidence-confrontation.js?v=2',patchCaseTwoCopy);
      });
     });
    });
