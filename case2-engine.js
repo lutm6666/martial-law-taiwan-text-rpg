@@ -36,7 +36,7 @@ function sanitizeRainSave(){
 
 function restoreCaseOneLoad(){
  var load=$('loadBtn');
- if(load&&typeof caseOneLoadHandler==='function')load.onclick=caseOneLoadHandler;
+ if(load&&typeof caseOneLoadHandler==='function'&&load.onclick!==caseOneLoadHandler)load.onclick=caseOneLoadHandler;
 }
 
 function startRainFromHiddenButton(){
@@ -45,14 +45,17 @@ function startRainFromHiddenButton(){
 }
 
 function ensureRainResume(){
- var start=$('startScreen'),load=$('loadBtn');
+ var start=$('startScreen'),load=$('loadBtn'),old=$('rainResumeBtn'),v=rainSave();
  if(!start||!load)return;
- var old=$('rainResumeBtn');if(old)old.remove();
- var v=rainSave();if(!v||v.caseId!==RAIN_CASE)return;
+ if(!v||v.caseId!==RAIN_CASE){if(old)old.remove();return}
+ var label=v.finished?'查看案件二《雨夜敲門》':'繼續案件二《雨夜敲門》';
+ if(old){
+  if(old.textContent!==label)old.textContent=label;
+  if(old.onclick!==startRainFromHiddenButton)old.onclick=startRainFromHiddenButton;
+  return;
+ }
  var b=document.createElement('button');
- b.id='rainResumeBtn';b.type='button';b.className='secondary';
- b.textContent=v.finished?'查看案件二《雨夜敲門》':'繼續案件二《雨夜敲門》';
- b.onclick=startRainFromHiddenButton;
+ b.id='rainResumeBtn';b.type='button';b.className='secondary';b.textContent=label;b.onclick=startRainFromHiddenButton;
  load.insertAdjacentElement('afterend',b);
 }
 
