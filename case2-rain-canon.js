@@ -47,13 +47,13 @@ window.CASE2_RAIN_CANON={
   },
 
   locations:{
-    home:{name:'林家玄關／客廳',sub:'案件起點',image:'assets/v2/canon/scene-home.jpg',initial:true,actions:['inspect_footprints','inspect_yue_mark','ask_lin']},
-    corridor:{name:'二樓公共走廊',sub:'證詞與現場核對',image:'assets/v2/canon/scene-corridor.jpg',unlock:['e01','e02'],actions:['check_rain_path','ask_chen']},
-    entrance:{name:'一樓入口／住戶板',sub:'租住紀錄',image:'assets/v2/canon/scene-entrance.jpg',unlockFlags:['chen_mentions_xu'],actions:['inspect_board','inspect_ledger','confront_landlord']},
-    yonghe:{name:'永和行雜貨店',sub:'時間線交叉驗證',image:'assets/v2/canon/scene-yonghe.jpg',unlock:['e03','e04'],actions:['ask_shopkeeper','inspect_yonghe_ledger']},
-    stairs:{name:'樓梯間',sub:'第一次異常事件',image:'assets/v2/canon/scene-stairs.jpg',unlockFlags:['timeline_conflict'],actions:['staircase_event']},
-    spare:{name:'空置舊租客房',sub:'張文德留下的東西',image:'assets/v2/canon/scene-spare-room.jpg',unlockFlags:['staircase_event_seen'],actions:['inspect_sisters_photo','inspect_wende_note','find_rooftop_key']},
-    rooftop:{name:'屋頂曬衣場／儲藏間',sub:'核心證物',image:'assets/v2/canon/scene-rooftop.jpg',unlock:['e08'],actions:['open_storage','inspect_bag','inspect_bag_contents','inspect_postcard','inspect_sealed_letter']}
+    home:{name:'林家玄關／客廳',sub:'案件起點',image:'assets/v2/rain-ch1-scene.svg',initial:true,actions:['inspect_footprints','inspect_yue_mark','ask_lin']},
+    corridor:{name:'二樓公共走廊',sub:'證詞與現場核對',image:'assets/v2/rain-ch1-scene.svg',unlock:['e01','e02'],actions:['check_rain_path','ask_chen']},
+    entrance:{name:'一樓入口／住戶板',sub:'租住紀錄',image:'assets/v2/rain-ch1-scene.svg',unlockFlags:['chen_mentions_xu'],actions:['inspect_board','inspect_ledger','confront_landlord']},
+    yonghe:{name:'永和行雜貨店',sub:'時間線交叉驗證',image:'assets/v2/rain-ch1-scene.svg',unlock:['e03','e04'],actions:['ask_shopkeeper','inspect_yonghe_ledger']},
+    stairs:{name:'樓梯間',sub:'第一次異常事件',image:'assets/v2/rain-ch1-scene.svg',unlockFlags:['timeline_conflict'],actions:['staircase_event']},
+    spare:{name:'空置舊租客房',sub:'張文德留下的東西',image:'assets/v2/rain-ch1-scene.svg',unlockFlags:['staircase_event_seen'],actions:['inspect_sisters_photo','inspect_wende_note','find_rooftop_key']},
+    rooftop:{name:'屋頂曬衣場／儲藏間',sub:'核心證物',image:'assets/v2/rain-ch1-scene.svg',unlock:['e08'],actions:['open_storage','inspect_bag','inspect_bag_contents','inspect_postcard','inspect_sealed_letter']}
   },
 
   actions:{
@@ -79,7 +79,7 @@ window.CASE2_RAIN_CANON={
   },
 
   events:{
-    qiulan_reveal:{trigger:{all:['e06','e09','e11'],flag:'final_ready'},text:'回到201後，再次響起三下、停頓、兩下的敲門聲。這次門外女子沒有離開。她承認自己是許秋蘭，為尋找姐姐留下的東西而來。',set:{qiulan_revealed:true},know:'qiulan'},
+    qiulan_reveal:{trigger:{all:['e06','e09','e11'],flag:'final_ready'},text:'回到201後，再次響起三下、停頓、兩下的敲門聲。這次門外女子沒有離開。她承認自己是許秋蘭，為尋找姐姐留下的物品而來。',set:{qiulan_revealed:true},know:'qiulan'},
     final_knock:{after:'correct_final_deduction',text:'許秋蘭離開後，門外再次響起相同敲門聲。開門無人；回到客廳時，新的濕腳印已由門口延伸到桌前，許月琴的照片被翻到正面。'}
   },
 
