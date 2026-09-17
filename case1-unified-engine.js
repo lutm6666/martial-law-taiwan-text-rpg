@@ -24,10 +24,10 @@ var art={
  failed:'assets/case1/failed.webp?v=9'
 };
 var visualMeta={
- tea:{alt:'1958 年臺北茶行・傍晚',note:'先看紙張、裝訂與桌面，不先猜誰拿走了東西。'},
- print:{alt:'1958 年臺北印刷行・午後',note:'帳簿、廢紙與工作流程能把記憶變成可核對的紀錄。'},
- market:{alt:'1958 年臺北市場・白天',note:'傳聞很多；先追紙張實際走過的路。'},
- bookstall:{alt:'1958 年臺北舊書攤・下午',note:'被當成廢紙的東西，也可能因為仍有用途而被留下。'}
+ tea:{alt:'1958 年臺北茶行・傍晚',before:'先看看桌上的冊子與周遭。',after:'你注意到冊子攤開在桌面，缺頁集中在同一本裝訂中；桌上沒有明顯翻找或爭搶留下的凌亂。',observed:['你把視線從阿川移到桌面。訪談冊攤開著，缺頁集中在同一段裝訂位置，桌上的紙張與茶具則沒有被匆忙翻動的跡象。','這些只能先說明「紙從冊子裡少了」，還不能說明是誰拿走、又為什麼拿走。']},
+ print:{alt:'1958 年臺北印刷行・午後',before:'先看看帳簿、紙堆與工作區。',after:'你看見工作區裡帳簿、鉛字與廢紙各有固定位置；紙張確實會經過整理與集中。',observed:['你沿著工作桌看了一圈。帳簿放在一側，鉛字盒與紙堆分開，牆邊則有整理過的廢紙與麻繩。','這裡的紙不是靜止不動的物件，而是會依照日常工作流程被搬動、集中，再交出去。']},
+ market:{alt:'1958 年臺北市場・白天',before:'先看看攤位、包貨紙與人流。',after:'你看見紙張在市場裡被反覆拿來墊箱、包貨；同一張紙很容易在不同攤位之間轉手。',observed:['你沒有先追著議論聲走，而是看攤位怎麼使用紙。墊箱、包花生、包雜貨的紙來源不一，很多都已經被折過或撕過。','如果失頁真的到了市場，它最可能先留下的是實物痕跡，而不是一段完整故事。']},
+ bookstall:{alt:'1958 年臺北舊書攤・下午',before:'先看看書堆、夾紙與櫃檯。',after:'你發現老闆會把仍能使用的零散紙張夾進舊書；書脊與頁縫因此值得逐本查看。',observed:['你掃過書攤。幾本工具書明顯比旁邊厚，書頁之間也夾著零散紙片，像是老闆隨手保存可再利用的紙。','這裡真正值得找的不是「可疑的人」，而是哪一本書裡夾著能和原冊缺口直接比對的紙。']}
 };
 
 var evidence={
@@ -104,8 +104,8 @@ function nextPrologue(){if(prologueIndex<prologue.length-1){prologueIndex++;rend
 function showGame(){hideAll();$('gameScreen').classList.remove('hidden');$('playerLabel').textContent=state.name+'・民俗家學調查者';$('caseChip').textContent='CASE 01・失落的三頁';var build=document.querySelector('.build');if(build)build.textContent='BUILD 6.0・UNIFIED PROTAGONIST';if($('failImage'))$('failImage').src=art.failed;renderFocus();setTab(currentTab)}
 function renderFocus(){var box=$('focusDots');box.innerHTML='';for(var i=0;i<MAX_FOCUS;i++){var d=document.createElement('i');if(i<state.focus)d.classList.add('on');if(state.focus===1&&i===0)d.classList.add('danger');box.appendChild(d)}$('focusLabel').textContent='推理專注 '+state.focus+'/'+MAX_FOCUS}
 function setTab(tab){currentTab=tab;var panels={scene:'scenePanel',map:'mapPanel',record:'recordPanel',deduction:'deductionPanel'};document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.tab===tab)});Object.keys(panels).forEach(function(k){$(panels[k]).classList.toggle('hidden',k!==tab)});if(tab==='scene')renderScene();if(tab==='map')renderMap();if(tab==='record')renderRecords();if(tab==='deduction')renderDeduction()}
-function observeScene(){state.flags.visualSeen[state.location]=true;state.flags.lastResult=null;save();renderScene()}
-function renderVisual(){var box=$('sceneVisual'),img=$('sceneImage'),note=$('visualNote'),m=visualMeta[state.location];if(!m){box.classList.add('hidden');return}box.classList.remove('hidden');img.src=art[state.location];img.alt=m.alt;img.onclick=observeScene;note.textContent=(state.flags.visualSeen[state.location]?'已觀察｜':'點擊圖片觀察｜')+m.note;box.classList.toggle('seen',!!state.flags.visualSeen[state.location])}
+function observeScene(){var m=visualMeta[state.location];state.flags.visualSeen[state.location]=true;state.flags.lastResult=m&&m.observed?{location:state.location,lines:m.observed}:null;save();renderScene()}
+function renderVisual(){var box=$('sceneVisual'),img=$('sceneImage'),note=$('visualNote'),m=visualMeta[state.location];if(!m){box.classList.add('hidden');return}box.classList.remove('hidden');img.src=art[state.location];img.alt=m.alt;img.onclick=observeScene;note.textContent=state.flags.visualSeen[state.location]?'已觀察｜'+m.after:'點擊圖片觀察｜'+m.before;box.classList.toggle('seen',!!state.flags.visualSeen[state.location])}
 function appendLines(lines){var box=$('sceneBody');box.innerHTML='';lines.forEach(function(t){var p=document.createElement('p');p.textContent=t;box.appendChild(p)})}
 function renderScene(){renderVisual();var loc=locations[state.location];$('locationName').textContent=loc.name;$('locationSub').textContent=loc.sub;var last=state.flags.lastResult;appendLines(last&&last.location===state.location?last.lines:loc.intro);var grid=$('actionGrid');grid.innerHTML='';loc.actions.forEach(function(id){var a=actions[id];if(a.requires&&!a.requires.every(has))return;var b=document.createElement('button');b.className='action-btn'+(done(id)?' done':'');b.innerHTML='<strong>'+a.label+'</strong><small>'+(done(id)?'已調查，可再次查看':a.hint||'進行調查')+'</small>';b.onclick=function(){runAction(id)};grid.appendChild(b)})}
 function completeAction(id,lines){if(!done(id))state.done.push(id);state.flags.actionResults[id]=lines}
