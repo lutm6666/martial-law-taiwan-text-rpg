@@ -71,8 +71,8 @@ window.CASE2_RAIN_CANON={
     inspect_sisters_photo:{gain:'e06',text:'照片背面寫著「月琴、秋蘭」。兩姐妹外貌相近。'},
     inspect_wende_note:{gain:'e07',know:'wende',text:'紙條只說「她」與「樓上」，沒有姓名。你不能把代詞自行補成許月琴。'},
     find_rooftop_key:{gain:'e08',text:'抽屜夾層裡找到一把標示「屋頂」的舊鑰匙。'},
-    open_storage:{requires:['e08'],text:'鑰匙打開屋頂儲藏間。木箱後方放著一只老舊帆布提袋。'},
-    inspect_bag:{gain:'e09',text:'提袋上清楚縫著「許月琴」。'},
+    open_storage:{requires:['e08'],gain:'e09',text:'鑰匙打開屋頂儲藏間。木箱後方放著一只老舊帆布提袋，袋面縫著「許月琴」的姓名標籤。'},
+    inspect_bag:{requires:['e09'],text:'提袋上清楚縫著「許月琴」。你先確認所有權，再查看袋內物品。'},
     inspect_bag_contents:{requires:['e09'],gain:'e10',text:'袋內大多是普通生活用品。沒有任何一件物品本身能證明她參與政治活動。'},
     inspect_postcard:{requires:['e10'],gain:'e11',text:'未寄出的明信片沒有地址、郵票或郵戳。上面只有一句給秋蘭的話。'},
     inspect_sealed_letter:{requires:['e10'],gain:'e12',set:{final_ready:true},text:'信封仍完整封口。你不知道裡面寫什麼，也不能用未知內容支持任何結論。'}
