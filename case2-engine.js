@@ -45,8 +45,8 @@ function loadRainRuntime(done){
 
  function loadEngine(){
   if(window.Case2RainCanon){flushLoaded();return}
-  loadScript('case2-rain-canon-engine.js?v=3',function(ok){
-   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=3');return}
+  loadScript('case2-rain-canon-engine.js?v=4',function(ok){
+   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=4');return}
    if(window.__case2LightboxRequested){flushLoaded();return}
    window.__case2LightboxRequested=true;
    loadScript('image-lightbox.js?v=1',function(){flushLoaded()});
