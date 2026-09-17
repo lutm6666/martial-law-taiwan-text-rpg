@@ -85,7 +85,7 @@ function phaseLabel(){
  return '雨夜現場';
 }
 
-function renderHeader(){return '<article class="c2-head card"><h2>'+esc(s.name)+'｜案件二・雨夜敲門</h2><div class="c2-meta">1958・臺北<br>'+esc(DATA.protagonistMethod)+'</div><span class="c2-kicker">'+esc(phaseLabel())+'</span></article>'}
+function renderHeader(){return '<article class="c2-head card"><h2>'+esc(s.name)+'｜案件二・雨夜敲門</h2><div class="c2-meta">1958・臺北</div><span class="c2-kicker">'+esc(phaseLabel())+'</span></article>'}
 function imageHtml(src,alt){return '<div class="c2-art-wrap"><img class="c2-art" src="'+esc(src)+'" alt="'+esc(alt)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="c2-art-fallback">'+esc(alt)+'<br><small>正式圖片路徑已保留，等待素材同步。</small></div></div>'}
 
 function renderInvestigation(){
@@ -105,13 +105,13 @@ function renderInvestigation(){
 
 function sceneIntro(id){
  var t={
-  home:'第三個雨夜的敲門聲剛停。林秀雲打開門時，走廊已經沒有人，只剩門外的濕痕。',
-  corridor:'老走廊被雨氣浸得發暗。這裡可以核對腳印、排水與老住戶的記憶。',
-  entrance:'房東平時收租、換住戶名牌的地方。1958年的現況與更早的租冊並不是同一種紀錄。',
-  yonghe:'距住宅不到一分鐘。老闆保存著附近熟客多年的賒帳資料。',
-  stairs:'樓梯間窗外仍在下雨。這裡沒有可靠答案，只有一次必須如實記錄的異常。',
-  spare:'長期空置的房間留著前住戶張文德沒有帶走的東西。',
-  rooftop:'屋頂儲藏間潮濕而狹窄。木箱後方的物品把1955年的生活痕跡保留了下來。'
+  home:'第三個雨夜。三下敲門聲停了一拍，又響了兩下。林秀雲拉開門時，走廊上已經沒有人，只有雨水沿欄杆滴落，門前留著幾枚濕腳印。',
+  corridor:'二樓外廊被雨氣浸得發暗，欄杆外的街燈隔著雨幕發白。201在走廊深處，門旁幾盆花被風吹得輕輕晃動。',
+  entrance:'一樓入口比樓上乾燥些。牆上的住戶板貼著一張張姓名紙卡，房東的小桌旁則堆著幾本用了多年的租冊。',
+  yonghe:'永和行就在巷口。店裡混著肥皂、乾貨和木櫃的氣味，櫃檯後方疊著一冊冊賒帳簿，紙邊都被翻得發毛。',
+  stairs:'你離開一樓時，雨勢忽然加重。樓梯間的窗沒有關緊，風把濕氣灌進來，木扶手摸上去一片冰涼。',
+  spare:'這間房空了很久。灰塵覆在桌面和窗框上，抽屜拉開時帶出一股潮木味；幾樣被遺忘的小東西仍留在原處。',
+  rooftop:'屋頂風很大，曬衣繩在雨裡啪啪作響。儲藏間的門鎖已經生鏽，裡頭堆著木箱、破竹籃和幾件多年沒人動過的雜物。'
  };return t[id]||'';
 }
 function actionLabel(id){var m={
@@ -127,7 +127,7 @@ function renderMap(){
  Object.keys(DATA.locations).forEach(function(id){var l=DATA.locations[id],u=locationUnlocked(id);html+='<button data-go="'+id+'" class="'+(s.loc===id?'current':'')+'" '+(!u?'disabled':'')+'><strong>'+esc(l.name)+'</strong><small>'+(u?esc(l.sub):'尚未解鎖')+'</small></button>'});
  html+='</div>';
  if(finalReady())html+='<button id="c2StartDeduction" class="primary" type="button">進入最終推理</button>';
- else if(flag('final_ready')&&!flag('qiulan_revealed'))html+='<div class="c2-note">核心證物已齊。返回201號，確認最後一名關係人的身分。</div>';
+ else if(flag('final_ready')&&!flag('qiulan_revealed'))html+='<div class="c2-note">帆布袋裡的東西已經看完。回201時，也許還有人會來敲門。</div>';
  html+='</article>'+navHtml('map');
  $('v2RainMain').innerHTML=html;bindCommon();
  Array.prototype.forEach.call(document.querySelectorAll('[data-go]'),function(b){b.onclick=function(){enterLocation(b.getAttribute('data-go'))}});
@@ -138,7 +138,7 @@ function evidenceImage(e){return '<img src="'+esc(e.image)+'" alt="'+esc(e.name)
 function renderRecords(){
  var html=renderHeader()+'<article class="card c2-body"><p class="c2-kicker">案件紀錄</p><h2>正式證物</h2>';
  if(!s.evidence.length)html+='<p class="note">目前尚未取得證物。</p>';
- s.evidence.forEach(function(id){var e=DATA.evidence[id];html+='<div class="c2-record"><strong>'+esc(id.toUpperCase()+'｜'+e.name)+'</strong><small>'+esc(e.type+'｜'+e.desc)+'</small>'+evidenceImage(e)+'<div class="c2-proof">能證明：'+esc((e.proof||[]).join('；')||'—')+'<br>不能直接證明：'+esc((e.notProof||[]).join('；')||'—')+'</div></div>'});
+ s.evidence.forEach(function(id){var e=DATA.evidence[id];html+='<div class="c2-record"><strong>'+esc(id.toUpperCase()+'｜'+e.name)+'</strong><small>'+esc(e.type+'｜'+e.desc)+'</small>'+evidenceImage(e)+'<div class="c2-proof">目前可知：'+esc((e.proof||[]).join('；')||'—')+'<br>仍待釐清：'+esc((e.notProof||[]).join('；')||'—')+'</div></div>'});
  if(s.people.length){html+='<h2 style="margin-top:18px">人物紀錄</h2>';s.people.forEach(function(id){var p=DATA.people[id];if(p)html+='<div class="c2-record"><strong>'+esc(p.name)+'</strong><small>'+esc(p.desc)+'</small></div>'})}
  html+='</article>'+navHtml('records');$('v2RainMain').innerHTML=html;bindCommon();
 }
@@ -148,7 +148,7 @@ function renderDeduction(){
  var d=DATA.deductions[s.deduction];if(!d){return finishCorrect()}
  var html=renderHeader()+'<article class="c2-deduction card"><p class="c2-kicker">最終推理 '+(s.deduction+1)+' / '+DATA.deductions.length+'</p><h2>'+esc(d.q)+'</h2>'+focusDots();
  if(s.feedback)html+='<div class="c2-note">'+esc(s.feedback)+'</div>';
- html+='<div class="c2-warning">錯誤推論會消耗推理專注。不要把未知內容、相似外貌或政治背景直接當成證明。</div>';
+ html+='<div class="c2-warning">每一步推論都會影響剩餘的推理專注。</div>';
  d.options.forEach(function(o){html+='<button class="c2-option" data-opt="'+esc(o.id)+'">'+esc(o.text)+'</button>'});html+='</article>';
  $('v2RainMain').innerHTML=html;
  Array.prototype.forEach.call(document.querySelectorAll('[data-opt]'),function(b){b.onclick=function(){answerDeduction(b.getAttribute('data-opt'))}});
@@ -158,7 +158,7 @@ function answerDeduction(id){
  if(ok){s.feedback=d.explain;s.deduction++;save();render();return}
  s.focus--;
  if(s.focus<=0){s.ending=(id==='ghost')?'weak':'falseAccusation';s.finished=true;s.phase='done';save();render();return}
- s.feedback='這個結論超出了目前證據。'+d.explain;save();render();
+ s.feedback='這個說法和目前找到的線索對不上。'+d.explain;save();render();
 }
 function finishCorrect(){s.ending='correct';s.finished=true;s.phase='done';s.feedback='';save();render()}
 
@@ -168,7 +168,7 @@ function renderEnding(){
  else if(kind==='falseAccusation'){title=e.falseAccusationTitle;text=e.falseAccusationText}
  else{title=e.correctTitle;text=e.correctText}
  var html='<article class="c2-ending card paper"><p class="eyebrow" style="color:#715c34">CASE CLOSED・雨夜敲門</p><h2>'+esc(title)+'</h2><p>'+esc(text)+'</p>';
- if(kind==='correct')html+='<div class="c2-event"><strong>最後一次敲門</strong><br>'+esc(DATA.events.final_knock.text)+'</div><div class="c2-summary"><div><strong>能確定的事</strong><br>許月琴曾住201；租冊的1955年5月搬離日期不可靠；她在6月17日仍在附近；許秋蘭是1958年來敲門尋物的人。</div><div><strong>不能確定的事</strong><br>許月琴最後去了哪裡、密封信內容、她是否知道信件內容，以及當年陌生人的確切身分。</div></div>';
+ if(kind==='correct')html+='<div class="c2-event"><strong>最後一次敲門</strong><br>'+esc(DATA.events.final_knock.text)+'</div><div class="c2-summary"><div><strong>留下來的紀錄</strong><br>許月琴曾住201；租冊上的1955年5月搬離日期與6月17日的賒帳紀錄衝突；1958年的敲門女子是前來尋找姐姐遺物的許秋蘭。</div><div><strong>仍然空著的位置</strong><br>許月琴最後去了哪裡、密封信裡寫了什麼、她是否知道信中內容，以及當年帶她離開的人究竟是誰。</div></div>';
  html+='<div class="c2-home-row"><button id="c2Home" class="primary" type="button">回到標題</button><button id="c2Again" class="secondary" type="button">重新調查</button></div></article>';
  $('v2RainMain').innerHTML=html;
  $('c2Home').onclick=function(){location.reload()};$('c2Again').onclick=function(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}s=fresh();save();render()};

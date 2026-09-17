@@ -6,7 +6,7 @@ window.CASE2_RAIN_CANON={
   title:'雨夜敲門',
   year:1958,
   city:'臺北',
-  protagonistMethod:'把傳聞、原話、物證與時間分開核對；不知道的資訊不以猜測補足。',
+  protagonistMethod:'雨聲裡留下的每一件東西，都有自己的時間。',
 
   residents:{
     '101':'陳福來','102':'黃春枝','103':'李水旺','104':'張玉蘭','105':'王金發','106':'劉淑貞',
@@ -57,30 +57,30 @@ window.CASE2_RAIN_CANON={
   },
 
   actions:{
-    inspect_footprints:{gain:'e01',text:'門外水泥地留下數枚濕腳印，最後一枚停在門檻前。你先記錄鞋底輪廓與方向，不替它指定主人。'},
+    inspect_footprints:{gain:'e01',text:'門外的水泥地還泛著濕光。幾枚窄鞋底的腳印沿走廊來到201門前，最後一枚正停在門檻外，之後便斷了。'},
     inspect_yue_mark:{gain:'e02',text:'門框上有一道很舊的「月」字刻痕。它比林秀雲入住的時間早得多。'},
     ask_lin:{know:'lin',text:'林秀雲說，第二晚從門縫看見一名全身濕透的年輕女子。她問「妳找誰」，對方沒有回答。'},
-    check_rain_path:{text:'屋簷與排水方向不足以自然形成整串腳印。這只能證明腳印不是單純由雨水滴落形成。'},
+    check_rain_path:{text:'你沿著屋簷和排水溝看了一遍。雨水往欄杆外側流，門前那串腳印卻是從走廊另一頭一步步靠近201，方向完全不同。'},
     ask_chen:{know:'chen',set:{chen_mentions_xu:true},text:'陳太太記得201以前住過一名姓許的年輕女子，名字中似乎有個「月」字。'},
-    inspect_board:{gain:'e04',text:'住戶板只是1958年的現況：201寫的是林秀雲。要找前住戶，必須看舊租冊。'},
-    inspect_ledger:{gain:'e03',text:'租冊證明許月琴曾住201；最可疑的是「民國44年5月搬離」的墨色與筆跡不同。'},
-    confront_landlord:{requires:['e03'],know:'landlord',text:'房東仍說許月琴「就是那年搬走」。他沒有提出其他文件證明5月日期。'},
-    ask_shopkeeper:{know:'shopkeeper',text:'吳添福很確定：1955年6月的一個雨夜，許月琴仍來店裡買日用品，而且一直往後看。'},
-    inspect_yonghe_ledger:{gain:'e05',set:{timeline_conflict:true},text:'6月17日的許月琴紀錄晚於租冊的5月搬離。這不是印象，而是直接的時間矛盾。'},
+    inspect_board:{gain:'e04',text:'住戶板上的紙卡都很新，201寫著林秀雲。板子旁邊的舊租冊卻厚得多，邊角已經磨黑，顯然記過好幾輪房客。'},
+    inspect_ledger:{gain:'e03',text:'201那一欄先寫著「許月琴，民國42年入住」。後面的「民國44年5月搬離」顏色更深，字勢也不同，像是隔了一段時間才補上去。'},
+    confront_landlord:{requires:['e03'],know:'landlord',text:'你把租冊翻到201那頁。黃先生只瞥了一眼便說：「就是那年搬走的。」問到五月是哪一天，他停了一會，只說記不得了。'},
+    ask_shopkeeper:{know:'shopkeeper',text:'吳添福把眼鏡往上推了推，說那年六月有個雨夜，許月琴來買洋火、棉線和肥皂。她付帳前幾次回頭看店外，像是在等人，又像怕有人跟上來。'},
+    inspect_yonghe_ledger:{gain:'e05',set:{timeline_conflict:true},text:'賒帳簿翻到民國44年6月17日，許月琴的名字還在。洋火一盒、棉線一卷、肥皂一塊——三樣尋常日用品，日期卻比租冊上的「五月搬離」晚了整整一個多月。'},
     staircase_event:{once:true,set:{staircase_event_seen:true},text:'樓梯間窗邊站著一名濕透的女子。樓下忽然傳來門聲；你回頭再看，她已不見，只剩水跡往樓上延伸。'},
     inspect_sisters_photo:{gain:'e06',text:'照片背面寫著「月琴、秋蘭」。兩姐妹外貌相近。'},
-    inspect_wende_note:{gain:'e07',know:'wende',text:'紙條只說「她」與「樓上」，沒有姓名。你不能把代詞自行補成許月琴。'},
+    inspect_wende_note:{gain:'e07',know:'wende',text:'紙條被壓在抽屜最裡面，只有幾個字：「若她回來，東西還在樓上。別交給別人。——文德」沒有日期，也沒有寫出那個「她」是誰。'},
     find_rooftop_key:{gain:'e08',text:'抽屜夾層裡找到一把標示「屋頂」的舊鑰匙。'},
     open_storage:{requires:['e08'],gain:'e09',text:'鑰匙打開屋頂儲藏間。木箱後方放著一只老舊帆布提袋，袋面縫著「許月琴」的姓名標籤。'},
-    inspect_bag:{requires:['e09'],text:'提袋上清楚縫著「許月琴」。你先確認所有權，再查看袋內物品。'},
-    inspect_bag_contents:{requires:['e09'],gain:'e10',text:'袋內大多是普通生活用品。沒有任何一件物品本身能證明她參與政治活動。'},
-    inspect_postcard:{requires:['e10'],gain:'e11',text:'未寄出的明信片沒有地址、郵票或郵戳。上面只有一句給秋蘭的話。'},
-    inspect_sealed_letter:{requires:['e10'],gain:'e12',set:{final_ready:true},text:'信封仍完整封口。你不知道裡面寫什麼，也不能用未知內容支持任何結論。'}
+    inspect_bag:{requires:['e09'],text:'帆布已經發硬，提把磨得起毛。靠近袋口的布條上仍能看見三個繡字：許月琴。'},
+    inspect_bag_contents:{requires:['e09'],gain:'e10',text:'袋裡沒有什麼神祕物件：一本工作手冊、幾封家書、針線、梳子、錢包、普通讀物，還有那張姐妹合照。東西收得很整齊，像是主人原本還打算再來拿。'},
+    inspect_postcard:{requires:['e10'],gain:'e11',text:'一張明信片夾在工作手冊後面，沒有地址，也沒有貼郵票。背面只寫著：「秋蘭：如果我很久沒有回家，不要來找我。月琴。」'},
+    inspect_sealed_letter:{requires:['e10'],gain:'e12',set:{final_ready:true},text:'袋底還壓著一封泛黃的信。封口膠仍完整，表面沒有地址、郵戳，也沒有任何特別標記。你翻看正反兩面，信封始終沒有被拆開過。'}
   },
 
   events:{
-    qiulan_reveal:{trigger:{all:['e06','e09','e11'],flag:'final_ready'},text:'回到201後，再次響起三下、停頓、兩下的敲門聲。這次門外女子沒有離開。她承認自己是許秋蘭，為尋找姐姐留下的物品而來。',set:{qiulan_revealed:true},know:'qiulan'},
-    final_knock:{after:'correct_final_deduction',text:'許秋蘭離開後，門外再次響起相同敲門聲。開門無人；回到客廳時，新的濕腳印已由門口延伸到桌前，許月琴的照片被翻到正面。'}
+    qiulan_reveal:{trigger:{all:['e06','e09','e11'],flag:'final_ready'},text:'你把帆布袋帶回201不久，門外又響起三下、停一拍、再兩下。這次女子沒有躲開。她看見袋上的名字，臉色一下變了：「那是我姐姐的。」她說自己叫許秋蘭，幾天前收到一張沒有署名的紙條，只寫著姐姐的東西還留在舊住處。',set:{qiulan_revealed:true},know:'qiulan'},
+    final_knock:{after:'correct_final_deduction',text:'許秋蘭抱著帆布袋離開後，雨聲又填滿走廊。過了一會，門外忽然傳來三下、停一拍、再兩下。你立刻開門——走廊空著。回到客廳時，門檻內多出一串剛留下的濕腳印，一路延伸到桌前；原本扣著的姐妹合照，不知何時已翻到正面。'}
   },
 
   deductions:[
@@ -88,27 +88,27 @@ window.CASE2_RAIN_CANON={
       {id:'yueqin',text:'許月琴'},
       {id:'qiulan',text:'許秋蘭'},
       {id:'ghost',text:'無法判斷是否為人'}
-    ],explain:'姐妹合照與許秋蘭本人證詞可以辨認來訪者；相似外貌不能在本人承認之前當作定論。'},
+    ],explain:'照片裡的秋蘭和門外女子極為相像，而她本人也說出了來此處的原因。前三晚的敲門者至此有了身分。'},
     {id:'moveout',q:'許月琴是否真的在租冊記載的1955年5月搬走？',requires:['e03','e05'],correct:'no',options:[
       {id:'yes',text:'是'},
       {id:'no',text:'否'},
       {id:'unknown',text:'無法判斷'}
-    ],explain:'永和行6月17日帳簿直接晚於5月搬離紀錄，因此至少可確定租冊日期不可信。'},
+    ],explain:'租冊寫五月搬離，永和行卻在六月十七日仍記著她的名字與賒購品項。兩筆日期無法同時成立。'},
     {id:'cause',q:'目前證據能否證明許月琴因為什麼事情失蹤？',requires:['e07','e11','e12'],correct:'unknown',options:[
       {id:'politics',text:'參與地下政治組織'},
       {id:'intel',text:'替人傳遞情報'},
       {id:'landlord',text:'被房東陷害'},
       {id:'unknown',text:'不能確定'}
-    ],explain:'信件未拆封，沒有證據證明許月琴知道內容；失蹤與被詢問也不能反推有罪。'}
+    ],explain:'紙條、明信片和密封信都留下了不安的痕跡，卻沒有交代她最後遭遇了什麼。那封信甚至至今未拆。'}
   ],
 
   ending:{
     correctTitle:'她曾經存在',
-    correctText:'你沒有解開許月琴最後去了哪裡，但證明了「1955年5月搬走」不是可靠紀錄，並把她留下的物品交回家人。',
+    correctText:'你仍不知道許月琴最後去了哪裡。能留下來的，是她確實住過201、六月仍在附近生活，以及那只被藏了三年的帆布袋。秋蘭把姐姐留下的東西抱在懷裡，第一次有人把這段往事完整地說出她的名字。',
     weakTitle:'雨夜怪談',
-    weakText:'若玩家在證據不足時直接把事件歸為靈異，許月琴的名字仍可能再次被埋掉。',
+    weakText:'你把一切都歸進雨夜怪談。住戶很快有了新的版本：有人說是女鬼，有人說是索命。至於許月琴曾經住過201、留下過什麼，反而沒有人再提。',
     falseAccusationTitle:'錯誤的名字',
-    falseAccusationText:'若玩家在沒有直接證據時指控某人造成許月琴失蹤，案件將再次產生一個沒有證據支持的結論。'
+    falseAccusationText:'你把一個人的名字寫進結論，卻沒能把那個名字和許月琴的失蹤接起來。新的說法很快蓋過舊的空白，而真正發生過什麼，仍舊沒有人知道。'
   }
 };
 })();
