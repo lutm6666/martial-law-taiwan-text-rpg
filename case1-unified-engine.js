@@ -24,10 +24,10 @@ var art={
  failed:'assets/case1/failed.webp?v=9'
 };
 var visualMeta={
- tea:{alt:'1958 年臺北茶行・傍晚',before:'先看看桌上的冊子與周遭。',after:'你注意到冊子攤開在桌面，缺頁集中在同一本裝訂中；桌上沒有明顯翻找或爭搶留下的凌亂。',observed:['你把視線從阿川移到桌面。訪談冊攤開著，缺頁集中在同一段裝訂位置，桌上的紙張與茶具則沒有被匆忙翻動的跡象。','這些只能先說明「紙從冊子裡少了」，還不能說明是誰拿走、又為什麼拿走。']},
- print:{alt:'1958 年臺北印刷行・午後',before:'先看看帳簿、紙堆與工作區。',after:'你看見工作區裡帳簿、鉛字與廢紙各有固定位置；紙張確實會經過整理與集中。',observed:['你沿著工作桌看了一圈。帳簿放在一側，鉛字盒與紙堆分開，牆邊則有整理過的廢紙與麻繩。','這裡的紙不是靜止不動的物件，而是會依照日常工作流程被搬動、集中，再交出去。']},
- market:{alt:'1958 年臺北市場・白天',before:'先看看攤位、包貨紙與人流。',after:'你看見紙張在市場裡被反覆拿來墊箱、包貨；同一張紙很容易在不同攤位之間轉手。',observed:['你沒有先追著議論聲走，而是看攤位怎麼使用紙。墊箱、包花生、包雜貨的紙來源不一，很多都已經被折過或撕過。','如果失頁真的到了市場，它最可能先留下的是實物痕跡，而不是一段完整故事。']},
- bookstall:{alt:'1958 年臺北舊書攤・下午',before:'先看看書堆、夾紙與櫃檯。',after:'你發現老闆會把仍能使用的零散紙張夾進舊書；書脊與頁縫因此值得逐本查看。',observed:['你掃過書攤。幾本工具書明顯比旁邊厚，書頁之間也夾著零散紙片，像是老闆隨手保存可再利用的紙。','這裡真正值得找的不是「可疑的人」，而是哪一本書裡夾著能和原冊缺口直接比對的紙。']}
+ tea:{alt:'1958 年臺北茶行・傍晚',before:'先看看桌上的冊子與周遭。',after:'你注意到冊子攤開在桌面，17、21、22 頁缺失，裝訂處留下連續的斜裂口。',observed:['你把視線從阿川移到桌面。訪談冊攤開著，17、21、22 頁不見了，三處裂口的方向相近。','你把頁碼和裂口形狀記下，接下來可以問阿川冊子最後帶到哪裡，也可以對照缺口前後的內容。']},
+ print:{alt:'1958 年臺北印刷行・午後',before:'先看看帳簿、紙堆與工作區。',after:'你看見工作區裡帳簿、鉛字與廢紙各有固定位置，牆邊還留著綁紙用的麻繩。',observed:['你沿著工作桌看了一圈。帳簿放在一側，鉛字盒與紙堆分開，牆邊堆著整理過的廢紙與麻繩。','後間紙捆之間空了一塊，像是最近才有一捆被搬走。']},
+ market:{alt:'1958 年臺北市場・白天',before:'先看看攤位、包貨紙與人流。',after:'你看見紙張在市場裡被反覆拿來墊箱、包貨，不少紙已沾上油漬或折痕。',observed:['你沿著攤位慢慢看。墊箱、包花生、包雜貨的紙來源不一，很多已經被折過或撕過。','攤販拿紙時通常不特別分來源，幾張寫過字的紙也混在其中。']},
+ bookstall:{alt:'1958 年臺北舊書攤・下午',before:'先看看書堆、夾紙與櫃檯。',after:'你發現幾本工具書比旁邊厚，頁縫裡還露出零散紙角。',observed:['你掃過書攤。幾本工具書明顯比旁邊厚，書頁之間也夾著零散紙片。','櫃檯旁還放著一疊待整理的舊紙，老闆似乎習慣把還能用的紙先留下。']}
 };
 
 var evidence={
@@ -48,10 +48,10 @@ var people={
  bookseller:{name:'舊書攤老闆',desc:'會把仍可使用、寫過字的紙暫時夾進舊書保存。'}
 };
 var locations={
- tea:{name:'茶行',sub:'案件起點',intro:['茶行快打烊了。阿川把一本缺了三頁的訪談冊推到你面前。','你從小跟著家中長輩接觸民俗與科儀，早就知道「大家都這樣說」和「事情真的如此」不是同一件事。這次也一樣：先看痕跡，再問人。'],actions:['tea_index','tea_ask','tea_compare']},
- print:{name:'印刷行',sub:'油墨與紙堆',intro:['機器剛停，空氣裡仍有油墨味。周老闆正在整理鉛字與紙張。','你沒有把他的緊張直接記成可疑，只先找日期、流程與最後接觸紙張的人。'],actions:['print_ledger','print_zhou','print_waste']},
- market:{name:'市場',sub:'物流與傳聞',intro:['攤販、搬貨與叫賣聲混在一起。紙在這裡可能被拿來墊箱、包貨，也可能再被轉手。','幾個人正談一名穿制服、四處問地址的人。你把「親眼看到」和「後來猜的目的」分開記下。'],actions:['market_stalls','market_runner','market_postman']},
- bookstall:{name:'舊書攤',sub:'紙頁之間',intro:['騎樓深處堆著一排排舊書。幾本工具書的書頁已經發脆。','你已追到紙張的實際流向；現在要找的不是最可疑的人，而是能和原冊直接比對的紙。'],actions:['book_owner','book_search','book_stub','book_pages']}
+ tea:{name:'茶行',sub:'案件起點',intro:['茶行快打烊了。阿川把一本缺了三頁的訪談冊推到你面前。','他把杯子往旁邊挪開，騰出桌面讓你仔細看冊子。'],actions:['tea_index','tea_ask','tea_compare']},
+ print:{name:'印刷行',sub:'油墨與紙堆',intro:['機器剛停，空氣裡仍有油墨味。周老闆正在整理鉛字與紙張。','你走近櫃檯時，他手上的動作慢了一下，目光落在你帶來的冊子上。'],actions:['print_ledger','print_zhou','print_waste']},
+ market:{name:'市場',sub:'物流與傳聞',intro:['攤販、搬貨與叫賣聲混在一起。紙在這裡被拿來墊箱、包貨，也常跟著貨物轉手。','不遠處有人提起一名穿制服、四處問地址的人，話頭很快被旁人接了過去。'],actions:['market_stalls','market_runner','market_postman']},
+ bookstall:{name:'舊書攤',sub:'紙頁之間',intro:['騎樓深處堆著一排排舊書。幾本工具書的書頁已經發脆。','老闆蹲在櫃檯後整理一疊舊紙，旁邊幾本工具書塞得微微鼓起。'],actions:['book_owner','book_search','book_stub','book_pages']}
 };
 
 var prologue=[
@@ -112,9 +112,9 @@ function completeAction(id,lines){if(!done(id))state.done.push(id);state.flags.a
 function runAction(id){var a=actions[id],res;if(done(id)&&state.flags.actionResults[id]&&!a.dynamic){res={complete:true,lines:state.flags.actionResults[id]}}else{res=a.run();if(res.complete!==false)completeAction(id,res.lines)}state.flags.lastResult={location:state.location,lines:res.lines};save();renderScene();renderFocus()}
 
 var actions={
- tea_index:{label:'檢查缺頁位置',hint:'先確定少了什麼',run:function(){gain('missing_index');return{lines:['你把冊子攤平。第 17、21、22 頁不在，裝訂斷口連成同一條斜線。','這不像有人逐頁挑選，更像幾張紙一起被抽離。你先記頁碼，不先猜拿走紙的人。']}}},
- tea_ask:{label:'問阿川最後在哪裡用過冊子',hint:'追最後可確認地點',run:function(){know('achuan');unlock('print');return{lines:['阿川說前一晚曾把冊子帶到周老闆的印刷行排字，隔天也回去歸還借用的鉛字盒。','你把「印刷行」標進地圖。先追紙真正出現過的地方，而不是追最容易讓人害怕的猜測。']}}},
- tea_compare:{label:'比對缺口前後內容',hint:'確認失頁原本屬於哪段訪談',run:function(){return{lines:['第 16 頁還在談工廠夜班，第 18 頁卻已換了話題。','你記下：失頁至少有一部分原本與夜班訪談相連。內容能縮小範圍，但還不能證明紙去了哪裡。']}}},
+ tea_index:{label:'檢查缺頁位置',hint:'先確定少了什麼',run:function(){gain('missing_index');return{lines:['你把冊子攤平。第 17、21、22 頁不在，裝訂斷口連成同一條斜線。','三頁的裂口方向相近，像是在相近時間被一起扯離。你把頁碼和裂口形狀記下。']}}},
+ tea_ask:{label:'問阿川最後在哪裡用過冊子',hint:'追最後可確認地點',run:function(){know('achuan');unlock('print');return{lines:['阿川說前一晚曾把冊子帶到周老闆的印刷行排字，隔天也回去歸還借用的鉛字盒。','你把「印刷行」標進地圖，準備去問周老闆那晚的情況。']}}},
+ tea_compare:{label:'比對缺口前後內容',hint:'確認失頁原本屬於哪段訪談',run:function(){return{lines:['第 16 頁還在談工廠夜班，第 18 頁卻已換了話題。','你記下：失頁至少有一部分原本與夜班訪談相連。三頁原本的內容範圍因此縮小了一些。']}}},
  print_ledger:{label:'查看借物簿',hint:'用帳目固定日期',run:function(){gain('print_ledger');return{lines:['借物簿記著：十二日借出鉛字盒，十三日歸還。前後欄位、流水號與墨色連續。','這筆帳比「我記得」更穩。你把十三日這個時間點留著，準備追問周老闆。']}}},
  print_zhou:{label:'用帳目追問周老闆',hint:'分清隱瞞與惡意',requires:['print_ledger'],run:function(){know('zhou');gain('waste_route');gain('zhou_motive');unlock('market');return{lines:['你把借物簿轉向周老闆。他沉默後承認：十三日收桌時，一捆廢紙照平常流程交給市場跑腿少年。','真正讓他吞吞吐吐的不是「有人偷紙」，而是那些紙上寫著人名。他怕承認紙從自己店裡流出去，會替生意與自己惹麻煩。','市場被標進地圖。']}}},
  print_waste:{label:'檢查廢紙處理方式',hint:'確認這是不是平常流程',dynamic:true,run:function(){return{lines:has('waste_route')?['後間少了一捆紙，牆邊留下的麻繩與竹籃都顯示這不是第一次往市場送廢紙。','你得到的是一條日常物流，而不是一次神祕交接。']:['後間紙捆之間空了一塊，但周老闆現在只肯說「處理掉了」。','空位值得記住，卻還不足以替它指定去向。先用帳目把他那一天的流程固定下來。'],complete:has('waste_route')}}},
