@@ -79,10 +79,10 @@ function doAction(id){
 }
 
 function phaseLabel(){
- if(flag('qiulan_revealed'))return '真相核對';
- if(flag('timeline_conflict'))return '時間線破口';
- if(has('e03'))return '舊紀錄';
- return '雨夜現場';
+ if(flag('qiulan_revealed'))return '門外的人';
+ if(flag('timeline_conflict'))return '六月十七';
+ if(has('e03'))return '租冊上的五月';
+ return '第三個雨夜';
 }
 
 function renderHeader(){return '<article class="c2-head card"><h2>'+esc(s.name)+'｜案件二・雨夜敲門</h2><div class="c2-meta">1958・臺北</div><span class="c2-kicker">'+esc(phaseLabel())+'</span></article>'}
@@ -136,9 +136,9 @@ function renderMap(){
 
 function evidenceImage(e){return '<img src="'+esc(e.image)+'" alt="'+esc(e.name)+'" onerror="this.style.display=\'none\'">'}
 function renderRecords(){
- var html=renderHeader()+'<article class="card c2-body"><p class="c2-kicker">案件紀錄</p><h2>正式證物</h2>';
+ var html=renderHeader()+'<article class="card c2-body"><p class="c2-kicker">案件紀錄</p><h2>手上的紀錄</h2>';
  if(!s.evidence.length)html+='<p class="note">目前尚未取得證物。</p>';
- s.evidence.forEach(function(id){var e=DATA.evidence[id];html+='<div class="c2-record"><strong>'+esc(id.toUpperCase()+'｜'+e.name)+'</strong><small>'+esc(e.type+'｜'+e.desc)+'</small>'+evidenceImage(e)+'<div class="c2-proof">目前可知：'+esc((e.proof||[]).join('；')||'—')+'<br>仍待釐清：'+esc((e.notProof||[]).join('；')||'—')+'</div></div>'});
+ s.evidence.forEach(function(id){var e=DATA.evidence[id];html+='<div class="c2-record"><strong>'+esc(id.toUpperCase()+'｜'+e.name)+'</strong><small>'+esc(e.type+'｜'+e.desc)+'</small>'+evidenceImage(e)+'</div>'});
  if(s.people.length){html+='<h2 style="margin-top:18px">人物紀錄</h2>';s.people.forEach(function(id){var p=DATA.people[id];if(p)html+='<div class="c2-record"><strong>'+esc(p.name)+'</strong><small>'+esc(p.desc)+'</small></div>'})}
  html+='</article>'+navHtml('records');$('v2RainMain').innerHTML=html;bindCommon();
 }
