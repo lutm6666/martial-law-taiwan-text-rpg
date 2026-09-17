@@ -43,6 +43,40 @@ function loadScript(src,next){
 }
 function flushLoaded(){loaded=true;loading=false;failed=false;rainLoadError='';settle(true)}
 
+function ensureSharedLightbox(){
+ if($('mistImageLightbox')){window.__case2LightboxRequested=true;return}
+ if(window.__case2LightboxRequested)return;
+ window.__case2LightboxRequested=true;
+ loadScript('image-lightbox.js?v=1',function(){});
+}
+function patchCase1ObservationUI(){
+ var game=$('gameScreen'),img=$('sceneImage'),grid=$('actionGrid'),note=$('visualNote'),old=$('case1ObserveSceneBtn');
+ if(!img||!grid)return;
+ if(typeof img.onclick==='function'){
+  img.__case1ObserveHandler=img.onclick;
+  img.onclick=null;
+ }
+ if(!game||game.classList.contains('hidden')||typeof img.__case1ObserveHandler!=='function'||!img.getAttribute('src')){
+  if(old)old.remove();
+  return;
+ }
+ if(note&&note.textContent.indexOf('點擊圖片觀察｜')===0){
+  var hint=note.textContent.slice('點擊圖片觀察｜'.length);
+  if(hint)img.__case1ObserveHint=hint;
+  if(note.textContent!=='點擊圖片可放大')note.textContent='點擊圖片可放大';
+ }
+ var seen=!!(note&&note.textContent.indexOf('已觀察｜')===0),button=old;
+ if(!button){
+  button=document.createElement('button');
+  button.id='case1ObserveSceneBtn';button.type='button';button.className='action-btn';
+  button.onclick=function(){var fn=img.__case1ObserveHandler;if(typeof fn==='function')fn.call(img)};
+  grid.insertBefore(button,grid.firstChild);
+ }
+ var detail=seen?'已觀察，可再次查看':(img.__case1ObserveHint||'查看場景細節');
+ var html='<strong>觀察現場</strong><small>'+detail+'</small>';
+ if(button.innerHTML!==html)button.innerHTML=html;
+}
+
 function loadRainRuntime(done){
  if(loaded&&window.Case2RainCanon){done(true);return}
  if(failed){done(false);return}
@@ -101,6 +135,8 @@ function patchEntryPoints(){
 }
 
 installProgressiveVisibility();
+ensureSharedLightbox();
 patchEntryPoints();
-if(window.MutationObserver){new MutationObserver(function(){patchEntryPoints()}).observe(document.documentElement,{childList:true,subtree:true})}
+patchCase1ObservationUI();
+if(window.MutationObserver){new MutationObserver(function(){patchEntryPoints();patchCase1ObservationUI()}).observe(document.documentElement,{childList:true,subtree:true})}
 })();
