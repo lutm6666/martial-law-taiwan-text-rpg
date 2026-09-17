@@ -22,7 +22,7 @@ function normalizeRainSave(){
  if(!v.flags||typeof v.flags!=='object'||Array.isArray(v.flags)){v.flags={};changed=true}
  if(!v.done||typeof v.done!=='object'||Array.isArray(v.done)){v.done={};changed=true}
  if(!Array.isArray(v.answers)){v.answers=[];changed=true}
- if(typeof v.loc!=='string'){v.loc='home';changed=true}
+ if(['home','corridor','entrance','yonghe','stairs','spare','rooftop'].indexOf(v.loc)<0){v.loc='home';changed=true}
  if(['investigate','deduction','done'].indexOf(v.phase)<0){v.phase=v.finished?'done':'investigate';changed=true}
  if(typeof v.deduction!=='number'||!isFinite(v.deduction)||v.deduction<0){v.deduction=0;changed=true}
  if(typeof v.focus!=='number'||!isFinite(v.focus)||v.focus<0||v.focus>4){v.focus=4;changed=true}
