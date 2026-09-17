@@ -134,7 +134,7 @@ function renderMap(){
  var d=$('c2StartDeduction');if(d)d.onclick=function(){s.phase='deduction';s.deduction=0;s.feedback='';save();render()};
 }
 
-function evidenceImage(e){return '<img src="'+esc(e.image)+'" alt="'+esc(e.name)+'" onerror="this.style.display=\'none\'">'}
+function evidenceImage(e){return '<img src="'+esc(e.image)+'" alt="'+esc(e.name)+'" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">'}
 function renderRecords(){
  var html=renderHeader()+'<article class="card c2-body"><p class="c2-kicker">案件紀錄</p><h2>手上的紀錄</h2>';
  if(!s.evidence.length)html+='<p class="note">目前尚未取得證物。</p>';
