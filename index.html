@@ -27,20 +27,20 @@
 </head>
 <body>
 <main class="app">
-<header class="topbar"><div><p class="eyebrow">HISTORICAL INVESTIGATION</p><h1>霧中的臺灣</h1></div><div style="text-align:right"><span id="caseChip" class="chip">CASE 01・失落的三頁</span><div class="build">BUILD 6.0・UNIFIED</div></div></header>
+<header class="topbar"><div><p class="eyebrow">HISTORICAL INVESTIGATION</p><h1>霧中的臺灣</h1></div><div style="text-align:right"><span id="caseChip" class="chip">CASE 01・失落的三頁</span><div class="build">BUILD 6.1・DIEGETIC</div></div></header>
 
 <section id="startScreen">
- <article class="start-card card paper"><p class="eyebrow" style="color:#715c34">1958・臺北</p><h2>同一位調查者，兩起案件</h2><p>從第一案開始，你扮演的就是《雨夜敲門》的同一位主角。遊戲不再提供職業選擇，也不再因職業切換敘述。</p><div class="protagonist-card"><strong>主角背景｜民俗家學調查者</strong><p>家中長輩熟悉地方民俗與科儀。你能辨識符式、禁忌與儀式脈絡，但不把家學本身當作案件證明；你的習慣是把傳聞、原話、物證與時間分開核對。</p></div></article>
- <label class="field"><span>主角姓名</span><input id="nameInput" maxlength="12" placeholder="留白則使用：林默"></label>
- <button id="startBtn" type="button" class="primary">開始案件一：《失落的三頁》</button>
- <button id="loadBtn" type="button" class="secondary">繼續案件一</button>
+ <article class="start-card card paper"><p class="eyebrow" style="color:#715c34">1958・臺北</p><h2>阿川的來信</h2><p>傍晚，你收到舊識阿川捎來的口信。他正在整理一批生活訪談，卻發現冊子少了三頁。事情看似只是幾張紙不見了，但紙上記著人名，而這個年代，人們對名字與來路格外謹慎。</p><div class="protagonist-card"><strong>你從小熟悉民俗與科儀</strong><p>家中長輩教你辨識符式、禁忌與儀式脈絡，也一再提醒你：傳聞不能代替證據。遇到說不清的事，你習慣先記原話、核對時間，再看物證。</p></div></article>
+ <label class="field"><span>你的名字</span><input id="nameInput" maxlength="12" placeholder="留白則使用：林默"></label>
+ <button id="startBtn" type="button" class="primary">前往茶行</button>
+ <button id="loadBtn" type="button" class="secondary">繼續調查</button>
  <p id="bootStatus" class="status-line"></p>
 </section>
 
 <section id="prologueScreen" class="hidden prologue-wrap"><article class="prologue-card card"><p id="prologueDate" class="date-line"></p><h2 id="prologueTitle"></h2><div id="prologueText" class="prologue-text"></div><button id="prologueNext" type="button" class="prologue-next">繼續</button><div id="prologueCounter" class="prologue-counter"></div></article></section>
 
 <section id="gameScreen" class="hidden">
- <div id="tutorialBanner" class="tutorial-banner">固定主角方法：先觀察，再詢問；把家學提供的脈絡與案件真正能證明的部分分開。</div>
+ <div id="tutorialBanner" class="tutorial-banner">你先觀察，再詢問；把家學提供的脈絡與案件真正能證明的部分分開。</div>
  <div class="case-status card"><div><h2 id="playerLabel">—</h2><div class="case-meta"><span>案件一・失落的三頁</span><span id="focusLabel">推理專注</span></div></div><div id="focusDots" class="confidence"></div></div>
  <section id="scenePanel"><p class="screen-title">現場調查</p><figure id="sceneVisual" class="scene-visual card"><img id="sceneImage" alt=""><figcaption id="visualNote" class="visual-note"></figcaption></figure><article class="scene card"><div class="scene-head"><small id="locationSub"></small><h2 id="locationName"></h2></div><div id="sceneBody" class="scene-body"></div></article><div id="actionGrid" class="action-grid"></div></section>
  <section id="mapPanel" class="hidden"><p class="screen-title">調查地圖</p><div class="section-card card"><h3>前往地點</h3><div id="mapGrid" class="map-grid"></div></div></section>
@@ -50,12 +50,13 @@
  <nav class="tabs"><button class="tab-btn active" data-tab="scene">調查</button><button class="tab-btn" data-tab="map">地圖</button><button class="tab-btn" data-tab="record">紀錄</button><button class="tab-btn" data-tab="deduction">推理</button></nav>
 </section>
 
-<section id="completeScreen" class="hidden"><article class="case-complete card paper"><p class="eyebrow" style="color:#715c34">CASE CLOSED</p><h2>失落的三頁</h2><div id="completeText"></div><div class="summary-list"><div class="summary-item"><strong>調查方法</strong><br>傳聞與緊張反應只能提供方向；結論必須回到能互相核對的紙張、帳目、證詞與流程。</div><div class="summary-item"><strong>主角背景</strong><br>你的家學讓你熟悉「傳統如何被解讀與轉述」，但真正帶進案件二的核心能力，是不把解釋放在證據前面。</div><div class="summary-item"><strong>下一案</strong><br>《雨夜敲門》。三個雨夜看似是同一件怪事，但第一步仍然是先證明它們是否真的有同一個原因。</div></div><button id="nextCaseBtn" class="primary">開始案件二：《雨夜敲門》</button><button id="homeBtn" class="secondary">回到標題</button></article></section>
+<section id="completeScreen" class="hidden"><article class="case-complete card paper"><p class="eyebrow" style="color:#715c34">CASE CLOSED</p><h2>失落的三頁</h2><div id="completeText"></div><div class="summary-list"><div class="summary-item"><strong>調查方法</strong><br>傳聞與緊張反應只能提供方向；結論必須回到能互相核對的紙張、帳目、證詞與流程。</div><div class="summary-item"><strong>你帶走的習慣</strong><br>你的家學讓你熟悉「傳統如何被解讀與轉述」，但真正帶進下一次調查的，是不把解釋放在證據前面。</div><div class="summary-item"><strong>下一案</strong><br>《雨夜敲門》。三個雨夜看似是同一件怪事，但第一步仍然是先證明它們是否真的有同一個原因。</div></div><button id="nextCaseBtn" class="primary">開始案件二：《雨夜敲門》</button><button id="homeBtn" class="secondary">回到標題</button></article></section>
 
 <section id="failScreen" class="hidden"><article class="fail-card card"><div class="fail-visual"><img id="failImage" alt="案件失敗後的夜間茶行"></div><p class="eyebrow">CASE FAILED</p><h2>推論失去可信度</h2><p>你把尚未被證明的部分寫進了結論，案件中的人開始停止提供資訊。</p><p>家學教過你很多解釋事物的方法，但它同樣提醒你：沒有證據支撐的判斷，不會因為說得篤定就變成事實。</p><p id="failDetail" class="note"></p><button id="retryBtn" class="primary">重新調查案件一</button><button id="failHomeBtn" class="secondary">回到標題</button></article></section>
 </main>
 <div id="toast" class="toast"></div>
 <script src="case1-unified-engine.js?v=1"></script>
 <script src="case2-engine.js?v=15"></script>
+<script src="start-screen-hotfix.js?v=1"></script>
 </body>
 </html>
