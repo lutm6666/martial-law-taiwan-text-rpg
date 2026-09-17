@@ -12,7 +12,25 @@ var waiting=[];
 var rainLoadError='';
 
 function parse(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(e){return null}}
-function hasRainSave(){var v=parse(RAIN_SAVE);return !!(v&&v.caseId===RAIN_CASE)}
+function normalizeRainSave(){
+ var v=parse(RAIN_SAVE);if(!v||v.caseId!==RAIN_CASE)return v;
+ var changed=false;
+ function set(k,val){if(v[k]===undefined||v[k]===null){v[k]=val;changed=true}}
+ if(!v.visited||typeof v.visited!=='object'||Array.isArray(v.visited)){v.visited={home:true};changed=true}
+ if(!Array.isArray(v.evidence)){v.evidence=[];changed=true}
+ if(!Array.isArray(v.people)){v.people=[];changed=true}
+ if(!v.flags||typeof v.flags!=='object'||Array.isArray(v.flags)){v.flags={};changed=true}
+ if(!v.done||typeof v.done!=='object'||Array.isArray(v.done)){v.done={};changed=true}
+ if(!Array.isArray(v.answers)){v.answers=[];changed=true}
+ if(typeof v.loc!=='string'){v.loc='home';changed=true}
+ if(['investigate','deduction','done'].indexOf(v.phase)<0){v.phase=v.finished?'done':'investigate';changed=true}
+ if(typeof v.deduction!=='number'||!isFinite(v.deduction)||v.deduction<0){v.deduction=0;changed=true}
+ if(typeof v.focus!=='number'||!isFinite(v.focus)||v.focus<0||v.focus>4){v.focus=4;changed=true}
+ set('feedback','');set('finished',false);set('ending',null);
+ if(changed){try{localStorage.setItem(RAIN_SAVE,JSON.stringify(v))}catch(e){}}
+ return v;
+}
+function hasRainSave(){var v=normalizeRainSave();return !!(v&&v.caseId===RAIN_CASE)}
 function setStatus(text){var status=$('bootStatus');if(status)status.textContent=text||''}
 function installProgressiveVisibility(){
  if($('case2ProgressiveVisibilityStyle'))return;
@@ -102,6 +120,7 @@ function loadRainRuntime(done){
 }
 
 function startRain(){
+ normalizeRainSave();
  var next=$('nextCaseBtn'),originalText=next&&next.textContent;
  if(next){next.disabled=true;next.textContent='讀取《雨夜敲門》…'}
  setStatus('');
