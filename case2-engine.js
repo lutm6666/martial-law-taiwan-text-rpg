@@ -14,6 +14,13 @@ var rainLoadError='';
 function parse(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(e){return null}}
 function hasRainSave(){var v=parse(RAIN_SAVE);return !!(v&&v.caseId===RAIN_CASE)}
 function setStatus(text){var status=$('bootStatus');if(status)status.textContent=text||''}
+function installProgressiveVisibility(){
+ if($('case2ProgressiveVisibilityStyle'))return;
+ var style=document.createElement('style');
+ style.id='case2ProgressiveVisibilityStyle';
+ style.textContent='.c2-btn:disabled:not(.done),.c2-map button:disabled{display:none!important}';
+ document.head.appendChild(style);
+}
 
 function settle(ok){
  var callbacks=waiting.slice();waiting.length=0;
@@ -93,6 +100,7 @@ function patchEntryPoints(){
  if(chip&&root&&!root.classList.contains('hidden')&&chip.textContent!=='CASE 02・雨夜敲門')chip.textContent='CASE 02・雨夜敲門';
 }
 
+installProgressiveVisibility();
 patchEntryPoints();
 if(window.MutationObserver){new MutationObserver(function(){patchEntryPoints()}).observe(document.documentElement,{childList:true,subtree:true})}
 })();
