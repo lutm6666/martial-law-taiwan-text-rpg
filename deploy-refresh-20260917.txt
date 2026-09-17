@@ -1,0 +1,1 @@
+Trigger GitHub Pages redeploy so the current main branch (fixed protagonist, no profession selection) is published.
