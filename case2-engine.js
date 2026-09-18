@@ -42,6 +42,29 @@ function installProgressiveVisibility(){
  style.textContent='.c2-btn:disabled:not(.done),.c2-map button:disabled{display:none!important}';
  document.head.appendChild(style);
 }
+function installCasePickerStyle(){
+ if($('casePickerStyle'))return;
+ var style=document.createElement('style');
+ style.id='casePickerStyle';
+ style.textContent='.case-picker{margin-top:14px;padding:14px;border:1px solid #3a3d33;border-radius:14px;background:#171914}.case-picker label{display:block;margin-bottom:8px;color:#aaa799;font-size:.75rem;letter-spacing:.08em}.case-picker-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.case-picker select{min-width:0;width:100%;border:1px solid #3b3e34;background:#181a16;color:#ece8dc;border-radius:12px;padding:12px 13px}.case-picker button{border:1px solid #8c7b50;background:#242318;color:#ece8dc;border-radius:12px;padding:12px 14px}.case-picker small{display:block;margin-top:8px;color:#858276;line-height:1.45}@media(max-width:420px){.case-picker-row{grid-template-columns:1fr}.case-picker button{width:100%}}';
+ document.head.appendChild(style);
+}
+function ensureCasePicker(){
+ var start=$('startScreen'),load=$('loadBtn'),old=$('casePicker');
+ if(!start||!load)return;
+ if(old)return;
+ installCasePickerStyle();
+ var box=document.createElement('div');
+ box.id='casePicker';box.className='case-picker';
+ box.innerHTML='<label for="casePickerSelect">案件選擇</label><div class="case-picker-row"><select id="casePickerSelect"><option value="case1">第一案｜失落的三頁</option><option value="case2">第二案｜雨夜敲門</option></select><button id="casePickerGo" type="button">進入案件</button></div><small>測試用入口；既有存檔仍依各案件原本規則讀取。</small>';
+ load.insertAdjacentElement('afterend',box);
+ var go=$('casePickerGo');
+ if(go)go.onclick=function(){
+  var select=$('casePickerSelect'),choice=select&&select.value;
+  if(choice==='case2'){startRain();return}
+  var first=$('startBtn');if(first)first.click();
+ };
+}
 
 function settle(ok){
  var callbacks=waiting.slice();waiting.length=0;
@@ -149,6 +172,7 @@ function patchEntryPoints(){
 }
 
 installProgressiveVisibility();
+ensureCasePicker();
 patchEntryPoints();
 patchCase1ObservationUI();
 if(window.MutationObserver){new MutationObserver(function(){patchEntryPoints();patchCase1ObservationUI()}).observe(document.documentElement,{childList:true,subtree:true})}
