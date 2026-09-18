@@ -32,7 +32,7 @@ var visualMeta={
 
 var evidence={
  missing_index:{name:'缺頁編號',type:'現場紀錄',desc:'第 17、21、22 頁遭抽離；殘留紙根的裂向近似，21、22 頁位置形成連續缺口。'},
- print_ledger:{name:'鉛字盒借用簿',type:'帳目',desc:'借物簿記載阿川十二日借出鉛字盒，十三日歸還；前後欄位與墨色連續。'},
+ print_ledger:{name:'借物簿',type:'帳目',desc:'借物簿記載阿川十二日借出鉛字盒，十三日歸還；前後欄位與墨色連續。'},
  waste_route:{name:'廢紙去向',type:'流程情報',desc:'周老闆承認十三日收桌時有一捆廢紙交給市場跑腿少年，這也是店裡平常的處理方式。'},
  zhou_motive:{name:'周老闆的顧慮',type:'證詞',desc:'周老闆說自己避談廢紙去向，是因為那些紙上可能留著受訪者姓名，他怕事情從自己店裡惹出去。'},
  wrapped_scrap:{name:'包花生的紙角',type:'紙片',desc:'花生攤找到一角較白的紙，殘留「夜班」二字；筆跡與阿川的訪談冊相符。'},
@@ -64,7 +64,7 @@ var deduction=[
  {q:'第一問：三頁紙是怎麼離開印刷行的？',opts:[['steal','有人趁周老闆不注意偷走'],['waste','收桌時混進廢紙，被一起帶到市場'],['achuan','阿川自己把三頁交給了陌生人']],correct:'waste',need:'wrapped_scrap',teach:'把印刷行後間、跑腿少年的路線和市場裡那張紙角接起來。'},
  {q:'第二問：周老闆為什麼一開始避談那捆廢紙？',opts:[['cover','他知道有人偷紙，正在替對方遮掩'],['risk','他怕寫著人名的紙從自己店裡流出去惹麻煩'],['forget','他其實完全不記得阿川來過']],correct:'risk',need:'zhou_motive',teach:'想想他真正停頓的是「阿川來過」還是「紙上寫了什麼」。'},
  {q:'第三問：市場裡那名郵務人員當天在做什麼？',opts:[['tracker','他在追查阿川的筆記'],['rumor','攤販都這麼說，所以他應該與失頁有關'],['postal','他在處理一封錯投到別巷的郵件']],correct:'postal',need:'postal_stub',teach:'把市場裡的轉述和存根上的地址放在一起。'},
- {q:'第四問：哪一件東西能把找回的紙和原冊直接接回去？',opts:[['ledger','鉛字盒借用簿'],['pages','找回的三頁筆記'],['runner','跑腿少年的說法']],correct:'pages',need:'archive_pages',teach:'頁碼、筆跡和裂口都在同一件物證上。'}
+ {q:'第四問：哪一件東西能把找回的紙和原冊直接接回去？',opts:[['ledger','借物簿'],['pages','找回的三頁筆記'],['runner','跑腿少年的說法']],correct:'pages',need:'archive_pages',teach:'頁碼、筆跡和裂口都在同一件物證上。'}
 ];
 
 function fresh(name){return{name:(name||'林默').trim()||'林默',caseId:'case1',schema:6,location:'tea',unlocked:['tea'],visited:['tea'],evidence:[],people:[],done:[],flags:{actionResults:{},visualSeen:{},mistakes:0,deductionReady:false,postmanRumor:false},focus:MAX_FOCUS,deductionStep:0,finished:false,failed:false}}
