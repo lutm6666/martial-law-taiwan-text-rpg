@@ -78,7 +78,7 @@ function patchCase1ObservationUI(){
  if(note&&note.textContent.indexOf('點擊圖片觀察｜')===0){
   var hint=note.textContent.slice('點擊圖片觀察｜'.length);
   if(hint)img.__case1ObserveHint=hint;
-  if(note.textContent!=='觀察請使用下方「觀察現場」')note.textContent='觀察請使用下方「觀察現場」';
+  if(note.textContent)note.textContent='';
  }
  var seen=!!(note&&note.textContent.indexOf('已觀察｜')===0),button=old;
  if(!button){
