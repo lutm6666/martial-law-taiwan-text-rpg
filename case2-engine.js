@@ -64,12 +64,6 @@ function loadScript(src,next){
 }
 function flushLoaded(){loaded=true;loading=false;failed=false;rainLoadError='';settle(true)}
 
-function ensureSharedLightbox(){
- if($('mistImageLightbox')){window.__case2LightboxRequested=true;return}
- if(window.__case2LightboxRequested)return;
- window.__case2LightboxRequested=true;
- loadScript('image-lightbox.js?v=1',function(){});
-}
 function patchCase1ObservationUI(){
  var game=$('gameScreen'),img=$('sceneImage'),grid=$('actionGrid'),note=$('visualNote'),old=$('case1ObserveSceneBtn');
  if(!img||!grid)return;
@@ -84,7 +78,7 @@ function patchCase1ObservationUI(){
  if(note&&note.textContent.indexOf('點擊圖片觀察｜')===0){
   var hint=note.textContent.slice('點擊圖片觀察｜'.length);
   if(hint)img.__case1ObserveHint=hint;
-  if(note.textContent!=='點擊圖片可放大')note.textContent='點擊圖片可放大';
+  if(note.textContent!=='觀察請使用下方「觀察現場」')note.textContent='觀察請使用下方「觀察現場」';
  }
  var seen=!!(note&&note.textContent.indexOf('已觀察｜')===0),button=old;
  if(!button){
@@ -109,9 +103,7 @@ function loadRainRuntime(done){
   if(window.Case2RainCanon){flushLoaded();return}
   loadScript('case2-rain-canon-engine.js?v=4',function(ok){
    if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=4');return}
-   if(window.__case2LightboxRequested){flushLoaded();return}
-   window.__case2LightboxRequested=true;
-   loadScript('image-lightbox.js?v=1',function(){flushLoaded()});
+   flushLoaded();
   });
  }
 
@@ -157,7 +149,6 @@ function patchEntryPoints(){
 }
 
 installProgressiveVisibility();
-ensureSharedLightbox();
 patchEntryPoints();
 patchCase1ObservationUI();
 if(window.MutationObserver){new MutationObserver(function(){patchEntryPoints();patchCase1ObservationUI()}).observe(document.documentElement,{childList:true,subtree:true})}
