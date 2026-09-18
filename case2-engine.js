@@ -101,8 +101,8 @@ function loadRainRuntime(done){
 
  function loadEngine(){
   if(window.Case2RainCanon){flushLoaded();return}
-  loadScript('case2-rain-canon-engine.js?v=4',function(ok){
-   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=4');return}
+  loadScript('case2-rain-canon-engine.js?v=5',function(ok){
+   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=5');return}
    flushLoaded();
   });
  }
