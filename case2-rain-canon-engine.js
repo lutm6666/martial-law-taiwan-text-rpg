@@ -119,11 +119,11 @@ function sceneIntro(id){
   yonghe:'永和行就在巷口。店裡混著肥皂、乾貨和木櫃的氣味，櫃檯後方疊著一冊冊賒帳簿，紙邊都被翻得發毛。',
   stairs:'你離開一樓時，雨勢忽然加重。樓梯間的窗沒有關緊，風把濕氣灌進來，木扶手摸上去一片冰涼。',
   spare:'這間房空了很久。灰塵覆在桌面和窗框上，抽屜拉開時帶出一股潮木味；幾樣被遺忘的小東西仍留在原處。',
-  rooftop:'屋頂風很大，曬衣繩在雨裡啪啪作響。儲藏間的門鎖已經生鏽，裡頭堆著木箱、破竹籃和幾件多年沒人動過的雜物。'
+  rooftop:'屋頂風很大，曬衣繩在雨裡啪啪作響。儲藏間的門鎖已經生鏽，門縫裡只有潮木和灰塵的氣味；站在外面看不清裡頭放了什麼。'
  };return t[id]||'';
 }
 function actionLabel(id){var m={
- inspect_footprints:'檢查門外濕腳印',inspect_yue_mark:'查看門框刻痕',ask_lin:'詢問林秀雲',check_rain_path:'核對雨水流向',ask_chen:'詢問陳太太',inspect_board:'查看住戶一覽板',inspect_ledger:'翻查舊租冊',confront_landlord:'追問房東',ask_shopkeeper:'詢問永和行老闆',inspect_yonghe_ledger:'查看賒帳簿',staircase_event:'走近窗邊女子',inspect_sisters_photo:'查看姐妹合照',inspect_wende_note:'查看張文德紙條',find_rooftop_key:'翻找抽屜夾層',open_storage:'打開屋頂儲藏間',inspect_bag:'查看帆布提袋',inspect_bag_contents:'整理提袋內容',inspect_postcard:'查看未寄明信片',inspect_sealed_letter:'檢查密封信件'};return m[id]||id}
+ inspect_footprints:'檢查門外濕腳印',inspect_yue_mark:'查看門框刻痕',ask_lin:'詢問林秀雲',check_rain_path:'核對雨水流向',ask_chen:'詢問陳太太',inspect_board:'查看住戶一覽板',inspect_ledger:'翻查舊租冊',confront_landlord:'追問房東',ask_shopkeeper:'詢問永和行老闆',inspect_yonghe_ledger:'查看賒帳簿',staircase_event:'走近窗邊女子',inspect_sisters_photo:'查看姐妹合照',inspect_wende_note:'查看張文德紙條',find_rooftop_key:'翻找抽屜夾層',open_storage:'打開屋頂儲藏間',inspect_bag_contents:'整理提袋內容',inspect_postcard:'查看未寄明信片',inspect_sealed_letter:'檢查密封信件'};return m[id]||id}
 function actionHint(id,a){if(a.requires&&!hasAll(a.requires))return '需要先取得：'+a.requires.map(function(x){return DATA.evidence[x].name}).join('、');if(actionDone(id))return '已完成';return '調查'}
 
 function navHtml(active){return '<div class="c2-tabs"><button data-view="scene" class="'+(active==='scene'?'active':'')+'">調查</button><button data-view="map" class="'+(active==='map'?'active':'')+'">地圖</button><button data-view="records" class="'+(active==='records'?'active':'')+'">紀錄 '+s.evidence.length+'/12</button></div>'}
