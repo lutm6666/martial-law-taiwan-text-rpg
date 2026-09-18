@@ -18,6 +18,9 @@ function normalizeRainSave(){
  function set(k,val){if(v[k]===undefined||v[k]===null){v[k]=val;changed=true}}
  if(!v.visited||typeof v.visited!=='object'||Array.isArray(v.visited)){v.visited={home:true};changed=true}
  if(!Array.isArray(v.evidence)){v.evidence=[];changed=true}
+ var validEvidence=['e01','e02','e03','e04','e05','e06','e07','e08','e09','e10','e11','e12'];
+ var cleanEvidence=v.evidence.filter(function(id,index){return validEvidence.indexOf(id)>=0&&v.evidence.indexOf(id)===index});
+ if(cleanEvidence.length!==v.evidence.length){v.evidence=cleanEvidence;changed=true}
  if(!Array.isArray(v.people)){v.people=[];changed=true}
  if(!v.flags||typeof v.flags!=='object'||Array.isArray(v.flags)){v.flags={};changed=true}
  if(!v.done||typeof v.done!=='object'||Array.isArray(v.done)){v.done={};changed=true}
