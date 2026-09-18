@@ -31,7 +31,7 @@ window.CASE2_RAIN_CANON={
     e07:{name:'張文德紙條',type:'紙條',image:'assets/v2/canon/e07-wende-note.png',desc:'紙條寫著：「若她回來，東西還在樓上。別交給別人。——文德」',proof:['有人刻意把某件物品藏在樓上'],notProof:['「她」是誰','物品內容']},
     e08:{name:'屋頂鑰匙',type:'物件',image:'assets/v2/canon/e08-rooftop-key.png',desc:'老式鑰匙，標示「屋頂」，可打開屋頂儲藏間。',proof:['可進入屋頂儲藏間'],notProof:[]},
     e09:{name:'許月琴帆布提袋',type:'物件',image:'assets/v2/canon/e09-canvas-bag.png',desc:'屋頂儲藏間找到的舊帆布提袋，縫有「許月琴」姓名標籤。',proof:['提袋屬於許月琴','張文德紙條所指物品很可能就是此袋'],notProof:['提袋中的物品具有犯罪性質']},
-    e10:{name:'提袋內物品',type:'物件組',image:'assets/v2/canon/e10-bag-contents.png',desc:'工作手冊、妹妹家書、姐妹照片、針線、梳子、錢包與普通讀物等日常物品。',proof:['許月琴留下的是普通生活用品','她與妹妹保持聯繫'],notProof:['許月琴參與政治組織','許月琴從事情報工作']},
+    e10:{name:'提袋內物品',type:'物件組',image:'assets/v2/canon/e10-bag-contents.png',desc:'工作手冊、妹妹家書、針線、梳子、錢包與普通讀物等日常物品。',proof:['許月琴留下的是普通生活用品','她與妹妹保持聯繫'],notProof:['許月琴參與政治組織','許月琴從事情報工作']},
     e11:{name:'未寄出的明信片',type:'文字證物',image:'assets/v2/canon/e11-unsent-postcard.png',desc:'明信片沒有郵票、郵戳與地址。內容：「秋蘭：如果我很久沒有回家，不要來找我。月琴。」',proof:['許月琴曾預期自己可能長時間無法回家'],notProof:['她知道自己會被誰帶走','她已知信件內容']},
     e12:{name:'未拆封信件',type:'文件',image:'assets/v2/canon/e12-sealed-letter.png',desc:'普通泛黃紙信封，膠封完整，沒有郵票、郵戳或醒目特殊標誌。',proof:['信件至今未被拆開'],notProof:['信中內容','許月琴是否知道信中內容','信件是否涉及政治活動']}
   },
@@ -53,7 +53,7 @@ window.CASE2_RAIN_CANON={
     yonghe:{name:'永和行雜貨店',sub:'時間線交叉驗證',image:'assets/v2/canon/04_永和行雜貨店.png',unlock:['e03','e04'],actions:['ask_shopkeeper','inspect_yonghe_ledger']},
     stairs:{name:'樓梯間',sub:'第一次異常事件',image:'assets/v2/canon/05_樓梯間.png',unlockFlags:['timeline_conflict'],actions:['staircase_event']},
     spare:{name:'空置舊租客房',sub:'張文德留下的東西',image:'assets/v2/canon/06_空置舊租客房.png',unlockFlags:['staircase_event_seen'],actions:['inspect_sisters_photo','inspect_wende_note','find_rooftop_key']},
-    rooftop:{name:'屋頂曬衣場／儲藏間',sub:'核心證物',image:'assets/v2/canon/07_屋頂雜物間.png',unlock:['e08'],actions:['open_storage','inspect_bag','inspect_bag_contents','inspect_postcard','inspect_sealed_letter']}
+    rooftop:{name:'屋頂曬衣場／儲藏間',sub:'核心證物',image:'assets/v2/canon/07_屋頂雜物間.png',unlock:['e08'],actions:['open_storage','inspect_bag_contents','inspect_postcard','inspect_sealed_letter']}
   },
 
   actions:{
@@ -72,8 +72,7 @@ window.CASE2_RAIN_CANON={
     inspect_wende_note:{gain:'e07',know:'wende',text:'紙條被壓在抽屜最裡面，只有幾個字：「若她回來，東西還在樓上。別交給別人。——文德」沒有日期，也沒有寫出那個「她」是誰。'},
     find_rooftop_key:{gain:'e08',text:'抽屜拉到底時卡了一下。你摸到後板與底板之間有一道薄縫，撬開鬆動的木片，裡面躺著一把用布條包住的舊鑰匙；布條上只寫了兩個字：「屋頂」。'},
     open_storage:{requires:['e08'],gain:'e09',text:'鑰匙打開屋頂儲藏間。木箱後方放著一只老舊帆布提袋，袋面縫著「許月琴」的姓名標籤。'},
-    inspect_bag:{requires:['e09'],text:'帆布已經發硬，提把磨得起毛。靠近袋口的布條上仍能看見三個繡字：許月琴。'},
-    inspect_bag_contents:{requires:['e09'],gain:'e10',text:'袋裡沒有什麼神祕物件：一本工作手冊、幾封家書、針線、梳子、錢包、普通讀物，還有那張姐妹合照。東西收得很整齊，像是主人原本還打算再來拿。'},
+    inspect_bag_contents:{requires:['e09'],gain:'e10',text:'袋裡沒有什麼神祕物件：一本工作手冊、幾封家書、針線、梳子、錢包和普通讀物。東西收得很整齊，像是主人原本還打算再來拿。'},
     inspect_postcard:{requires:['e10'],gain:'e11',text:'一張明信片夾在工作手冊後面，沒有地址，也沒有貼郵票。背面只寫著：「秋蘭：如果我很久沒有回家，不要來找我。月琴。」'},
     inspect_sealed_letter:{requires:['e10'],gain:'e12',set:{final_ready:true},text:'袋底還壓著一封泛黃的信。封口膠仍完整，表面沒有地址、郵戳，也沒有任何特別標記。你翻看正反兩面，信封始終沒有被拆開過。'}
   },
