@@ -30,6 +30,7 @@ function normalizeRainSave(){
  if(typeof v.deduction!=='number'||!isFinite(v.deduction)||v.deduction<0){v.deduction=0;changed=true}
  if(typeof v.focus!=='number'||!isFinite(v.focus)||v.focus<0||v.focus>4){v.focus=4;changed=true}
  set('feedback','');set('finished',false);set('ending',null);
+ if(v.feedback==='帆布已經發硬，提把磨得起毛。靠近袋口的布條上仍能看見三個繡字：許月琴。'){v.feedback='';changed=true}
  if(changed){try{localStorage.setItem(RAIN_SAVE,JSON.stringify(v))}catch(e){}}
  return v;
 }
@@ -124,15 +125,15 @@ function loadRainRuntime(done){
 
  function loadEngine(){
   if(window.Case2RainCanon){flushLoaded();return}
-  loadScript('case2-rain-canon-engine.js?v=5',function(ok){
-   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=5');return}
+  loadScript('case2-rain-canon-engine.js?v=6',function(ok){
+   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=6');return}
    flushLoaded();
   });
  }
 
  if(window.CASE2_RAIN_CANON){loadEngine();return}
- loadScript('case2-rain-canon.js?v=3',function(ok){
-  if(!ok||!window.CASE2_RAIN_CANON){reportLoadError('case2-rain-canon.js?v=3');return}
+ loadScript('case2-rain-canon.js?v=4',function(ok){
+  if(!ok||!window.CASE2_RAIN_CANON){reportLoadError('case2-rain-canon.js?v=4');return}
   loadEngine();
  });
 }
