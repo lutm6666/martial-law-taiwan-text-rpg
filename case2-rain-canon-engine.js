@@ -30,7 +30,7 @@ function load(){var v=parse(SAVE_KEY);if(!v||v.caseId!==DATA.id)return null;v.vi
 function injectStyle(){
  if($('case2CanonStyle'))return;
  var st=document.createElement('style');st.id='case2CanonStyle';st.textContent='\
-#v2Rain{padding-bottom:96px}.c2-head{padding:14px 15px;margin-bottom:12px}.c2-head h2{margin:0 0 5px;font-size:1rem}.c2-meta{font-size:.72rem;color:#9b988b;line-height:1.55}.c2-scene{overflow:hidden;padding:0}.c2-art-wrap{position:relative;background:#111}.c2-art{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;filter:saturate(.82) contrast(1.04)}.c2-art-fallback{display:none;aspect-ratio:3/2;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#29261f,#151612);color:#aaa392;text-align:center}.c2-body{padding:17px}.c2-body h2{margin:4px 0 10px}.c2-body p{line-height:1.8}.c2-actions{display:grid;gap:9px;margin-top:12px}.c2-btn,.c2-map button,.c2-option{border:1px solid #3d4036;background:#1b1d18;color:#ece8dc;border-radius:13px;padding:12px;text-align:left}.c2-btn strong,.c2-map strong{display:block}.c2-btn small,.c2-map small{display:block;color:#969386;margin-top:4px;line-height:1.48}.c2-btn.done{opacity:.58}.c2-btn:disabled{opacity:.35}.c2-note{margin-top:12px;padding:11px 12px;border-left:3px solid #8d7853;background:#211e18;line-height:1.68;color:#c8c1b1}.c2-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:13px 0}.c2-tabs button{border:1px solid #3c3e35;background:#181a16;color:#aaa69a;border-radius:11px;padding:9px}.c2-tabs button.active{background:#302d21;color:#eee4ce;border-color:#8f7a4d}.c2-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.c2-map button.current{border-color:#9b8754;background:#292719}.c2-map button:disabled{opacity:.32}.c2-record{margin-top:9px;padding:11px;border:1px solid #35382f;border-radius:11px;background:#171914}.c2-record strong{display:block}.c2-record small{display:block;margin-top:4px;color:#9c998d;line-height:1.58}.c2-record img{width:100%;margin-top:9px;border-radius:9px;display:block;max-height:280px;object-fit:cover}.c2-proof{margin-top:7px;font-size:.72rem;color:#a9a393;line-height:1.55}.c2-deduction,.c2-ending,.c2-fail{padding:18px}.c2-deduction h2,.c2-ending h2,.c2-fail h2{line-height:1.45}.c2-option{display:block;width:100%;margin-top:9px;line-height:1.58}.c2-dots{display:flex;gap:5px;margin:8px 0 12px}.c2-dots i{width:10px;height:10px;border-radius:50%;background:#44473e}.c2-dots i.on{background:#c7b16f}.c2-warning{font-size:.78rem;color:#c99789;margin-top:10px}.c2-event{border:1px solid #65593d;background:linear-gradient(135deg,#282319,#1b1b16);padding:14px;border-radius:13px;margin-top:12px;line-height:1.72;color:#ece8dc}.c2-story{margin-top:14px;padding:16px 16px 15px;border-left:3px solid #8d7853;background:rgba(182,155,95,.08);border-radius:0 12px 12px 0;line-height:1.9}.c2-story-title{margin-bottom:10px;font-size:.75rem;font-weight:700;letter-spacing:.08em;color:#cdbb8d}.c2-story p{margin:0 0 .9em}.c2-story p:last-child{margin-bottom:0}.c2-dialogue{font-weight:650;color:#f1e4bf}.c2-ending-lead{font-size:1rem;line-height:1.9}.c2-ending-lead p{margin:.7em 0}.paper .c2-story{background:rgba(86,66,31,.07);border-left-color:#8f7745;color:#332d21}.paper .c2-story-title{color:#715c34}.paper .c2-dialogue{color:#3a2d16}.c2-summary{display:grid;gap:9px;margin:14px 0}.c2-summary div{padding:11px;border:1px solid rgba(65,54,32,.22);border-radius:10px;line-height:1.62}.c2-kicker{font-size:.68rem;letter-spacing:.12em;color:#9a917c}.c2-home-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}@media(min-width:640px){.c2-actions{grid-template-columns:1fr 1fr}.c2-map{grid-template-columns:repeat(3,1fr)}}';
+#v2Rain{padding-bottom:96px}.c2-head{padding:14px 15px;margin-bottom:12px}.c2-head h2{margin:0 0 5px;font-size:1rem}.c2-meta{font-size:.72rem;color:#9b988b;line-height:1.55}.c2-scene{overflow:hidden;padding:0}.c2-art-wrap{position:relative;background:#111}.c2-art{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;filter:saturate(.82) contrast(1.04)}.c2-art-fallback{display:none;aspect-ratio:3/2;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#29261f,#151612);color:#aaa392;text-align:center}.c2-body{padding:17px}.c2-body h2{margin:4px 0 10px}.c2-body p{line-height:1.8}.c2-scene-intro{line-height:1.95}.c2-scene-intro p{margin:0 0 .95em}.c2-scene-intro p:last-child{margin-bottom:0}.c2-actions{display:grid;gap:9px;margin-top:12px}.c2-btn,.c2-map button,.c2-option{border:1px solid #3d4036;background:#1b1d18;color:#ece8dc;border-radius:13px;padding:12px;text-align:left}.c2-btn strong,.c2-map strong{display:block}.c2-btn small,.c2-map small{display:block;color:#969386;margin-top:4px;line-height:1.48}.c2-btn.done{opacity:.58}.c2-btn:disabled{opacity:.35}.c2-note{margin-top:12px;padding:11px 12px;border-left:3px solid #8d7853;background:#211e18;line-height:1.68;color:#c8c1b1}.c2-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:13px 0}.c2-tabs button{border:1px solid #3c3e35;background:#181a16;color:#aaa69a;border-radius:11px;padding:9px}.c2-tabs button.active{background:#302d21;color:#eee4ce;border-color:#8f7a4d}.c2-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.c2-map button.current{border-color:#9b8754;background:#292719}.c2-map button:disabled{opacity:.32}.c2-record{margin-top:9px;padding:11px;border:1px solid #35382f;border-radius:11px;background:#171914}.c2-record strong{display:block}.c2-record small{display:block;margin-top:4px;color:#9c998d;line-height:1.58}.c2-record img{width:100%;margin-top:9px;border-radius:9px;display:block;max-height:280px;object-fit:cover}.c2-proof{margin-top:7px;font-size:.72rem;color:#a9a393;line-height:1.55}.c2-deduction,.c2-ending,.c2-fail{padding:18px}.c2-deduction h2,.c2-ending h2,.c2-fail h2{line-height:1.45}.c2-option{display:block;width:100%;margin-top:9px;line-height:1.58}.c2-dots{display:flex;gap:5px;margin:8px 0 12px}.c2-dots i{width:10px;height:10px;border-radius:50%;background:#44473e}.c2-dots i.on{background:#c7b16f}.c2-warning{font-size:.78rem;color:#c99789;margin-top:10px}.c2-event{border:1px solid #65593d;background:linear-gradient(135deg,#282319,#1b1b16);padding:14px;border-radius:13px;margin-top:12px;line-height:1.72;color:#ece8dc}.c2-story{margin-top:14px;padding:16px 16px 15px;border-left:3px solid #8d7853;background:rgba(182,155,95,.08);border-radius:0 12px 12px 0;line-height:1.9}.c2-story-title{margin-bottom:10px;font-size:.75rem;font-weight:700;letter-spacing:.08em;color:#cdbb8d}.c2-story p{margin:0 0 .9em}.c2-story p:last-child{margin-bottom:0}.c2-dialogue{font-weight:650;color:#f1e4bf}.c2-ending-lead{font-size:1rem;line-height:1.9}.c2-ending-lead p{margin:.7em 0}.paper .c2-story{background:rgba(86,66,31,.07);border-left-color:#8f7745;color:#332d21}.paper .c2-story-title{color:#715c34}.paper .c2-dialogue{color:#3a2d16}.c2-summary{display:grid;gap:9px;margin:14px 0}.c2-summary div{padding:11px;border:1px solid rgba(65,54,32,.22);border-radius:10px;line-height:1.62}.c2-kicker{font-size:.68rem;letter-spacing:.12em;color:#9a917c}.c2-home-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}@media(min-width:640px){.c2-actions{grid-template-columns:1fr 1fr}.c2-map{grid-template-columns:repeat(3,1fr)}}';
  document.head.appendChild(st);
 }
 
@@ -94,11 +94,16 @@ function narrativeHtml(text){
   return '<p>'+h+'</p>';
  }).join('');
 }
+function sceneIntroHtml(text){
+ return String(text||'').split(/\n\n+/).filter(function(p){return p.trim()}).map(function(p){
+  return '<p>'+esc(p.trim())+'</p>';
+ }).join('');
+}
 
 function renderInvestigation(){
  var l=DATA.locations[s.loc];
  var html=renderHeader();
- html+='<article class="c2-scene card">'+imageHtml(l.image,l.name)+'<div class="c2-body"><p class="c2-kicker">'+esc(l.sub)+'</p><h2>'+esc(l.name)+'</h2><p>'+esc(sceneIntro(s.loc))+'</p>';
+ html+='<article class="c2-scene card">'+imageHtml(l.image,l.name)+'<div class="c2-body"><p class="c2-kicker">'+esc(l.sub)+'</p><h2>'+esc(l.name)+'</h2><div class="c2-scene-intro">'+sceneIntroHtml(sceneIntro(s.loc))+'</div>';
  var showingQiulanEvent=s.loc==='home'&&flag('qiulan_revealed');
  if(s.feedback&&!(showingQiulanEvent&&s.feedback===DATA.events.qiulan_reveal.text))html+='<div class="c2-note">'+esc(s.feedback)+'</div>';
  if(showingQiulanEvent)html+='<div class="c2-story"><div class="c2-story-title">敲門者現身</div>'+narrativeHtml(DATA.events.qiulan_reveal.text)+'</div>';
@@ -113,7 +118,7 @@ function renderInvestigation(){
 
 function sceneIntro(id){
  var t={
-  home:'第三個雨夜。三下敲門聲停了一拍，又響了兩下。林秀雲拉開門時，走廊上已經沒有人，只有雨水沿欄杆滴落，門前留著幾枚濕腳印。',
+  home:'第三個雨夜，雨比前兩晚更密。屋簷的水沿著騎樓邊緣一線線落下，201號房裡只剩雨聲貼著窗面流過。\n\n三下。停一拍。再兩下。\n\n林秀雲把手搭上門栓，等了一會才拉開門。走廊已經空了，昏黃的燈光照著濕亮的地面，雨水仍沿欄杆一滴一滴往下落。\n\n門檻前，幾枚濕腳印還泛著水光。',
   corridor:'二樓外廊被雨氣浸得發暗，欄杆外的街燈隔著雨幕發白。201在走廊深處，門旁幾盆花被風吹得輕輕晃動。',
   entrance:'一樓入口比樓上乾燥些。牆上的住戶板貼著一張張姓名紙卡，房東的小桌旁則堆著幾本用了多年的租冊。',
   yonghe:'永和行就在巷口。店裡混著肥皂、乾貨和木櫃的氣味，櫃檯後方疊著一冊冊賒帳簿，紙邊都被翻得發毛。',
@@ -124,7 +129,31 @@ function sceneIntro(id){
 }
 function actionLabel(id){var m={
  inspect_footprints:'檢查門外濕腳印',inspect_yue_mark:'查看門框刻痕',ask_lin:'詢問林秀雲',check_rain_path:'核對雨水流向',ask_chen:'詢問陳太太',inspect_board:'查看住戶一覽板',inspect_ledger:'翻查舊租冊',confront_landlord:'追問房東',ask_shopkeeper:'詢問永和行老闆',inspect_yonghe_ledger:'查看賒帳簿',staircase_event:'走近窗邊女子',inspect_sisters_photo:'查看姐妹合照',inspect_wende_note:'查看張文德紙條',find_rooftop_key:'翻找抽屜夾層',open_storage:'打開屋頂儲藏間',inspect_bag_contents:'整理提袋內容',inspect_postcard:'查看未寄明信片',inspect_sealed_letter:'檢查密封信件'};return m[id]||id}
-function actionHint(id,a){if(a.requires&&!hasAll(a.requires))return '需要先取得：'+a.requires.map(function(x){return DATA.evidence[x].name}).join('、');if(actionDone(id))return '已完成';return '調查'}
+function actionHint(id,a){
+ if(a.requires&&!hasAll(a.requires))return '需要先取得：'+a.requires.map(function(x){return DATA.evidence[x].name}).join('、');
+ if(actionDone(id))return '已完成';
+ var m={
+  inspect_footprints:'先確認腳印停在哪裡',
+  inspect_yue_mark:'看看刻痕是新是舊',
+  ask_lin:'把前三晚的敲門情形問清楚',
+  check_rain_path:'比較腳印與屋簷雨水方向',
+  ask_chen:'問問201以前住過誰',
+  inspect_board:'先確認現在的住戶',
+  inspect_ledger:'沿著201的舊紀錄往前查',
+  confront_landlord:'拿租冊上的異常追問日期',
+  ask_shopkeeper:'問問他是否還記得許月琴',
+  inspect_yonghe_ledger:'用帳簿把記憶釘在日期上',
+  staircase_event:'看看半層平台上的人影',
+  inspect_sisters_photo:'辨認照片裡的兩個名字',
+  inspect_wende_note:'讀清紙條留下的指向',
+  find_rooftop_key:'看看抽屜深處還藏著什麼',
+  open_storage:'用找到的鑰匙打開生鏽門鎖',
+  inspect_bag_contents:'逐件確認袋裡留下的東西',
+  inspect_postcard:'讀那張沒有寄出的字',
+  inspect_sealed_letter:'先從未拆封的信封本身判斷'
+ };
+ return m[id]||'調查';
+}
 
 function navHtml(active){return '<div class="c2-tabs"><button data-view="scene" class="'+(active==='scene'?'active':'')+'">調查</button><button data-view="map" class="'+(active==='map'?'active':'')+'">地圖</button><button data-view="records" class="'+(active==='records'?'active':'')+'">紀錄 '+s.evidence.length+'/12</button></div>'}
 function bindCommon(){Array.prototype.forEach.call(document.querySelectorAll('[data-view]'),function(b){b.onclick=function(){renderView(b.getAttribute('data-view'))}})}
