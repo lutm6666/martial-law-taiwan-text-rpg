@@ -30,7 +30,7 @@ function load(){var v=parse(SAVE_KEY);if(!v||v.caseId!==DATA.id)return null;v.vi
 function injectStyle(){
  if($('case2CanonStyle'))return;
  var st=document.createElement('style');st.id='case2CanonStyle';st.textContent='\
-#v2Rain{padding-bottom:96px}.c2-head{padding:14px 15px;margin-bottom:12px}.c2-head h2{margin:0 0 5px;font-size:1rem}.c2-meta{font-size:.72rem;color:#9b988b;line-height:1.55}.c2-scene{overflow:hidden;padding:0}.c2-art-wrap{position:relative;background:#111}.c2-art{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;filter:saturate(.82) contrast(1.04)}.c2-art-fallback{display:none;aspect-ratio:3/2;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#29261f,#151612);color:#aaa392;text-align:center}.c2-body{padding:17px}.c2-body h2{margin:4px 0 10px}.c2-body p{line-height:1.8}.c2-scene-intro{line-height:1.95}.c2-scene-intro p{margin:0 0 .95em}.c2-scene-intro p:last-child{margin-bottom:0}.c2-actions{display:grid;gap:9px;margin-top:12px}.c2-btn,.c2-map button,.c2-option{border:1px solid #3d4036;background:#1b1d18;color:#ece8dc;border-radius:13px;padding:12px;text-align:left}.c2-btn strong,.c2-map strong{display:block}.c2-btn small,.c2-map small{display:block;color:#969386;margin-top:4px;line-height:1.48}.c2-btn.done{opacity:.58}.c2-btn:disabled{opacity:.35}.c2-note{margin-top:12px;padding:11px 12px;border-left:3px solid #8d7853;background:#211e18;line-height:1.68;color:#c8c1b1}.c2-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:13px 0}.c2-tabs button{border:1px solid #3c3e35;background:#181a16;color:#aaa69a;border-radius:11px;padding:9px}.c2-tabs button.active{background:#302d21;color:#eee4ce;border-color:#8f7a4d}.c2-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.c2-map button.current{border-color:#9b8754;background:#292719}.c2-map button:disabled{opacity:.32}.c2-record{margin-top:9px;padding:11px;border:1px solid #35382f;border-radius:11px;background:#171914}.c2-record strong{display:block}.c2-record small{display:block;margin-top:4px;color:#9c998d;line-height:1.58}.c2-record img{width:100%;margin-top:9px;border-radius:9px;display:block;max-height:280px;object-fit:cover}.c2-proof{margin-top:7px;font-size:.72rem;color:#a9a393;line-height:1.55}.c2-deduction,.c2-ending,.c2-fail{padding:18px}.c2-deduction h2,.c2-ending h2,.c2-fail h2{line-height:1.45}.c2-option{display:block;width:100%;margin-top:9px;line-height:1.58}.c2-dots{display:flex;gap:5px;margin:8px 0 12px}.c2-dots i{width:10px;height:10px;border-radius:50%;background:#44473e}.c2-dots i.on{background:#c7b16f}.c2-warning{font-size:.78rem;color:#c99789;margin-top:10px}.c2-event{border:1px solid #65593d;background:linear-gradient(135deg,#282319,#1b1b16);padding:14px;border-radius:13px;margin-top:12px;line-height:1.72;color:#ece8dc}.c2-story{margin-top:14px;padding:16px 16px 15px;border-left:3px solid #8d7853;background:rgba(182,155,95,.08);border-radius:0 12px 12px 0;line-height:1.9}.c2-story-title{margin-bottom:10px;font-size:.75rem;font-weight:700;letter-spacing:.08em;color:#cdbb8d}.c2-story p{margin:0 0 .9em}.c2-story p:last-child{margin-bottom:0}.c2-dialogue{font-weight:650;color:#f1e4bf}.c2-ending-lead{font-size:1rem;line-height:1.9}.c2-ending-lead p{margin:.7em 0}.paper .c2-story{background:rgba(86,66,31,.07);border-left-color:#8f7745;color:#332d21}.paper .c2-story-title{color:#715c34}.paper .c2-dialogue{color:#3a2d16}.c2-summary{display:grid;gap:9px;margin:14px 0}.c2-summary div{padding:11px;border:1px solid rgba(65,54,32,.22);border-radius:10px;line-height:1.62}.c2-kicker{font-size:.68rem;letter-spacing:.12em;color:#9a917c}.c2-home-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}@media(min-width:640px){.c2-actions{grid-template-columns:1fr 1fr}.c2-map{grid-template-columns:repeat(3,1fr)}}';
+#v2Rain{padding-bottom:96px}.c2-head{padding:14px 15px;margin-bottom:12px}.c2-head h2{margin:0 0 5px;font-size:1rem}.c2-meta{font-size:.72rem;color:#9b988b;line-height:1.55}.c2-scene{overflow:hidden;padding:0}.c2-art-wrap{position:relative;background:#111}.c2-art{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;filter:saturate(.82) contrast(1.04)}.c2-art-fallback{display:none;aspect-ratio:3/2;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#29261f,#151612);color:#aaa392;text-align:center}.c2-body{padding:17px}.c2-body h2{margin:4px 0 10px}.c2-body p{line-height:1.8}.c2-scene-intro{line-height:1.95}.c2-scene-intro p{margin:0 0 .95em}.c2-scene-intro p:last-child{margin-bottom:0}.c2-actions{display:grid;gap:9px;margin-top:12px}.c2-btn,.c2-map button,.c2-option{border:1px solid #3d4036;background:#1b1d18;color:#ece8dc;border-radius:13px;padding:12px;text-align:left}.c2-btn strong,.c2-map strong{display:block}.c2-btn small,.c2-map small{display:block;color:#969386;margin-top:4px;line-height:1.48}.c2-btn.done{opacity:.58}.c2-btn:disabled{opacity:.35}.c2-note{margin-top:12px;padding:11px 12px;border-left:3px solid #8d7853;background:#211e18;line-height:1.68;color:#c8c1b1}.c2-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:13px 0}.c2-tabs button{border:1px solid #3c3e35;background:#181a16;color:#aaa69a;border-radius:11px;padding:9px}.c2-tabs button.active{background:#302d21;color:#eee4ce;border-color:#8f7a4d}.c2-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.c2-map button.current{border-color:#9b8754;background:#292719}.c2-map button:disabled{opacity:.32}.c2-record{margin-top:9px;padding:11px;border:1px solid #35382f;border-radius:11px;background:#171914}.c2-record strong{display:block}.c2-record small{display:block;margin-top:4px;color:#9c998d;line-height:1.58}.c2-record img{width:100%;margin-top:9px;border-radius:9px;display:block;max-height:280px;object-fit:cover}.c2-proof{margin-top:7px;font-size:.72rem;color:#a9a393;line-height:1.55}.c2-deduction,.c2-ending,.c2-fail{padding:18px}.c2-deduction h2,.c2-ending h2,.c2-fail h2{line-height:1.45}.c2-option{display:block;width:100%;margin-top:9px;line-height:1.58}.c2-dots{display:flex;gap:5px;margin:8px 0 12px}.c2-dots i{width:10px;height:10px;border-radius:50%;background:#44473e}.c2-dots i.on{background:#c7b16f}.c2-warning{font-size:.78rem;color:#c99789;margin-top:10px}.c2-event{border:1px solid #65593d;background:linear-gradient(135deg,#282319,#1b1b16);padding:14px;border-radius:13px;margin-top:12px;line-height:1.72;color:#ece8dc}.c2-story{margin-top:14px;padding:16px 16px 15px;border-left:3px solid #8d7853;background:rgba(182,155,95,.08);border-radius:0 12px 12px 0;line-height:1.9}.c2-story-title{margin-bottom:10px;font-size:.75rem;font-weight:700;letter-spacing:.08em;color:#cdbb8d}.c2-story p{margin:0 0 .9em}.c2-story p:last-child{margin-bottom:0}.c2-dialogue{font-weight:650;color:#f1e4bf}.c2-ending-lead{font-size:1rem;line-height:1.9}.c2-ending-lead p{margin:.7em 0}.c2-opening{padding:22px 20px}.c2-opening h2{margin:5px 0 16px;font-size:1.65rem}.c2-opening-text{font-size:1.02rem;line-height:2}.c2-opening-text p{margin:0 0 1.15em}.c2-opening-text p:last-child{margin-bottom:0}.c2-opening .primary{margin-top:20px}.paper .c2-story{background:rgba(86,66,31,.07);border-left-color:#8f7745;color:#332d21}.paper .c2-story-title{color:#715c34}.paper .c2-dialogue{color:#3a2d16}.c2-summary{display:grid;gap:9px;margin:14px 0}.c2-summary div{padding:11px;border:1px solid rgba(65,54,32,.22);border-radius:10px;line-height:1.62}.c2-kicker{font-size:.68rem;letter-spacing:.12em;color:#9a917c}.c2-home-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}@media(min-width:640px){.c2-actions{grid-template-columns:1fr 1fr}.c2-map{grid-template-columns:repeat(3,1fr)}}';
  document.head.appendChild(st);
 }
 
@@ -99,6 +99,16 @@ function sceneIntroHtml(text){
   return '<p>'+esc(p.trim())+'</p>';
  }).join('');
 }
+function shouldShowOpening(){
+ return !!(DATA.opening&&!flag('opening_seen')&&s.phase==='investigate'&&s.loc==='home'&&!s.evidence.length&&Object.keys(s.done||{}).length===0);
+}
+function renderOpening(){
+ var o=DATA.opening||{};
+ var html='<article class="c2-opening card"><p class="c2-kicker">'+esc(o.kicker||'案件二・雨夜敲門')+'</p><h2>'+esc(o.title||'第三個雨夜')+'</h2><div class="c2-opening-text">'+sceneIntroHtml(o.text||'')+'</div><button id="c2OpeningNext" class="primary" type="button">開始調查</button></article>';
+ $('v2RainMain').innerHTML=html;
+ var next=$('c2OpeningNext');
+ if(next)next.onclick=function(){s.flags.opening_seen=true;save();render()};
+}
 
 function renderInvestigation(){
  var l=DATA.locations[s.loc];
@@ -118,13 +128,13 @@ function renderInvestigation(){
 
 function sceneIntro(id){
  var t={
-  home:'第三個雨夜，雨比前兩晚更密。屋簷的水沿著騎樓邊緣一線線落下，201號房裡只剩雨聲貼著窗面流過。\n\n三下。停一拍。再兩下。\n\n林秀雲把手搭上門栓，等了一會才拉開門。走廊已經空了，昏黃的燈光照著濕亮的地面，雨水仍沿欄杆一滴一滴往下落。\n\n門檻前，幾枚濕腳印還泛著水光。',
-  corridor:'二樓外廊被雨氣浸得發暗，欄杆外的街燈隔著雨幕發白。201在走廊深處，門旁幾盆花被風吹得輕輕晃動。',
-  entrance:'一樓入口比樓上乾燥些。牆上的住戶板貼著一張張姓名紙卡，房東的小桌旁則堆著幾本用了多年的租冊。',
-  yonghe:'永和行就在巷口。店裡混著肥皂、乾貨和木櫃的氣味，櫃檯後方疊著一冊冊賒帳簿，紙邊都被翻得發毛。',
-  stairs:'你離開一樓時，雨勢忽然加重。樓梯間的窗沒有關緊，風把濕氣灌進來，木扶手摸上去一片冰涼。',
-  spare:'這間房空了很久。灰塵覆在桌面和窗框上，抽屜拉開時帶出一股潮木味；幾樣被遺忘的小東西仍留在原處。',
-  rooftop:'屋頂風很大，曬衣繩在雨裡啪啪作響。儲藏間的門鎖已經生鏽，門縫裡只有潮木和灰塵的氣味；站在外面看不清裡頭放了什麼。'
+  home:'門重新關上後，林秀雲沒有立刻回到桌邊。她仍站在玄關旁，不時往門縫的方向看。\n\n客廳裡很安靜，只有雨聲從窗外壓進來。門檻外那幾枚水光未乾的腳印還在，門框、地面和她的說法，都是現在能先核對的東西。',
+  corridor:'你從201走出來，沿二樓外廊慢慢往前。雨氣貼在牆面上，欄杆外的街燈被雨幕磨成一團發白的光。\n\n這一層的房門大多關著，只有幾盆靠牆的花被風吹得輕輕碰著花架。回頭看，201就在走廊深處；要分清門前的痕跡是不是單純被雨帶進來，得把整條外廊一起看。',
+  entrance:'你順著樓梯走到一樓，雨聲被牆面隔掉一層，空氣也比樓上乾一些。入口旁的住戶板貼著一張張姓名紙卡，像是把整棟樓此刻的住戶固定在牆上。\n\n房東的小桌就在旁邊，桌角壓著幾本用了多年的租冊。新紙卡和舊冊子放在同一處，正好把「現在住誰」和「以前住誰」分成兩種紀錄。',
+  yonghe:'永和行就在巷口，門外的雨聲一進店裡就被木櫃和貨架吸掉大半。肥皂、乾貨與舊木頭的氣味混在一起，櫃檯後方則一冊冊疊著賒帳簿。\n\n這裡的記憶不像住戶口中的年份那麼模糊。買過什麼、欠了多少、哪一天記上一筆，只要帳還在，就有機會重新對出時間。',
+  stairs:'你離開一樓時，雨勢忽然加重。樓梯間的窗沒有關緊，風一陣陣把濕氣灌進來，牆角的光也跟著忽明忽暗。\n\n木扶手摸上去一片冰涼。樓上沒有說話聲，只有雨點敲窗和你的腳步在轉角間來回反響。',
+  spare:'門推開時比想像中更沉。這間房空了很久，窗框和桌面都覆著一層完整的灰，連光照進來都顯得發白。\n\n屋裡沒有明顯被翻找過的痕跡，幾件留下來的舊家具仍在原位。抽屜拉動時帶出潮木味，也讓人更清楚感覺到：有人離開後，這裡很久沒再真正住過人。',
+  rooftop:'你帶著那把舊鑰匙走上屋頂。風比樓下強得多，曬衣繩被吹得一下下抽在鐵架上，遠處的屋瓦和街燈都浸在雨霧裡。\n\n儲藏間縮在屋頂一角，門鎖已經生鏽。從門縫只能聞到潮木和灰塵的氣味，看不清裡頭放了什麼；真正藏在樓上的東西，還隔著這一道門。'
  };return t[id]||'';
 }
 function actionLabel(id){var m={
@@ -211,7 +221,7 @@ function renderEnding(){
  $('c2Home').onclick=function(){location.reload()};$('c2Again').onclick=function(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}s=fresh();save();render()};
 }
 
-function render(){showRoot();if(s.finished||s.phase==='done')return renderEnding();if(s.phase==='deduction')return renderDeduction();renderInvestigation()}
+function render(){showRoot();if(s.finished||s.phase==='done')return renderEnding();if(s.phase==='deduction')return renderDeduction();if(shouldShowOpening())return renderOpening();renderInvestigation()}
 function start(){s=load()||fresh();save();render()}
 function restart(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}s=fresh();save();render()}
 function hasSave(){var v=load();return !!v}
