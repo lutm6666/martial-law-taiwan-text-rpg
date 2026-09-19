@@ -125,15 +125,15 @@ function loadRainRuntime(done){
 
  function loadEngine(){
   if(window.Case2RainCanon){flushLoaded();return}
-  loadScript('case2-rain-canon-engine.js?v=7',function(ok){
-   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=7');return}
+  loadScript('case2-rain-canon-engine.js?v=8',function(ok){
+   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=8');return}
    flushLoaded();
   });
  }
 
  if(window.CASE2_RAIN_CANON){loadEngine();return}
- loadScript('case2-rain-canon.js?v=4',function(ok){
-  if(!ok||!window.CASE2_RAIN_CANON){reportLoadError('case2-rain-canon.js?v=4');return}
+ loadScript('case2-rain-canon.js?v=5',function(ok){
+  if(!ok||!window.CASE2_RAIN_CANON){reportLoadError('case2-rain-canon.js?v=5');return}
   loadEngine();
  });
 }
@@ -153,21 +153,10 @@ function startRain(){
  });
 }
 
-function ensureRainResume(){
- var start=$('startScreen'),load=$('loadBtn'),old=$('rainResumeBtn');
- if(!start||!load)return;
- if(!hasRainSave()){if(old)old.remove();return}
- var v=parse(RAIN_SAVE)||{},label=v.finished?'查看案件二《雨夜敲門》':'繼續案件二《雨夜敲門》';
- if(old){if(old.textContent!==label)old.textContent=label;if(old.onclick!==startRain)old.onclick=startRain;return}
- var b=document.createElement('button');
- b.id='rainResumeBtn';b.type='button';b.className='secondary';b.textContent=label;b.onclick=startRain;
- load.insertAdjacentElement('afterend',b);
-}
-
 function patchEntryPoints(){
+ var resume=$('rainResumeBtn');if(resume)resume.remove();
  var next=$('nextCaseBtn');
  if(next){var label='開始案件二：《雨夜敲門》';if(next.textContent!==label)next.textContent=label;if(next.onclick!==startRain)next.onclick=startRain}
- ensureRainResume();
  var chip=$('caseChip'),root=$('v2Rain');
  if(chip&&root&&!root.classList.contains('hidden')&&chip.textContent!=='CASE 02・雨夜敲門')chip.textContent='CASE 02・雨夜敲門';
 }
