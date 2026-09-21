@@ -179,7 +179,8 @@ function mapSub(id,open){
   return'尚未取得前往線索';
  }
  if(id==='tea'&&state.timePhase>0)return'隔日傍晚・回到茶行';
- return locations[id].sub;
+ if(id==='tea')return'案件起點';
+ return locations[id].sub.split('・').slice(-1)[0];
 }
 function renderMap(){var grid=$('mapGrid');grid.innerHTML='';Object.keys(locations).forEach(function(id){var l=locations[id],open=travelOpen(id),b=document.createElement('button');b.className='map-btn'+(state.visited.indexOf(id)>=0?' visited':'')+(open?'':' locked');b.disabled=!open;b.innerHTML='<strong>'+l.name+'</strong><small>'+mapSub(id,open)+'</small>';b.onclick=function(){var from=state.location,firstVisit=state.visited.indexOf(id)<0;advanceTimeFor(id);state.location=id;if(firstVisit)state.visited.push(id);state.flags.lastResult={location:id,lines:travelLines(id,from,firstVisit)};save();setTab('scene')};grid.appendChild(b)})}
 function evidenceMedia(e){if(!e.images||!e.images.length)return '';return '<div class="evidence-media'+(e.images.length>1?' multi':'')+'">'+e.images.map(function(src,i){var url=src+'?v=1';return '<a class="evidence-image-link" href="'+url+'" target="_blank" rel="noopener"><img src="'+url+'" alt="'+e.name+(e.images.length>1?'・'+(i+1):'')+'" loading="lazy"></a>'}).join('')+'</div>'}
