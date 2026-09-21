@@ -14,11 +14,11 @@ for old in ('4.2.1', '4.4', '4.5'):
 
 # Remove the old aggressively compressed data-URI image scripts.
 for tag in (
-    '<script src="case1-art-tea.js?v=1"></script>',
-    '<script src="case1-art-print.js?v=1"></script>',
-    '<script src="case1-art-market.js?v=1"></script>',
-    '<script src="case1-art-bookstall.js?v=1"></script>',
-    '<script src="case1-art-failed.js?v=1"></script>',
+    '<script src="archive/legacy-art-js/case1-art-tea.js?v=1"></script>',
+    '<script src="archive/legacy-art-js/case1-art-print.js?v=1"></script>',
+    '<script src="archive/legacy-art-js/case1-art-market.js?v=1"></script>',
+    '<script src="archive/legacy-art-js/case1-art-bookstall.js?v=1"></script>',
+    '<script src="archive/legacy-art-js/case1-art-failed.js?v=1"></script>',
 ):
     text = text.replace(tag + '\n', '').replace(tag, '')
 

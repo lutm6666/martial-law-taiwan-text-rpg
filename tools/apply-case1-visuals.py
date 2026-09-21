@@ -46,9 +46,9 @@ if old_tutorial in text:
     text = text.replace(old_tutorial, new_tutorial, 1)
 
 # Load image data before the inline engine.
-if 'case1-art-tea.js' not in text:
+if 'archive/legacy-art-js/case1-art-tea.js' not in text:
     marker = '<script>\n(function(){'
-    tags = '<script src="case1-art-tea.js?v=1"></script>\n<script src="case1-art-print.js?v=1"></script>\n<script src="case1-art-market.js?v=1"></script>\n<script src="case1-art-bookstall.js?v=1"></script>\n<script src="case1-art-failed.js?v=1"></script>\n'
+    tags = '<script src="archive/legacy-art-js/case1-art-tea.js?v=1"></script>\n<script src="archive/legacy-art-js/case1-art-print.js?v=1"></script>\n<script src="archive/legacy-art-js/case1-art-market.js?v=1"></script>\n<script src="archive/legacy-art-js/case1-art-bookstall.js?v=1"></script>\n<script src="archive/legacy-art-js/case1-art-failed.js?v=1"></script>\n'
     if marker not in text:
         raise SystemExit('visual patch: inline script marker not found')
     text = text.replace(marker, tags + marker, 1)

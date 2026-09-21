@@ -1,52 +1,67 @@
-# 霧中的臺灣｜戒嚴時期歷史文字 RPG
+# 霧中的臺灣｜歷史推理解謎
 
-一款以 1958 年臺灣社會為背景的手機優先（mobile-first）互動文字 RPG。
+《霧中的臺灣》是一款以 1958 年臺北為背景、手機優先的純前端文字推理解謎遊戲。
 
-## 正式發布方式
+## 目前正式版本
 
-本專案目前以 **GitHub Pages** 作為正式發布方式，不依賴 Netlify 才能運作。
+主角背景固定為 **民俗家學調查者**；玩家只需要輸入姓名。遊戲目前包含：
 
-每次 `main` branch 更新後，`.github/workflows/pages.yml` 會自動部署最新版本至 GitHub Pages。遊戲目前為純前端架構，因此劇情、選項、角色屬性、道具裝備、事件視覺、localStorage 存檔與 iPhone Safari 操作都能直接在 GitHub Pages 執行。
+- 第一案〈失落的三頁〉：追查三頁訪談筆記如何從茶行、印刷行、市場一路流到舊書攤。
+- 第二案〈雨夜敲門〉：調查 201 號房的雨夜敲門、前租客許月琴的紀錄，以及許秋蘭尋找姐姐遺物的過程。
+- 以物證、證詞、時間線與可驗證的現場資訊進行推理。
+- 第一案 7 張正式證物圖；第二案 12 張正式證物圖與 7 張正式場景圖。
+- localStorage 本機存檔。
+- iPhone Safari 與一般桌面瀏覽器可直接遊玩。
 
-Netlify 暫時不是必要元件。只有未來加入帳號、跨裝置雲端存檔、排行榜、伺服器 API 或其他後端功能時，才需要另外評估 Netlify、Supabase、Firebase 或其他後端服務。
+正式公開頁面：
+https://lutm6666.github.io/martial-law-taiwan-text-rpg/
 
-更多說明見 [`DEPLOYMENT.md`](DEPLOYMENT.md)。
+## 正式執行鏈
 
-## 目前版本
+正式首頁只依賴以下檔案：
 
-- 純 HTML / CSS / JavaScript，無需安裝套件
-- 針對 iPhone Safari 與行動裝置調整
-- 8 種角色背景：學生、工人、公務員、記者、教師、商人、退伍軍人、持家者
-- 觀察、知識、沉著、人情四項能力
-- 壓力、聲望、疑心三項狀態
-- 多條分支路線與多個結局
-- 身分限定與條件式選項
-- 道具與裝備系統
-- 事件紀錄
-- localStorage 本機自動存檔、手動保存與讀取
-- 場景視覺層與高壓狀態呈現
-- 選項後果不預先顯示，降低「看數字選答案」的情況
-- 不依賴外部字型、框架或 CDN
+```text
+index.html
+├─ case1-unified-engine.js
+├─ case2-engine.js
+│  ├─ case2-rain-canon.js        （案件二需要時載入）
+│  └─ case2-rain-canon-engine.js （案件二需要時載入）
+└─ start-screen-hotfix.js
+```
 
-## 執行方式
+正式圖片資源：
 
-正式遊玩建議使用 GitHub Pages。若只是在本機測試，也可以直接開啟 `index.html`。
+```text
+assets/case1/
+assets/v2/canon/
+```
 
-GitHub Pages 的部署由 GitHub Actions 自動完成，不需要再手動把檔案同步到 Netlify。
-
-## 歷史題材說明
-
-本作為歷史題材虛構作品。角色與主要事件為創作，部分制度、社會氛圍與時代背景取材自史實。遊戲以呈現普通人在特定時代條件下的選擇與不確定性為目的，不替任何政治立場背書。
+其中第一案證物使用 `assets/case1/evidence01.png` ～ `evidence07.png`；第二案 Canon 圖片集中在 `assets/v2/canon/`。
 
 ## 專案結構
 
-- `index.html`：遊戲介面與各模組載入入口
-- `style.css`：手機優先樣式、場景視覺與高壓狀態效果
-- `game-v4.js`：主要劇情、角色狀態、選擇、道具、裝備與存檔系統
-- `role-narrative-v1.js` / `role-narrative-v2.js`：身分差異化敘事
-- `choice-bridges-v2.js`：選項與場景銜接修正
-- `logic-audit-v1.js`：劇情邏輯與狀態補強
-- `history.js`：史實節點呈現
-- `tension-visuals-v1.js`：場景視覺、緊張感與選項資訊隱藏層
-- `.github/workflows/pages.yml`：GitHub Pages 自動部署
-- `.nojekyll`：避免 GitHub Pages 套用 Jekyll 處理
+- `index.html`：正式 UI 與共用樣式。
+- `case1-unified-engine.js`：第一案資料、調查流程、推理與存檔。
+- `case2-engine.js`：第二案入口與延遲載入控制。
+- `case2-rain-canon.js`：第二案 Canon、證物、人物、場景與推理資料。
+- `case2-rain-canon-engine.js`：第二案執行引擎。
+- `start-screen-hotfix.js`：首頁入口補強。
+- `assets/`：正式與歷史圖片資源；正式部署只會帶入目前遊戲需要的子目錄。
+- `assets-src/`：部分場景圖片的可重建來源，不是瀏覽器執行依賴。
+- `tools/`：驗證與維護工具。
+- `archive/`：過去版本與舊式模組，只供追溯，不屬於正式執行鏈。
+- `.github/workflows/pages.yml`：GitHub Pages 驗證與部署。
+
+## 部署方式
+
+每次 `main` 更新後，GitHub Actions 會先檢查正式 JavaScript 語法與必要圖片數量，再建立精簡的 `_site` 目錄。Pages 只發布正式入口、正式引擎與正式圖片，不再把 `tools/`、`assets-src/` 或 `archive/` 一起公開。
+
+詳細流程見 `DEPLOYMENT.md`。
+
+## 開發原則
+
+- 固定以目前 Canon 為準，不讓舊版腳本覆蓋正式資料。
+- 場景觀察、證物、證詞與推理條件必須能互相核對。
+- 物證圖片只對應實際存在的遊戲物件；證詞與流程情報不偽造成文件。
+- 新增或修改檔案後，檢查 JavaScript 語法、資源路徑、解鎖可達性與證物鏈。
+- 保持純前端與手機優先；除非未來需要帳號、跨裝置雲端存檔或伺服器資料，否則不引入必要後端。

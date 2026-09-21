@@ -133,17 +133,17 @@ for image_name in ('tea', 'bookstall', 'failed'):
     from_b64_parts(image_name)
 
 from_js_parts('print', [
-    'case1-hq-print-1.js',
-    'case1-hq-print-2.js',
-    'case1-hq-print-3.js',
+    'archive/legacy-art-js/case1-hq-print-1.js',
+    'archive/legacy-art-js/case1-hq-print-2.js',
+    'archive/legacy-art-js/case1-hq-print-3.js',
 ])
 from_js_parts('market', [
-    'case1-hq-market-1.js',
-    'case1-hq-market-2.js',
-    'case1-hq-market-3.js',
-    'case1-hq-market-4a.js',
-    'case1-hq-market-4b.js',
-    'case1-hq-market-4c.js',
+    'archive/legacy-art-js/case1-hq-market-1.js',
+    'archive/legacy-art-js/case1-hq-market-2.js',
+    'archive/legacy-art-js/case1-hq-market-3.js',
+    'archive/legacy-art-js/case1-hq-market-4a.js',
+    'archive/legacy-art-js/case1-hq-market-4b.js',
+    'archive/legacy-art-js/case1-hq-market-4c.js',
 ])
 
 print('Case 1 image rebuild completed successfully.')

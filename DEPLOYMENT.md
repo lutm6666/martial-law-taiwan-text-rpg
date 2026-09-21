@@ -1,77 +1,82 @@
 # 部署架構
 
-## 目前正式架構
+## 正式架構
 
 ```text
 玩家（iPhone Safari / 桌面瀏覽器）
             ↓
       GitHub Pages
             ↓
- index.html + CSS + JavaScript
+      _site/
             ↓
-   localStorage 本機存檔
+index.html + 正式 JavaScript + 正式圖片
+            ↓
+      localStorage
 ```
 
-目前遊戲是純前端網站，因此 GitHub Pages 已足以提供完整遊玩功能。
+正式遊戲仍是純前端網站，不需要建置框架或後端服務。
 
-## GitHub Pages 自動部署
+## 自動部署
 
-Repository 已包含：
+`.github/workflows/pages.yml` 只監聽 `main`。
 
-```text
-.github/workflows/pages.yml
-```
+每次 `main` 有新 commit 時會依序：
 
-當 `main` branch 有新的 commit 時，GitHub Actions 會：
-
-1. Checkout 最新版本。
+1. Checkout repository。
 2. 設定 GitHub Pages。
-3. 將 Repository 內容打包成 Pages artifact。
-4. 部署到 GitHub Pages。
+3. 用 Node.js 語法檢查正式 JavaScript。
+4. 執行 `tools/verify-javascript.js`，確認 `index.html` 直接載入的腳本可解析。
+5. 確認第一案與第二案正式圖片數量。
+6. 建立乾淨的 `_site`。
+7. 只複製正式入口、正式引擎與正式圖片。
+8. 將 `_site` 上傳為 Pages artifact 並部署。
 
-因此日常更新流程是：
+## 目前會發布的檔案
 
 ```text
-修改遊戲 → commit 到 main → GitHub Actions → GitHub Pages 更新
+_site/
+├─ index.html
+├─ .nojekyll
+├─ case1-unified-engine.js
+├─ case2-engine.js
+├─ case2-rain-canon.js
+├─ case2-rain-canon-engine.js
+├─ start-screen-hotfix.js
+└─ assets/
+   ├─ case1/
+   └─ v2/
+      └─ canon/
 ```
 
-不需要另外把相同內容同步到 Netlify。
+## 不會發布
 
-## GitHub Pages 可以直接支援的遊戲功能
+以下仍可留在 repository 供開發與追溯，但不進入 Pages artifact：
 
-只要功能能在瀏覽器前端完成，目前都可以繼續直接加入：
+- `archive/`
+- `assets-src/`
+- `tools/`
+- README、部署文件與其他開發資料
+- 舊版預覽頁與舊式執行模組
+- `assets/v2/` 中已被 Canon 取代的舊預覽素材
 
-- 主線、支線與多結局劇情
-- 條件式與身分限定選項
-- 角色屬性、壓力、聲望、疑心
-- 道具、裝備、任務物品
-- 圖片、事件 CG、背景圖與 CSS 動畫
-- 音效與背景音樂（之後若加入）
-- localStorage 本機存檔
-- 行動裝置與 iPhone Safari UI
-- 事件紀錄與圖鑑
-- 純前端成就系統
+這可避免歷史版本被誤當成正式入口，也降低 Pages artifact 的冗餘。
 
-## 哪些功能未來才需要後端
+## 日常更新流程
 
-GitHub Pages 本身不執行伺服器程式。如果未來加入下列功能，才需要額外後端服務：
+```text
+修改遊戲
+  ↓
+commit / push 到 main
+  ↓
+Actions 驗證
+  ↓
+建立 _site
+  ↓
+GitHub Pages 部署
+```
 
-- 玩家帳號與登入
-- 跨裝置雲端存檔
-- 全玩家排行榜
-- 多人共享資料
-- 管理員後台資料庫
-- 需要隱藏金鑰的第三方 API
-- 伺服器端事件或資料驗證
+若驗證失敗，部署工作會停止，不會把有語法錯誤或關鍵圖片缺失的版本發布出去。
 
-到那個階段再評估 Netlify、Supabase、Firebase 或其他服務即可；目前不把其中任何一個設為遊戲必要依賴。
+## 何時需要後端
 
-## 專案原則
-
-目前開發優先維持：
-
-- GitHub Pages 單獨即可遊玩
-- 手機優先
-- 不依賴建置工具才能啟動
-- 不因外部服務失效而讓主遊戲無法開啟
-- 新增圖片與劇情時仍控制載入量，避免 iPhone Safari 體驗惡化
+目前不需要。只有未來加入玩家帳號、跨裝置雲端存檔、排行榜、多人共享資料、管理員資料庫或需要保密金鑰的 API 時，才需要評估額外後端服務。

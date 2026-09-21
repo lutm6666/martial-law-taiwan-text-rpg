@@ -27,10 +27,44 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Verify runtime JavaScript
+        run: |
+          node --check case1-unified-engine.js
+          node --check case2-engine.js
+          node --check case2-rain-canon.js
+          node --check case2-rain-canon-engine.js
+          node --check start-screen-hotfix.js
+          node tools/verify-javascript.js
+
+      - name: Verify canonical assets
+        run: |
+          test -f assets/case1/tea.webp
+          test -f assets/case1/print.webp
+          test -f assets/case1/market.webp
+          test -f assets/case1/bookstall.webp
+          test -f assets/case1/failed.webp
+          test "$(find assets/case1 -maxdepth 1 -type f -name 'evidence*.png' | wc -l)" -eq 7
+          test "$(find assets/v2/canon -maxdepth 1 -type f -name 'e*.png' | wc -l)" -eq 12
+          test "$(find assets/v2/canon -maxdepth 1 -type f -name '0[1-7]_*.png' | wc -l)" -eq 7
+
+      - name: Prepare production site
+        run: |
+          rm -rf _site
+          mkdir -p _site/assets/v2
+          cp index.html _site/
+          cp .nojekyll _site/
+          cp case1-unified-engine.js _site/
+          cp case2-engine.js _site/
+          cp case2-rain-canon.js _site/
+          cp case2-rain-canon-engine.js _site/
+          cp start-screen-hotfix.js _site/
+          cp -R assets/case1 _site/assets/case1
+          cp -R assets/v2/canon _site/assets/v2/canon
+
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
