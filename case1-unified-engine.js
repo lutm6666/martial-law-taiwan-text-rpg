@@ -31,15 +31,15 @@ var visualMeta={
 };
 
 var evidence={
- missing_index:{name:'缺頁編號',type:'現場紀錄',desc:'第 17、21、22 頁遭抽離；殘留紙根的裂向近似，21、22 頁位置形成連續缺口。'},
- print_ledger:{name:'借物簿',type:'帳目',desc:'借物簿記載阿川十二日借出鉛字盒，十三日歸還；前後欄位與墨色連續。'},
+ missing_index:{name:'缺頁編號',type:'現場紀錄',images:['assets/case1/evidence01.png','assets/case1/evidence02.png'],desc:'第 17、21、22 頁遭抽離；殘留紙根的裂向近似，21、22 頁位置形成連續缺口。'},
+ print_ledger:{name:'借物簿',type:'帳目',images:['assets/case1/evidence03.png'],desc:'借物簿記載阿川十二日借出鉛字盒，十三日歸還；前後欄位與墨色連續。'},
  waste_route:{name:'廢紙去向',type:'流程情報',desc:'周老闆承認十三日收桌時有一捆廢紙交給市場跑腿少年，這也是店裡平常的處理方式。'},
  zhou_motive:{name:'周老闆的顧慮',type:'證詞',desc:'周老闆說自己避談廢紙去向，是因為那些紙上可能留著受訪者姓名，他怕事情從自己店裡惹出去。'},
- wrapped_scrap:{name:'包花生的紙角',type:'紙片',desc:'花生攤找到一角較白的紙，殘留「夜班」二字；筆跡與阿川的訪談冊相符。'},
+ wrapped_scrap:{name:'包花生的紙角',type:'紙片',images:['assets/case1/evidence04.png'],desc:'花生攤找到一角較白的紙，殘留「夜班」二字；筆跡與阿川的訪談冊相符。'},
  runner_account:{name:'紙張交接確認',type:'證詞',desc:'跑腿少年說，多數廢紙拿去墊箱；幾張寫滿字、較完整的紙則被他交給舊書攤老闆。'},
- archive_pages:{name:'三頁失落筆記',type:'關鍵物證',desc:'舊字典裡找到第 17、21、22 頁；頁碼、筆跡與紙根裂口都能與原冊對回。'},
- postal_stub:{name:'問路地址便條',type:'便條',desc:'舊書攤老闆順手抄下「陳先生」與另一條巷子的門牌；他記得郵務人員前一天下午曾來問這個地址。'},
- consent_note:{name:'頁邊鉛筆註記',type:'文字線索',desc:'第 21 頁右側有阿川的鉛筆註記：「受訪者：不要真名。」'}
+ archive_pages:{name:'三頁失落筆記',type:'關鍵物證',images:['assets/case1/evidence05.png'],desc:'舊字典裡找到第 17、21、22 頁；頁碼、筆跡與紙根裂口都能與原冊對回。'},
+ postal_stub:{name:'問路地址便條',type:'便條',images:['assets/case1/evidence07.png'],desc:'舊書攤老闆順手抄下「陳先生」與另一條巷子的門牌；他記得郵務人員前一天下午曾來問這個地址。'},
+ consent_note:{name:'頁邊鉛筆註記',type:'文字線索',images:['assets/case1/evidence06.png'],desc:'第 21 頁右側有阿川的鉛筆註記：「受訪者：不要真名。」'}
 };
 var people={
  achuan:{name:'阿川',desc:'你的舊同學。近來替普通人做生活訪談，說話快，寫字更快；但提到受訪者姓名時總會先停一下。'},
@@ -128,7 +128,8 @@ var actions={
 };
 
 function renderMap(){var grid=$('mapGrid');grid.innerHTML='';Object.keys(locations).forEach(function(id){var l=locations[id],open=state.unlocked.indexOf(id)>=0,b=document.createElement('button');b.className='map-btn'+(state.visited.indexOf(id)>=0?' visited':'')+(open?'':' locked');b.disabled=!open;b.innerHTML='<strong>'+l.name+'</strong><small>'+(open?l.sub:'尚未取得前往線索')+'</small>';b.onclick=function(){state.location=id;if(state.visited.indexOf(id)<0)state.visited.push(id);state.flags.lastResult=null;save();setTab('scene')};grid.appendChild(b)})}
-function renderRecords(){var ev=$('evidenceGrid'),pp=$('peopleGrid');ev.innerHTML='';pp.innerHTML='';if(!state.evidence.length)ev.innerHTML='<div class="evidence-card"><strong>尚無案件紀錄</strong><small>可核對的物證、文件與證詞會收在這裡。</small></div>';state.evidence.forEach(function(id){var e=evidence[id],d=document.createElement('div');d.className='evidence-card';d.innerHTML='<strong>'+e.name+'</strong><small>'+e.desc+'</small><span class="tag">'+e.type+'</span>';ev.appendChild(d)});if(!state.people.length)pp.innerHTML='<div class="person-card"><strong>尚無人物紀錄</strong><small>與案件相關的人會在交談後加入。</small></div>';state.people.forEach(function(id){var p=people[id],d=document.createElement('div');d.className='person-card';d.innerHTML='<strong>'+p.name+'</strong><small>'+p.desc+'</small>';pp.appendChild(d)});$('evidenceCount').textContent=state.evidence.length}
+function evidenceMedia(e){if(!e.images||!e.images.length)return '';return '<div class="evidence-media'+(e.images.length>1?' multi':'')+'">'+e.images.map(function(src,i){return '<img src="'+src+'?v=1" alt="'+e.name+(e.images.length>1?'・'+(i+1):'')+'" loading="lazy">'}).join('')+'</div>'}
+function renderRecords(){var ev=$('evidenceGrid'),pp=$('peopleGrid');ev.innerHTML='';pp.innerHTML='';if(!state.evidence.length)ev.innerHTML='<div class="evidence-card"><strong>尚無案件紀錄</strong><small>可核對的物證、文件與證詞會收在這裡。</small></div>';state.evidence.forEach(function(id){var e=evidence[id],d=document.createElement('div');d.className='evidence-card';d.innerHTML='<strong>'+e.name+'</strong><small>'+e.desc+'</small>'+evidenceMedia(e)+'<span class="tag">'+e.type+'</span>';ev.appendChild(d)});if(!state.people.length)pp.innerHTML='<div class="person-card"><strong>尚無人物紀錄</strong><small>與案件相關的人會在交談後加入。</small></div>';state.people.forEach(function(id){var p=people[id],d=document.createElement('div');d.className='person-card';d.innerHTML='<strong>'+p.name+'</strong><small>'+p.desc+'</small>';pp.appendChild(d)});$('evidenceCount').textContent=state.evidence.length}
 function showEvidence(){renderRecords();$('evidenceSection').classList.remove('hidden');$('peopleSection').classList.add('hidden');$('recordEvidenceBtn').classList.add('active');$('recordPeopleBtn').classList.remove('active')}
 function showPeople(){renderRecords();$('peopleSection').classList.remove('hidden');$('evidenceSection').classList.add('hidden');$('recordPeopleBtn').classList.add('active');$('recordEvidenceBtn').classList.remove('active')}
 function loseFocus(msg){state.focus=Math.max(0,state.focus-1);state.flags.mistakes++;state.flags.deductionFeedback=msg;save();renderFocus();if(state.focus<=0){failCase();return}renderDeduction()}
