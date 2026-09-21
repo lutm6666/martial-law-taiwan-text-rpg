@@ -57,17 +57,17 @@ var locations={
 var prologue=[
  {date:'1958 年 9 月・臺北',title:'傍晚的口信',html:'<p>天色剛沉，街上的店家一間間把鐵門拉下一半。收音機從茶行、理髮店、雜貨舖裡各自傳出不同節目，聲音疊在騎樓下，誰也沒有特別去聽清楚。</p><p>阿川的口信就是這時送到的。紙條折得很窄，只寫了一句：</p><p class="quote-line">「我少了三頁訪談稿。你有空的話，過來幫我看一眼。」</p>'},
  {date:'你家・傍晚',title:'長輩留下的習慣',html:'<p>你家裡的人懂地方科儀。小時候跟在長輩身邊，你看過同一場祭儀被三個人說成三種來歷，也看過一個禁忌在幾年裡越講越完整，完整得像真的發生過。</p><p>長輩從不急著拆穿誰，只會把香案、時辰、做法和每個人的說法分開記。久了，你也養成同樣的習慣：先把留下來的東西擺在一起，再看故事是從哪裡長出來的。</p>'},
- {date:'茶行門口',title:'缺掉的三頁',html:'<p>阿川近來在替工人、學生、店家與家屬做生活訪談。那些筆記很碎，薪水、夜班、家裡的事、街坊閒話，全都擠在同一本冊子裡。</p><p>今晚，他把冊子留在最裡面的桌上等你。茶已經冷了，缺頁的位置卻一眼就看得出來。</p><p class="quote-line">「我想不起來是在哪裡少的。你幫我從頭看。」</p>'}
+ {date:'茶行門口',title:'缺掉的三頁',html:'<p>阿川近來在替工人、學生、店家與家屬做生活訪談。那些筆記很碎，薪水、夜班、家裡的事、街坊閒話，全都擠在同一本冊子裡。</p><p>今晚，他把冊子放在最裡面的桌上等你。茶已經冷了，缺頁的位置卻一眼就看得出來。</p><p class="quote-line">「我想不起來是在哪裡少的。你幫我從頭看。」</p>'}
 ];
 
 var deduction=[
- {q:'第一問：三頁紙是怎麼離開印刷行的？',opts:[['steal','有人趁周老闆不注意偷走'],['waste','收桌時混進廢紙，被一起帶到市場'],['achuan','阿川自己把三頁交給了陌生人']],correct:'waste',need:'wrapped_scrap',teach:'把印刷行後間、跑腿少年的路線和市場裡那張紙角接起來。'},
+ {q:'第一問：印刷行那批紙是怎麼被送到市場的？',opts:[['steal','有人趁周老闆不注意偷走'],['waste','收桌時和廢紙綁成一捆，由跑腿少年帶走'],['achuan','阿川自己把那批紙交給陌生人']],correct:'waste',need:'waste_route',teach:'周老闆的說法交代了送出流程；市場紙角和找回的頁面再把這批紙與阿川的冊子接起來。'},
  {q:'第二問：周老闆為什麼一開始避談那捆廢紙？',opts:[['cover','他知道有人偷紙，正在替對方遮掩'],['risk','他怕寫著人名的紙從自己店裡流出去惹麻煩'],['forget','他其實完全不記得阿川來過']],correct:'risk',need:'zhou_motive',teach:'想想他真正停頓的是「阿川來過」還是「紙上寫了什麼」。'},
  {q:'第三問：市場裡那名郵務人員當天在找什麼？',opts:[['tracker','阿川遺失的訪談筆記'],['rumor','市場裡傳聞的可疑文件'],['postal','另一條巷子的陳姓收件人']],correct:'postal',need:'postal_stub',teach:'把市場裡的轉述和便條上的姓氏、巷址放在一起。'},
  {q:'第四問：哪一件東西能把找回的紙和原冊直接接回去？',opts:[['ledger','借物簿'],['pages','找回的三頁筆記'],['runner','跑腿少年的說法']],correct:'pages',need:'archive_pages',teach:'頁碼、筆跡和裂口都在同一件物證上。'}
 ];
 
-function fresh(name){return{name:(name||'林默').trim()||'林默',caseId:'case1',schema:6,location:'tea',unlocked:['tea'],visited:['tea'],evidence:[],people:[],done:[],flags:{actionResults:{},visualSeen:{},mistakes:0,deductionReady:false,postmanRumor:false},focus:MAX_FOCUS,deductionStep:0,finished:false,failed:false}}
+function fresh(name){return{name:(name||'林默').trim()||'林默',caseId:'case1',schema:7,location:'tea',timePhase:0,unlocked:['tea'],visited:['tea'],evidence:[],people:[],done:[],flags:{actionResults:{},visualSeen:{},mistakes:0,deductionReady:false,postmanRumor:false},focus:MAX_FOCUS,deductionStep:0,finished:false,failed:false}}
 function normalize(v){
  if(!v||typeof v!=='object'||v.caseId!=='case1')return null;
  var n=fresh(typeof v.name==='string'?v.name:'林默');
@@ -78,6 +78,10 @@ function normalize(v){
  n.unlocked=(Array.isArray(v.unlocked)?v.unlocked:['tea']).filter(function(id){return !!locations[id]});if(n.unlocked.indexOf('tea')<0)n.unlocked.unshift('tea');
  n.visited=(Array.isArray(v.visited)?v.visited:['tea']).filter(function(id){return !!locations[id]});
  n.location=locations[v.location]&&n.unlocked.indexOf(v.location)>=0?v.location:'tea';if(n.visited.indexOf(n.location)<0)n.visited.push(n.location);
+ if(Number.isFinite(Number(v.timePhase)))n.timePhase=Math.max(0,Math.min(3,Math.floor(Number(v.timePhase))));
+ else if(n.location==='tea'&&n.visited.some(function(id){return id!=='tea'}))n.timePhase=2;
+ else if(n.visited.indexOf('bookstall')>=0)n.timePhase=2;
+ else if(n.visited.indexOf('print')>=0||n.visited.indexOf('market')>=0)n.timePhase=1;
  n.focus=Math.max(0,Math.min(MAX_FOCUS,Number.isFinite(Number(v.focus))?Math.floor(Number(v.focus)):MAX_FOCUS));
  n.deductionStep=Math.max(0,Math.min(deduction.length,Number.isFinite(Number(v.deductionStep))?Math.floor(Number(v.deductionStep)):0));
  n.flags={actionResults:{},visualSeen:{},mistakes:0,deductionReady:false,postmanRumor:false};
@@ -91,6 +95,7 @@ function normalize(v){
  if(n.evidence.indexOf('waste_route')>=0||n.evidence.indexOf('zhou_motive')>=0)unlockFor(n,'market');
  if(n.evidence.indexOf('runner_account')>=0)unlockFor(n,'bookstall');
  n.flags.deductionReady=n.evidence.indexOf('archive_pages')>=0&&n.evidence.indexOf('consent_note')>=0;
+ if(n.timePhase>=3&&!['waste_route','zhou_motive','postal_stub','archive_pages','consent_note'].every(function(id){return n.evidence.indexOf(id)>=0}))n.timePhase=n.visited.indexOf('bookstall')>=0?2:1;
  n.finished=!!v.finished&&n.deductionStep>=deduction.length;
  n.failed=!n.finished&&n.focus<=0;
  return n;
@@ -127,19 +132,44 @@ var actions={
  book_pages:{label:'仔細讀找回的三頁',hint:'看看紙上除了正文還留下什麼',requires:['archive_pages'],run:function(){gain('consent_note');state.flags.deductionReady=true;return{lines:['你把三頁按順序攤開。第 21 頁右側有一行幾乎被手掌磨淡的鉛筆字：「受訪者：不要真名。」','阿川看到那行字，先是愣了一下，接著把頁面往自己這邊收近。「這個我記得。她特別交代的。」','你在自己的索引上只寫「受訪者」，把原名留在原稿裡。三頁找回來了，接下來才輪到把整條路徑重新拼一次。']}}}
 };
 
+function readyToReturnTea(){return['waste_route','zhou_motive','postal_stub','archive_pages','consent_note'].every(has)}
+function travelOpen(id){
+ if(state.unlocked.indexOf(id)<0)return false;
+ if(state.timePhase>=3)return id==='tea';
+ if(id==='tea'&&state.timePhase>0&&!readyToReturnTea())return false;
+ return true;
+}
+function advanceTimeFor(id){
+ if(id==='print'&&state.timePhase<1)state.timePhase=1;
+ if(id==='bookstall'&&state.timePhase<2)state.timePhase=2;
+ if(id==='tea'&&state.timePhase>0&&readyToReturnTea())state.timePhase=3;
+}
 function travelLines(id,from,firstVisit){
  var loc=locations[id];
+ if(id==='tea'&&from!=='tea'&&state.timePhase>=3)return['隔日傍晚，你帶著整條紙張去向回到茶行。阿川還守著那本冊子，桌上的茶已經重新換過。'];
  if(!firstVisit){
-  if(id==='tea'&&from!=='tea')return['當天傍晚，你帶著目前查到的線索回到茶行。阿川還守著那本冊子，桌上的茶已經重新換過。'];
-  return['你再次回到'+loc.name+'，把先前沒有查完的地方重新看一遍。'];
+  var when=state.timePhase>=2?'同日下午稍晚':'同日下午';
+  return[when+'，你折回'+loc.name+'，把先前沒有查完的地方重新看一遍。'];
  }
  if(id==='print')return['隔天下午，你帶著昨晚在茶行記下的線索，來到周老闆的印刷行。'].concat(loc.intro);
  if(id==='market')return['離開印刷行時仍是同日下午。你照周老闆說的方向走到市場北口，去找那名替店家跑腿的少年。'].concat(loc.intro);
  if(id==='bookstall')return['同日下午稍晚，你順著跑腿少年指的方向沿騎樓走到舊書攤。'].concat(loc.intro);
  return loc.intro.slice();
 }
-function sceneSub(id){if(id==='tea'&&state.visited.some(function(x){return x!=='tea'}))return'隔日傍晚・回到茶行';return locations[id].sub}
-function renderMap(){var grid=$('mapGrid');grid.innerHTML='';Object.keys(locations).forEach(function(id){var l=locations[id],open=state.unlocked.indexOf(id)>=0,b=document.createElement('button');b.className='map-btn'+(state.visited.indexOf(id)>=0?' visited':'')+(open?'':' locked');b.disabled=!open;b.innerHTML='<strong>'+l.name+'</strong><small>'+(open?l.sub:'尚未取得前往線索')+'</small>';b.onclick=function(){var from=state.location,firstVisit=state.visited.indexOf(id)<0;state.location=id;if(firstVisit)state.visited.push(id);state.flags.lastResult={location:id,lines:travelLines(id,from,firstVisit)};save();setTab('scene')};grid.appendChild(b)})}
+function sceneSub(id){
+ if(id==='tea')return state.timePhase>=3?'隔日傍晚・回到茶行':'第一晚・傍晚';
+ if(state.timePhase>=2&&id!=='bookstall')return'同日下午稍晚・'+locations[id].sub.split('・').slice(-1)[0];
+ return locations[id].sub;
+}
+function mapSub(id,open){
+ if(!open){
+  if(id==='tea'&&state.timePhase>0&&!readyToReturnTea())return'把紙張去向查完整後再回來';
+  return'尚未取得前往線索';
+ }
+ if(id==='tea'&&state.timePhase>0)return'隔日傍晚・回到茶行';
+ return locations[id].sub;
+}
+function renderMap(){var grid=$('mapGrid');grid.innerHTML='';Object.keys(locations).forEach(function(id){var l=locations[id],open=travelOpen(id),b=document.createElement('button');b.className='map-btn'+(state.visited.indexOf(id)>=0?' visited':'')+(open?'':' locked');b.disabled=!open;b.innerHTML='<strong>'+l.name+'</strong><small>'+mapSub(id,open)+'</small>';b.onclick=function(){var from=state.location,firstVisit=state.visited.indexOf(id)<0;advanceTimeFor(id);state.location=id;if(firstVisit)state.visited.push(id);state.flags.lastResult={location:id,lines:travelLines(id,from,firstVisit)};save();setTab('scene')};grid.appendChild(b)})}
 function evidenceMedia(e){if(!e.images||!e.images.length)return '';return '<div class="evidence-media'+(e.images.length>1?' multi':'')+'">'+e.images.map(function(src,i){var url=src+'?v=1';return '<a class="evidence-image-link" href="'+url+'" target="_blank" rel="noopener"><img src="'+url+'" alt="'+e.name+(e.images.length>1?'・'+(i+1):'')+'" loading="lazy"></a>'}).join('')+'</div>'}
 function renderRecords(){var ev=$('evidenceGrid'),pp=$('peopleGrid');ev.innerHTML='';pp.innerHTML='';if(!state.evidence.length)ev.innerHTML='<div class="evidence-card"><strong>尚無案件紀錄</strong><small>可核對的物證、文件與證詞會收在這裡。</small></div>';state.evidence.forEach(function(id){var e=evidence[id],d=document.createElement('div');d.className='evidence-card';d.innerHTML='<strong>'+e.name+'</strong><small>'+e.desc+'</small>'+evidenceMedia(e)+'<span class="tag">'+e.type+'</span>';ev.appendChild(d)});if(!state.people.length)pp.innerHTML='<div class="person-card"><strong>尚無人物紀錄</strong><small>與案件相關的人會在交談後加入。</small></div>';state.people.forEach(function(id){var p=people[id],d=document.createElement('div');d.className='person-card';d.innerHTML='<strong>'+p.name+'</strong><small>'+p.desc+'</small>';pp.appendChild(d)});$('evidenceCount').textContent=state.evidence.length}
 function showEvidence(){renderRecords();$('evidenceSection').classList.remove('hidden');$('peopleSection').classList.add('hidden');$('recordEvidenceBtn').classList.add('active');$('recordPeopleBtn').classList.remove('active')}
