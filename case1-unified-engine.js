@@ -71,6 +71,7 @@ function fresh(name){return{name:(name||'林默').trim()||'林默',caseId:'case1
 function normalize(v){
  if(!v||typeof v!=='object'||v.caseId!=='case1')return null;
  var n=fresh(typeof v.name==='string'?v.name:'林默');
+ var savedPhase=Number(v.timePhase),hasSavedPhase=Number.isFinite(savedPhase);
  var validEvidence={};Object.keys(evidence).forEach(function(id){validEvidence[id]=1});
  (Array.isArray(v.evidence)?v.evidence:[]).forEach(function(id){if(validEvidence[id]&&n.evidence.indexOf(id)<0)n.evidence.push(id)});
  n.people=(Array.isArray(v.people)?v.people:[]).filter(function(id){return !!people[id]});
@@ -78,8 +79,7 @@ function normalize(v){
  n.unlocked=(Array.isArray(v.unlocked)?v.unlocked:['tea']).filter(function(id){return !!locations[id]});if(n.unlocked.indexOf('tea')<0)n.unlocked.unshift('tea');
  n.visited=(Array.isArray(v.visited)?v.visited:['tea']).filter(function(id){return !!locations[id]});
  n.location=locations[v.location]&&n.unlocked.indexOf(v.location)>=0?v.location:'tea';if(n.visited.indexOf(n.location)<0)n.visited.push(n.location);
- if(Number.isFinite(Number(v.timePhase)))n.timePhase=Math.max(0,Math.min(3,Math.floor(Number(v.timePhase))));
- else if(n.location==='tea'&&n.visited.some(function(id){return id!=='tea'}))n.timePhase=2;
+ if(hasSavedPhase)n.timePhase=Math.max(0,Math.min(3,Math.floor(savedPhase)));
  else if(n.visited.indexOf('bookstall')>=0)n.timePhase=2;
  else if(n.visited.indexOf('print')>=0||n.visited.indexOf('market')>=0)n.timePhase=1;
  n.focus=Math.max(0,Math.min(MAX_FOCUS,Number.isFinite(Number(v.focus))?Math.floor(Number(v.focus)):MAX_FOCUS));
@@ -95,7 +95,14 @@ function normalize(v){
  if(n.evidence.indexOf('waste_route')>=0||n.evidence.indexOf('zhou_motive')>=0)unlockFor(n,'market');
  if(n.evidence.indexOf('runner_account')>=0)unlockFor(n,'bookstall');
  n.flags.deductionReady=n.evidence.indexOf('archive_pages')>=0&&n.evidence.indexOf('consent_note')>=0;
- if(n.timePhase>=3&&!['waste_route','zhou_motive','postal_stub','archive_pages','consent_note'].every(function(id){return n.evidence.indexOf(id)>=0}))n.timePhase=n.visited.indexOf('bookstall')>=0?2:1;
+ var returnReady=['waste_route','zhou_motive','postal_stub','archive_pages','consent_note'].every(function(id){return n.evidence.indexOf(id)>=0});
+ if(!hasSavedPhase&&n.location==='tea'&&n.visited.some(function(id){return id!=='tea'})){
+  if(returnReady)n.timePhase=3;
+  else if(n.visited.indexOf('bookstall')>=0)n.location='bookstall';
+  else if(n.visited.indexOf('market')>=0)n.location='market';
+  else if(n.visited.indexOf('print')>=0)n.location='print';
+ }
+ if(n.timePhase>=3&&!returnReady)n.timePhase=n.visited.indexOf('bookstall')>=0?2:1;
  n.finished=!!v.finished&&n.deductionStep>=deduction.length;
  n.failed=!n.finished&&n.focus<=0;
  return n;
@@ -109,8 +116,13 @@ function nextPrologue(){if(prologueIndex<prologue.length-1){prologueIndex++;rend
 function showGame(){hideAll();$('gameScreen').classList.remove('hidden');$('playerLabel').textContent=state.name+'・民俗家學調查者';$('caseChip').textContent='CASE 01・失落的三頁';var build=document.querySelector('.build');if(build)build.textContent='BUILD 6.0・UNIFIED PROTAGONIST';if($('failImage'))$('failImage').src=art.failed;renderFocus();setTab(currentTab)}
 function renderFocus(){var box=$('focusDots');box.innerHTML='';for(var i=0;i<MAX_FOCUS;i++){var d=document.createElement('i');if(i<state.focus)d.classList.add('on');if(state.focus===1&&i===0)d.classList.add('danger');box.appendChild(d)}$('focusLabel').textContent='推理專注 '+state.focus+'/'+MAX_FOCUS}
 function setTab(tab){currentTab=tab;var panels={scene:'scenePanel',map:'mapPanel',record:'recordPanel',deduction:'deductionPanel'};document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.tab===tab)});Object.keys(panels).forEach(function(k){$(panels[k]).classList.toggle('hidden',k!==tab)});if(tab==='scene')renderScene();if(tab==='map')renderMap();if(tab==='record')renderRecords();if(tab==='deduction')renderDeduction()}
-function observeScene(){var m=visualMeta[state.location];state.flags.visualSeen[state.location]=true;state.flags.lastResult=m&&m.observed?{location:state.location,lines:m.observed}:null;save();renderScene()}
-function renderVisual(){var box=$('sceneVisual'),img=$('sceneImage'),note=$('visualNote'),m=visualMeta[state.location];if(!m){box.classList.add('hidden');return}box.classList.remove('hidden');img.src=art[state.location];img.alt=m.alt;img.onclick=observeScene;note.textContent=state.flags.visualSeen[state.location]?'已觀察｜'+m.after:'點擊圖片觀察｜'+m.before;box.classList.toggle('seen',!!state.flags.visualSeen[state.location])}
+function visualFor(id){
+ if(id==='tea'&&state.timePhase>=3)return{alt:'1958 年臺北茶行・隔日傍晚',before:'再看一次原冊與找回的三頁。',after:'找回的三頁已和原冊放在一起，紙邊與缺口仍能一一對回。',observed:['你把找回的三頁和原冊並排攤在桌上。阿川沒有急著把紙塞回去，只先沿著裂口一張張比過。','第 17、21、22 頁的紙邊仍能和冊中缺口接上；第 21 頁那行淡鉛筆字也還在。一路查到這裡，紙張的去向終於能從頭排回來。']};
+ return visualMeta[id];
+}
+function visualSeenKey(){return state.location==='tea'&&state.timePhase>=3?'tea_return':state.location}
+function observeScene(){var m=visualFor(state.location),key=visualSeenKey();state.flags.visualSeen[key]=true;state.flags.lastResult=m&&m.observed?{location:state.location,lines:m.observed}:null;save();renderScene()}
+function renderVisual(){var box=$('sceneVisual'),img=$('sceneImage'),note=$('visualNote'),m=visualFor(state.location),key=visualSeenKey();if(!m){box.classList.add('hidden');return}box.classList.remove('hidden');img.src=art[state.location];img.alt=m.alt;img.onclick=observeScene;note.textContent=state.flags.visualSeen[key]?'已觀察｜'+m.after:'點擊圖片觀察｜'+m.before;box.classList.toggle('seen',!!state.flags.visualSeen[key])}
 function appendLines(lines){var box=$('sceneBody');box.innerHTML='';lines.forEach(function(t){var p=document.createElement('p');p.textContent=t;box.appendChild(p)})}
 function renderScene(){renderVisual();var loc=locations[state.location];$('locationName').textContent=loc.name;$('locationSub').textContent=sceneSub(state.location);var last=state.flags.lastResult;appendLines(last&&last.location===state.location?last.lines:loc.intro);var grid=$('actionGrid');grid.innerHTML='';loc.actions.forEach(function(id){var a=actions[id];if(a.requires&&!a.requires.every(has))return;var b=document.createElement('button');b.className='action-btn'+(done(id)?' done':'');b.innerHTML='<strong>'+a.label+'</strong><small>'+(done(id)?'已調查，可再次查看':a.hint||'進行調查')+'</small>';b.onclick=function(){runAction(id)};grid.appendChild(b)})}
 function completeAction(id,lines){if(!done(id))state.done.push(id);state.flags.actionResults[id]=lines}
