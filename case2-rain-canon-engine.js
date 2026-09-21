@@ -62,6 +62,9 @@ function maybeQiulanReveal(){
 
 function enterLocation(id){
  if(!locationUnlocked(id))return;
+ var from=s.loc;
+ if(id!==from)s.feedback='';
+ if(id==='home'&&from!=='home')s.flags.returned_home=true;
  s.loc=id;s.visited[id]=true;
  if(id==='home')maybeQiulanReveal();
  save();render();
@@ -127,6 +130,8 @@ function renderInvestigation(){
 }
 
 function sceneIntro(id){
+ if(id==='home'&&flag('qiulan_revealed'))return '你帶著從屋頂找到的帆布袋回到201。林秀雲替你把門拉開，目光先落在袋面的姓名標籤上。\n\n外頭的雨還沒有停。這一次，屋裡已經不再只是第一次檢查過的門框與腳印；你手上多了許月琴留下的東西，也終於等到了那個反覆敲門的人。';
+ if(id==='home'&&flag('returned_home'))return '你重新回到201。林秀雲仍留在客廳，門外的雨聲沒有斷過。\n\n先前檢查過的門框與腳印都還在，但現在你帶回了新的紀錄，可以把外面的線索和201重新對在一起。';
  var t={
   home:'門重新關上後，林秀雲沒有立刻回到桌邊。她仍站在玄關旁，不時往門縫的方向看。\n\n客廳裡很安靜，只有雨聲從窗外壓進來。門檻外那幾枚水光未乾的腳印還在，門框、地面和她的說法，都是現在能先核對的東西。',
   corridor:'你從201走出來，沿二樓外廊慢慢往前。雨氣貼在牆面上，欄杆外的街燈被雨幕磨成一團發白的光。\n\n這一層的房門大多關著，只有幾盆靠牆的花被風吹得輕輕碰著花架。回頭看，201就在走廊深處；要分清門前的痕跡是不是單純被雨帶進來，得把整條外廊一起看。',
