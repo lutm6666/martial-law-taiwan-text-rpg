@@ -113,13 +113,16 @@ function renderOpening(){
  if(next)next.onclick=function(){s.flags.opening_seen=true;save();render()};
 }
 
+function currentSceneHtml(){
+ var showingQiulanEvent=s.loc==='home'&&flag('qiulan_revealed')&&s.feedback===DATA.events.qiulan_reveal.text;
+ if(showingQiulanEvent)return '<div class="c2-story-title">敲門者現身</div>'+narrativeHtml(DATA.events.qiulan_reveal.text);
+ if(s.feedback)return narrativeHtml(s.feedback);
+ return sceneIntroHtml(sceneIntro(s.loc));
+}
 function renderInvestigation(){
  var l=DATA.locations[s.loc];
  var html=renderHeader();
- html+='<article class="c2-scene card">'+imageHtml(l.image,l.name)+'<div class="c2-body"><p class="c2-kicker">'+esc(l.sub)+'</p><h2>'+esc(l.name)+'</h2><div class="c2-scene-intro">'+sceneIntroHtml(sceneIntro(s.loc))+'</div>';
- var showingQiulanEvent=s.loc==='home'&&flag('qiulan_revealed');
- if(s.feedback&&!(showingQiulanEvent&&s.feedback===DATA.events.qiulan_reveal.text))html+='<div class="c2-note">'+esc(s.feedback)+'</div>';
- if(showingQiulanEvent)html+='<div class="c2-story"><div class="c2-story-title">敲門者現身</div>'+narrativeHtml(DATA.events.qiulan_reveal.text)+'</div>';
+ html+='<article class="c2-scene card">'+imageHtml(l.image,l.name)+'<div class="c2-body"><p class="c2-kicker">'+esc(l.sub)+'</p><h2>'+esc(l.name)+'</h2><div class="c2-scene-intro">'+currentSceneHtml()+'</div>';
  html+='<div class="c2-actions">';
  l.actions.forEach(function(id){var a=DATA.actions[id],ready=actionReady(a),done=actionDone(id);html+='<button class="c2-btn '+(done?'done':'')+'" data-action="'+esc(id)+'" '+(!ready||a.once&&done?'disabled':'')+'><strong>'+esc(actionLabel(id))+'</strong><small>'+esc(actionHint(id,a))+'</small></button>'});
  html+='</div></div></article>';
