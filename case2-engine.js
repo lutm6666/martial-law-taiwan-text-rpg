@@ -27,7 +27,7 @@ function normalizeRainSave(){
  if(!Array.isArray(v.answers)){v.answers=[];changed=true}
  if(['home','corridor','entrance','yonghe','stairs','spare','rooftop'].indexOf(v.loc)<0){v.loc='home';changed=true}
  if(['investigate','deduction','done'].indexOf(v.phase)<0){v.phase=v.finished?'done':'investigate';changed=true}
- if(typeof v.deduction!=='number'||!isFinite(v.deduction)||v.deduction<0){v.deduction=0;changed=true}
+ if(typeof v.deduction!=='number'||!isFinite(v.deduction)||v.deduction<0||v.deduction>2){v.deduction=0;changed=true}
  if(typeof v.focus!=='number'||!isFinite(v.focus)||v.focus<0||v.focus>4){v.focus=4;changed=true}
  set('feedback','');set('finished',false);set('ending',null);
  if(v.feedback==='帆布已經發硬，提把磨得起毛。靠近袋口的布條上仍能看見三個繡字：許月琴。'){v.feedback='';changed=true}
