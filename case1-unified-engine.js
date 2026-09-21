@@ -24,47 +24,47 @@ var art={
  failed:'assets/case1/failed.webp?v=9'
 };
 var visualMeta={
- tea:{alt:'1958 年臺北茶行・傍晚',before:'先看看桌上的冊子與周遭。',after:'你注意到冊子攤開在桌面，17、21、22 頁缺失，裝訂處留下連續的斜裂口。',observed:['你把視線從阿川移到桌面。訪談冊攤開著，17、21、22 頁不見了，三處裂口的方向相近。','你把頁碼和裂口形狀記下。阿川坐在對面等著，你可以從冊子的去向或缺頁前後內容繼續問起。']},
- print:{alt:'1958 年臺北印刷行・午後',before:'先看看帳簿、紙堆與工作區。',after:'你看見工作區裡帳簿、鉛字與廢紙各有固定位置，牆邊還留著綁紙用的麻繩。',observed:['你沿著工作桌看了一圈。帳簿放在一側，鉛字盒與紙堆分開，牆邊堆著整理過的廢紙與麻繩。','後間紙捆之間空了一塊，像是最近才有一捆被搬走。']},
- market:{alt:'1958 年臺北市場・白天',before:'先看看攤位、包貨紙與人流。',after:'你看見紙張在市場裡被反覆拿來墊箱、包貨，不少紙已沾上油漬或折痕。',observed:['你沿著攤位慢慢看。墊箱、包花生、包雜貨的紙來源不一，很多已經被折過或撕過。','攤販拿紙時通常不特別分來源，幾張寫過字的紙也混在其中。']},
- bookstall:{alt:'1958 年臺北舊書攤・下午',before:'先看看書堆、夾紙與櫃檯。',after:'你發現幾本工具書比旁邊厚，頁縫裡還露出零散紙角。',observed:['你掃過書攤。幾本工具書明顯比旁邊厚，書頁之間也夾著零散紙片。','櫃檯旁還放著一疊待整理的舊紙，老闆似乎習慣把還能用的紙先留下。']}
+ tea:{alt:'1958 年臺北茶行・傍晚',before:'先看一眼桌面和阿川留下的冊子。',after:'冊子顯然已被反覆翻看；桌上的冷茶、鉛筆與便條都還停在阿川剛才整理的位置。',observed:['你先沒有去碰那些缺口，只把桌上的東西看了一遍。茶早已冷透，鉛筆擱在冊子旁，幾張便條壓著翻得發毛的紙角。','阿川顯然已經來回檢查過很多次。真正值得細看的不是桌面有多亂，而是那些被抽走的頁到底留下了什麼痕跡。']},
+ print:{alt:'1958 年臺北印刷行・午後',before:'先看印刷行怎麼運作，不急著追任何一捆紙。',after:'工作桌、鉛字盒與借物簿各有固定位置；後間則比前場更雜，像是所有暫時用不到的東西都先往裡放。',observed:['你先沿著排字桌走了一圈。鉛字盒一格格靠牆排開，紙張按大小壓在桌角，借物簿則壓在玻璃底下。','周老闆收東西很有順序：能歸位的都歸位，暫時說不清用途的才往後間送。要追失頁，得把某一天的流程拆開來看。']},
+ market:{alt:'1958 年臺北市場・白天',before:'先看人和貨怎麼流動，再決定從哪一攤追紙。',after:'人、貨與包材不停換手；紙一旦進了市場，很快就混進日常交易裡。',observed:['你站在市場口看了一會。菜籃、木箱、秤盤在人群間不斷移動，攤販說話時手也沒停，收錢、找零、包貨幾乎同時進行。','紙在這裡只是眾多耗材之一。真正要找的不是「哪裡有紙」，而是哪一張紙保留了能和阿川冊子對上的特徵。']},
+ bookstall:{alt:'1958 年臺北舊書攤・下午',before:'先看看攤位的格局和老闆平常怎麼收書。',after:'書架又深又密，工具書、舊報與零散收購品混在同一個狹窄空間；光靠第一眼很難知道紙被放去了哪裡。',observed:['你沒有立刻翻書，只先把攤位看了一圈。靠街的一側較亮，裡面幾排書架越往下越暗，櫃檯後還堆著尚未分類的收購品。','老闆知道每一類書大概在哪裡，卻不會替零散紙張另外編位置。要找跑腿少年帶來的東西，還是得先問他當時怎麼處理。']}
 };
 
 var evidence={
- missing_index:{name:'缺頁編號',type:'現場紀錄',desc:'訪談冊缺少第 17、21、22 頁，裝訂處留下相連的斜裂痕。'},
- print_ledger:{name:'鉛字盒借用簿',type:'帳目',desc:'阿川十二日借出鉛字盒，歸還欄卻記在十三日。'},
- waste_route:{name:'廢紙去向',type:'流程情報',desc:'印刷行的少量廢紙平常由市場跑腿少年帶走。'},
- zhou_motive:{name:'周老闆的顧慮',type:'證詞',desc:'周老闆真正害怕的是寫有人名的訪談紙從自己店裡流出，替生意與自己惹麻煩。'},
- wrapped_scrap:{name:'包花生的紙角',type:'紙片',desc:'市場找到帶有阿川筆跡與「夜班」字樣的紙角。'},
- runner_account:{name:'紙張交接確認',type:'證詞',desc:'跑腿少年把幾張較完整、寫滿字的紙交給舊書攤老闆。'},
- archive_pages:{name:'三頁失落筆記',type:'關鍵物證',desc:'舊字典裡找到第 17、21、22 頁，裂痕與原冊缺口吻合。'},
- postal_stub:{name:'錯投郵件存根',type:'存根',desc:'市場裡的郵務人員當天在處理錯投地址，存根上的地址與阿川、印刷行都不同。'},
- consent_note:{name:'頁邊鉛筆註記',type:'文字線索',desc:'第 21 頁右側寫著：「受訪者：不要真名。」阿川說這是整理訪談時特別留下的提醒。'}
+ missing_index:{name:'缺頁編號',type:'現場紀錄',desc:'第 17、21、22 頁遭抽離；殘留紙根的裂向近似，21、22 頁位置形成連續缺口。'},
+ print_ledger:{name:'借物簿',type:'帳目',desc:'借物簿記載阿川十二日借出鉛字盒，十三日歸還；前後欄位與墨色連續。'},
+ waste_route:{name:'廢紙去向',type:'流程情報',desc:'周老闆承認十三日收桌時有一捆廢紙交給市場跑腿少年，這也是店裡平常的處理方式。'},
+ zhou_motive:{name:'周老闆的顧慮',type:'證詞',desc:'周老闆說自己避談廢紙去向，是因為那些紙上可能留著受訪者姓名，他怕事情從自己店裡惹出去。'},
+ wrapped_scrap:{name:'包花生的紙角',type:'紙片',desc:'花生攤找到一角較白的紙，殘留「夜班」二字；筆跡與阿川的訪談冊相符。'},
+ runner_account:{name:'紙張交接確認',type:'證詞',desc:'跑腿少年說，多數廢紙拿去墊箱；幾張寫滿字、較完整的紙則被他交給舊書攤老闆。'},
+ archive_pages:{name:'三頁失落筆記',type:'關鍵物證',desc:'舊字典裡找到第 17、21、22 頁；頁碼、筆跡與紙根裂口都能與原冊對回。'},
+ postal_stub:{name:'問路地址便條',type:'便條',desc:'舊書攤老闆順手抄下「陳先生」與另一條巷子的門牌；他記得郵務人員前一天下午曾來問這個地址。'},
+ consent_note:{name:'頁邊鉛筆註記',type:'文字線索',desc:'第 21 頁右側有阿川的鉛筆註記：「受訪者：不要真名。」'}
 };
 var people={
- achuan:{name:'阿川',desc:'你的舊同學。整理普通人的生活訪談，因此格外在意姓名與來源。'},
- zhou:{name:'周老闆',desc:'印刷行老闆。起初避談寫有人名的廢紙如何流出店外，之後才交代當天收桌流程。'},
- runner:{name:'跑腿少年',desc:'替市場攤商搬貨，也替印刷行帶走少量廢紙。'},
- bookseller:{name:'舊書攤老闆',desc:'會把仍可使用、寫過字的紙暫時夾進舊書保存。'}
+ achuan:{name:'阿川',desc:'你的舊同學。近來替普通人做生活訪談，說話快，寫字更快；但提到受訪者姓名時總會先停一下。'},
+ zhou:{name:'周老闆',desc:'印刷行老闆。熟悉阿川，也熟悉哪些紙可以當廢紙、哪些紙上的字會替人惹麻煩。'},
+ runner:{name:'跑腿少年',desc:'替市場攤商搬貨，也替印刷行帶廢紙。每天走同幾條巷子，對紙張去向的記憶比對人名更清楚。'},
+ bookseller:{name:'舊書攤老闆',desc:'收舊書也收能再利用的紙。覺得寫滿字的紙拿來包吃食不妥，便常順手夾進工具書裡。'}
 };
 var locations={
- tea:{name:'茶行',sub:'案件起點',intro:['茶行快打烊了。阿川把一本缺了三頁的訪談冊推到你面前。','他把杯子往旁邊挪開，騰出桌面讓你仔細看冊子。'],actions:['tea_index','tea_ask','tea_compare']},
- print:{name:'印刷行',sub:'油墨與紙堆',intro:['機器剛停，空氣裡仍有油墨味。周老闆正在整理鉛字與紙張。','你走近櫃檯時，他手上的動作慢了一下，目光落在你帶來的冊子上。'],actions:['print_ledger','print_zhou','print_waste']},
- market:{name:'市場',sub:'物流與傳聞',intro:['攤販、搬貨與叫賣聲混在一起。紙在這裡被拿來墊箱、包貨，也常跟著貨物轉手。','不遠處有人提起一名穿制服、四處問地址的人，話頭很快被旁人接了過去。'],actions:['market_stalls','market_runner','market_postman']},
- bookstall:{name:'舊書攤',sub:'紙頁之間',intro:['騎樓深處堆著一排排舊書。幾本工具書的書頁已經發脆。','老闆蹲在櫃檯後整理一疊舊紙，旁邊幾本工具書塞得微微鼓起。'],actions:['book_owner','book_search','book_stub','book_pages']}
+ tea:{name:'茶行',sub:'案件起點',intro:['茶行快打烊了。半扇鐵門已經拉下來，街上的光從門縫斜切進桌面。阿川沒有碰眼前那杯茶，只把一本線裝訪談冊推到你手邊。','「我下午整理才發現少了三頁。」他壓低聲音。冊子裡夾著幾張便條，邊角被翻得發毛；真正空掉的地方卻很乾淨。'],actions:['tea_index','tea_ask','tea_compare']},
+ print:{name:'印刷行',sub:'油墨與紙堆',intro:['最後一聲鉛字碰撞剛停，店裡還浮著油墨、紙灰與熱機器混在一起的味道。周老闆正把鉛字歸回格子，你一進門，他先看見你手裡的冊子。','「阿川叫你來的？」他擦了擦手，語氣很平，動作卻慢了一拍。後間比前場昏暗，紙堆與工具靠牆塞得很滿，單看一眼分不出哪一樣和失頁有關。'],actions:['print_ledger','print_zhou','print_waste']},
+ market:{name:'市場',sub:'物流與傳聞',intro:['市場正是最吵的時候。菜販叫價、腳踏車鈴、木箱落地的聲音混成一片；在這裡，紙很少只做一次紙。','你才走過兩排攤位，就聽見有人提起昨天那個「穿制服、到處問地址的人」。一句話從魚攤傳到花生攤，細節也跟著多了一層。'],actions:['market_stalls','market_runner','market_postman']},
+ bookstall:{name:'舊書攤',sub:'紙頁之間',intro:['騎樓深處比街上暗一截。書架從地面一路疊到肩高，舊紙受潮後特有的氣味混著樟腦味。','老闆正坐在櫃檯後整理一疊剛收來的舊書。你提到跑腿少年，他手上的動作停了一下：「昨天是有個孩子來過。」'],actions:['book_owner','book_search','book_stub','book_pages']}
 };
 
 var prologue=[
- {date:'1958 年 9 月・臺北',title:'收音機沒有停過',html:'<p>城市仍照常上工、上課、做生意。傍晚的店家把鐵門拉下一半，收音機裡的聲音從街角一路飄進騎樓。</p><p class="quote-line">阿川在口信裡只寫了一句：「有三頁紙不見了，能不能過來幫我看看？」</p>'},
- {date:'你家・傍晚',title:'長輩教你的事',html:'<p>家中長輩熟悉地方民俗與科儀。你從小跟在旁邊，看過符式怎麼畫、祭儀怎麼排，也聽過同一件舊事被不同人說成不同模樣。</p><p>久而久之，你習慣把聽到的話和眼前留下的東西一起記下來，再慢慢拼出事情的先後。</p>'},
- {date:'茶行門口',title:'阿川找上你',html:'<p>阿川近來在整理工人、學生、店家與家屬的生活訪談。今天收冊子時，他才發現中間少了三頁。</p><p class="quote-line">「你眼睛細，幫我看看這三頁到底怎麼不見的。」</p><p>你推門進去。桌上已經擺著那本缺頁的冊子。</p>'}
+ {date:'1958 年 9 月・臺北',title:'傍晚的口信',html:'<p>天色剛沉，街上的店家一間間把鐵門拉下一半。收音機從茶行、理髮店、雜貨舖裡各自傳出不同節目，聲音疊在騎樓下，誰也沒有特別去聽清楚。</p><p>阿川的口信就是這時送到的。紙條折得很窄，只寫了一句：</p><p class="quote-line">「我少了三頁訪談稿。你有空的話，過來幫我看一眼。」</p>'},
+ {date:'你家・傍晚',title:'長輩留下的習慣',html:'<p>你家裡的人懂地方科儀。小時候跟在長輩身邊，你看過同一場祭儀被三個人說成三種來歷，也看過一個禁忌在幾年裡越講越完整，完整得像真的發生過。</p><p>長輩從不急著拆穿誰，只會把香案、時辰、做法和每個人的說法分開記。久了，你也養成同樣的習慣：先把留下來的東西擺在一起，再看故事是從哪裡長出來的。</p>'},
+ {date:'茶行門口',title:'缺掉的三頁',html:'<p>阿川近來在替工人、學生、店家與家屬做生活訪談。那些筆記很碎，薪水、夜班、家裡的事、街坊閒話，全都擠在同一本冊子裡。</p><p>今晚，他把冊子留在最裡面的桌上等你。茶已經冷了，缺頁的位置卻一眼就看得出來。</p><p class="quote-line">「我想不起來是在哪裡少的。你幫我從頭看。」</p>'}
 ];
 
 var deduction=[
- {q:'第一問：三頁失頁最可能怎麼離開印刷行？',opts:[['steal','有人趁周老闆不注意偷走'],['waste','整理時混進廢紙，被一起帶去市場'],['achuan','阿川故意把三頁交給陌生人']],correct:'waste',need:'wrapped_scrap',teach:'哪一條線索把印刷行和市場接在一起？'},
- {q:'第二問：周老闆一開始為什麼說得含糊？',opts:[['cover','他知道有人偷走筆記，正在掩護對方'],['risk','他怕寫有人名的紙從自己店裡流出去會惹麻煩'],['forget','他完全不記得阿川來過']],correct:'risk',need:'zhou_motive',teach:'回想他在借物簿面前改口時，真正顧忌的是什麼。'},
- {q:'第三問：市場裡的郵務人員與失頁有什麼關係？',opts:[['tracker','他就是在追查阿川的筆記'],['rumor','大家都這樣說，所以應列為主要嫌疑人'],['postal','他當時在處理錯投郵件，存根上的地址另有其處']],correct:'postal',need:'postal_stub',teach:'把攤販轉述和郵件存根放在一起看。'},
- {q:'第四問：哪件證物能直接確認找回的三頁就是原頁？',opts:[['ledger','鉛字盒借用簿'],['pages','三頁失落筆記本身'],['runner','紙張交接確認']],correct:'pages',need:'archive_pages',teach:'把找回的三頁和原冊缺口放在一起比對。'}
+ {q:'第一問：三頁紙是怎麼離開印刷行的？',opts:[['steal','有人趁周老闆不注意偷走'],['waste','收桌時混進廢紙，被一起帶到市場'],['achuan','阿川自己把三頁交給了陌生人']],correct:'waste',need:'wrapped_scrap',teach:'把印刷行後間、跑腿少年的路線和市場裡那張紙角接起來。'},
+ {q:'第二問：周老闆為什麼一開始避談那捆廢紙？',opts:[['cover','他知道有人偷紙，正在替對方遮掩'],['risk','他怕寫著人名的紙從自己店裡流出去惹麻煩'],['forget','他其實完全不記得阿川來過']],correct:'risk',need:'zhou_motive',teach:'想想他真正停頓的是「阿川來過」還是「紙上寫了什麼」。'},
+ {q:'第三問：市場裡那名郵務人員當天在找什麼？',opts:[['tracker','阿川遺失的訪談筆記'],['rumor','市場裡傳聞的可疑文件'],['postal','另一條巷子的陳姓收件人']],correct:'postal',need:'postal_stub',teach:'把市場裡的轉述和便條上的姓氏、巷址放在一起。'},
+ {q:'第四問：哪一件東西能把找回的紙和原冊直接接回去？',opts:[['ledger','借物簿'],['pages','找回的三頁筆記'],['runner','跑腿少年的說法']],correct:'pages',need:'archive_pages',teach:'頁碼、筆跡和裂口都在同一件物證上。'}
 ];
 
 function fresh(name){return{name:(name||'林默').trim()||'林默',caseId:'case1',schema:6,location:'tea',unlocked:['tea'],visited:['tea'],evidence:[],people:[],done:[],flags:{actionResults:{},visualSeen:{},mistakes:0,deductionReady:false,postmanRumor:false},focus:MAX_FOCUS,deductionStep:0,finished:false,failed:false}}
@@ -112,19 +112,19 @@ function completeAction(id,lines){if(!done(id))state.done.push(id);state.flags.a
 function runAction(id){var a=actions[id],res;if(done(id)&&state.flags.actionResults[id]&&!a.dynamic){res={complete:true,lines:state.flags.actionResults[id]}}else{res=a.run();if(res.complete!==false)completeAction(id,res.lines)}state.flags.lastResult={location:state.location,lines:res.lines};save();renderScene();renderFocus()}
 
 var actions={
- tea_index:{label:'檢查缺頁位置',hint:'先確定少了什麼',run:function(){gain('missing_index');return{lines:['你把冊子攤平。第 17、21、22 頁不在，裝訂斷口連成同一條斜線。','三頁的裂口方向相近，像是在相近時間被一起扯離。你把頁碼和裂口形狀記下。']}}},
- tea_ask:{label:'問阿川最後在哪裡用過冊子',hint:'追最後可確認地點',run:function(){know('achuan');unlock('print');return{lines:['阿川說前一晚曾把冊子帶到周老闆的印刷行排字，隔天也回去歸還借用的鉛字盒。','你把「印刷行」標進地圖，準備去問周老闆那晚的情況。']}}},
- tea_compare:{label:'比對缺口前後內容',hint:'確認失頁原本屬於哪段訪談',run:function(){return{lines:['第 16 頁還在談工廠夜班，第 18 頁卻已換了話題。','你記下：失頁至少有一部分原本與夜班訪談相連。三頁原本的內容範圍因此縮小了一些。']}}},
- print_ledger:{label:'查看借物簿',hint:'看看登記日期',run:function(){gain('print_ledger');return{lines:['借物簿記著：十二日借出鉛字盒，十三日歸還。前後欄位、流水號與墨色連續。','十二、十三日兩筆登記前後相連。你記下十三日，準備拿這個日期追問周老闆。']}}},
- print_zhou:{label:'用帳目追問周老闆',hint:'追問十三日收桌後的去向',requires:['print_ledger'],run:function(){know('zhou');gain('waste_route');gain('zhou_motive');unlock('market');return{lines:['你把借物簿轉向周老闆。他沉默後承認：十三日收桌時，一捆廢紙照平常流程交給市場跑腿少年。','他壓低聲音說，紙上寫著人名；若從自己店裡流出去，怕有人回頭追問，也怕生意受牽連。','市場被標進地圖。']}}},
- print_waste:{label:'檢查廢紙處理方式',hint:'看看平常怎麼處理廢紙',dynamic:true,run:function(){return{lines:has('waste_route')?['後間少了一捆紙，牆邊留下的麻繩與竹籃都顯示這不是第一次往市場送廢紙。','麻繩、竹籃和缺掉的紙捆位置對得上，這批廢紙平常就是這樣被送出後間。']:['後間紙捆之間空了一塊，但周老闆現在只肯說「處理掉了」。','你記下紙捆空位的位置。周老闆只說「處理掉了」，借物簿也許能把日期對上。'],complete:has('waste_route')}}},
- market_stalls:{label:'沿攤位找被拿來包貨的紙',hint:'找實物流向',run:function(){gain('wrapped_scrap');return{lines:['花生攤腳邊壓著一小角較白的紙。末尾還看得見「夜班」兩字，筆跡與阿川的冊子一致。','印刷行的紙確實進了市場。現在可以拿這個具體特徵去問跑腿少年。']}}},
- market_runner:{label:'找跑腿少年問那捆紙',hint:'用紙角喚回具體記憶',requires:['wrapped_scrap'],run:function(){know('runner');gain('runner_account');unlock('bookstall');return{lines:['少年看過紙角後想起那一捆。大多數紙拿去墊箱，幾張完整、寫滿字的紙，他覺得拿來包吃的東西不妥，就交給舊書攤老闆。','舊書攤被標進地圖。']}}},
- market_postman:{label:'追查「穿制服的人四處問地址」',hint:'拆開目擊與傳聞',run:function(){state.flags.postmanRumor=true;return{lines:['第一個人只看見郵務制服；第二個人記得他問過地址；傳到第三個人口中，已經變成「在找阿川的紙」。','三個人口中的說法一層層多了細節。你記下最早反覆出現的兩點：郵務制服、問地址。']}}},
- book_owner:{label:'詢問老闆收紙經過',hint:'問清楚紙是誰送來的',requires:['runner_account'],run:function(){know('bookseller');return{lines:['老闆確認，是跑腿少年親手把幾張完整紙交給他。','「寫滿字的紙拿來包吃的，我看了不舒服，就先夾著。」這和少年剛才說的交接順序一致。']}}},
- book_search:{label:'翻找夾過紙的舊工具書',hint:'找能與原冊直接比對的紙',requires:['runner_account'],run:function(){gain('archive_pages');return{lines:['一本破字典中段明顯厚了一截。三張摺過的紙從書脊旁滑出來：17、21、22。','裂痕與阿川冊上的缺口正好接回去。']}}},
- book_stub:{label:'核對櫃檯下的郵件存根',hint:'看看郵務人員留下了什麼',run:function(){gain('postal_stub');return{lines:[state.flags.postmanRumor?'老闆找到一張錯投郵件存根。昨天那名郵務人員是在確認送錯巷口的地址。':'櫃檯下夾著一張錯投郵件存根；老闆想起昨天確實有郵務人員來確認地址。','存根上的地址在另一條巷子，收件人姓陳，和阿川、印刷行的人都對不上。市場裡那段傳聞至此有了另一個來源。']}}},
- book_pages:{label:'仔細閱讀找回的三頁',hint:'看看三頁上還留著哪些註記',requires:['archive_pages'],run:function(){gain('consent_note');state.flags.deductionReady=true;return{lines:['你把三頁按頁碼排好。第 21 頁右側有一行很淡的鉛筆字：「受訪者：不要真名。」','阿川看到那行鉛筆字，立刻把第 21 頁收近一些。你在自己的紀錄上只寫「受訪者」，把原名留在原頁裡。','推理頁面已開放。']}}}
+ tea_index:{label:'檢查缺頁位置',hint:'看看紙是怎麼離開冊子的',run:function(){gain('missing_index');return{lines:['你把線裝冊攤平，用指腹壓住翻翹的紙角。第 17 頁只剩一道斜斜的紙根；往後翻到 21、22 頁，缺口更寬，兩頁像是連著被扯走。','阿川原先用鉛筆寫下的頁碼還在。你把三個缺口的方向和位置抄進自己的筆記，順手畫了小圖。']}}},
+ tea_ask:{label:'問阿川最後在哪裡用過冊子',hint:'把冊子最後幾次移動排出來',run:function(){know('achuan');unlock('print');return{lines:['阿川皺著眉想了一會兒。前一晚，他把冊子帶去周老闆的印刷行，挑幾段訪談試排；第二天又回去歸還借來的鉛字盒。','「回茶行以後我就塞進抽屜，今天下午才重翻。」他說。你在紙上寫下兩個時間點，把「印刷行」圈了起來。']}}},
+ tea_compare:{label:'比對缺口前後內容',hint:'看看三頁原本夾在哪些訪談裡',run:function(){return{lines:['第 16 頁還在記一名女工的夜班，第 18 頁已接到工資與輪班；第 20 頁末尾換成另一段訪談開頭，23 頁則已是別人的家務瑣事。','三個缺頁不屬於同一段完整文章，卻都出現在阿川最近整理、準備排字的幾組訪談之間。你把「夜班」兩字特別畫了一道線。']}}},
+ print_ledger:{label:'查看借物簿',hint:'把阿川來店裡的日期對清楚',run:function(){gain('print_ledger');return{lines:['玻璃底下的借物簿沾著指印。十二日那欄寫著「川：鉛字盒一只」，十三日的歸還欄又有一筆同樣的名字；上下幾筆字跡、墨色都連得起來。','周老闆站在旁邊沒催你。你把十三日抄下來，再抬頭時，他已經把擦手布折了兩次。']}}},
+ print_zhou:{label:'拿借物簿追問周老闆',hint:'問清十三日收桌後發生了什麼',requires:['print_ledger'],run:function(){know('zhou');gain('waste_route');gain('zhou_motive');unlock('market');return{lines:['你把借物簿轉過去，手指停在十三日。周老闆盯著那一格很久，才說那天收桌時確實清過一批紙：試印、裁邊、寫錯的便條，全綁成一捆，照平常交給替市場跑腿的少年。','你問他為什麼剛才只說「不知道」。他把聲音壓低：「那些紙有名字。要是從我店裡出去，又有人拿去亂傳，最後誰來說得清？」','他沒有再往下辯。只告訴你那孩子下午多半在市場北口一帶。']}}},
+ print_waste:{label:'檢查廢紙怎麼被送出去',hint:'看看後間留下的痕跡',dynamic:true,run:function(){return{lines:has('waste_route')?['你到後間重新看那個空位。竹籃底沾著紙灰，麻繩長度正好夠綁一捆四開紙；後門門檻還卡著幾小片被拖碎的白紙。','周老闆說，跑腿少年通常連竹籃一起提走，傍晚再空手送回。眼前這些痕跡和他說的日常流程對得上。']:['後間紙堆中間缺了一捆，竹籃擺在靠門的位置，麻繩卻還沒收好。你蹲下看見門檻卡著幾片新鮮紙屑。','「昨天清過一次。」周老闆只答這一句，隨即轉身去收鉛字。桌上的借物簿或許能把這個「昨天」釘得更準。'],complete:has('waste_route')}}},
+ market_stalls:{label:'沿攤位找被拿來包貨的紙',hint:'先追紙，不追傳聞',run:function(){gain('wrapped_scrap');return{lines:['你從菜攤一路看到花生攤。木箱底下塞著報紙，秤盤旁的紙已被油浸透；只有一張被壓在竹簍腳邊的白紙顏色比較新。','你抽出露在外面的紙角。上頭只剩半行字，末尾兩個字還看得清楚——「夜班」。墨水與阿川冊子裡的一樣偏淡，筆勢也熟悉。']}}},
+ market_runner:{label:'拿紙角問跑腿少年',hint:'讓他從實物回想那捆紙',requires:['wrapped_scrap'],run:function(){know('runner');gain('runner_account');unlock('bookstall');return{lines:['少年先認出的是紙，不是字。「周老闆那一捆？」他把紙角翻過來看了兩次。大部分廢紙被攤販拿去墊箱、包貨；其中幾張寫得密密麻麻，他嫌拿來包花生難看，就另外抽了出來。','「我給舊書攤的伯仔了。他什麼紙都留。」少年朝騎樓另一頭比了比。你順著他的手勢，在地圖上多標了一個位置。']}}},
+ market_postman:{label:'問清「穿制服的人」',hint:'把每個人真正看見的部分分開',run:function(){state.flags.postmanRumor=true;return{lines:['魚販只記得那人穿郵務制服；隔壁攤主記得他拿著一張紙問巷名；到了第三個人口中，已經變成「那個郵差在找阿川丟掉的東西」。','你請三個人各自重說一次，不替前一個人補細節。留下來的共同部分其實很少：郵務制服、問地址、昨天午後。舊書攤離這裡不遠，也許有人記得他當時問的是哪個地址。']}}},
+ book_owner:{label:'問老闆那幾張紙怎麼來的',hint:'把跑腿少年的說法接上',requires:['runner_account'],run:function(){know('bookseller');return{lines:['老闆聽你形容紙角，從鼻子裡「嗯」了一聲。「是那孩子拿來的。幾張寫滿字，我看拿去包吃的不好，就先塞書裡。」','他想不起頁碼，卻記得紙很薄、折過一次，而且其中一張邊上有鉛筆字。這和跑腿少年說的幾張完整紙接得起來。']}}},
+ book_search:{label:'翻找夾過紙的工具書',hint:'從書脊和厚度找異常',requires:['runner_account'],run:function(){gain('archive_pages');return{lines:['你從最下層開始抽書。一本舊字典在「工」字部附近鼓得特別明顯，書脊也被撐開一點。你把它平放在櫃檯上，三張對折的紙從頁間滑了出來。','17、21、22。阿川的字、阿川的頁碼。你把紙邊貼回冊子缺口旁，幾處斜裂像拼圖一樣接上。老闆在旁邊看了一眼，沒有說話。']}}},
+ book_stub:{label:'查看櫃檯下的地址便條',hint:'看看昨天那名郵務人員問的是哪個地址',run:function(){gain('postal_stub');return{lines:[state.flags.postmanRumor?'老闆聽你提到那名郵務人員，從櫃檯下抽出一張折過的小紙片：「昨天他問一個陳先生住哪裡，我怕自己講錯路，就順手把名字和門牌抄下來了。」':'你在櫃檯下看見一張折過的小紙片。老闆想了一會兒，說昨天有名郵務人員來問路；他怕自己記錯，便把對方口中的收件人和門牌順手抄在廢紙上。','便條上只有「陳先生」和一個不同巷子的門牌。上頭沒有阿川、茶行或印刷行的名字。市場裡越傳越大的那段話，到這裡只剩下一個普通的問路地址。']}}},
+ book_pages:{label:'仔細讀找回的三頁',hint:'看看紙上除了正文還留下什麼',requires:['archive_pages'],run:function(){gain('consent_note');state.flags.deductionReady=true;return{lines:['你把三頁按順序攤開。第 21 頁右側有一行幾乎被手掌磨淡的鉛筆字：「受訪者：不要真名。」','阿川看到那行字，先是愣了一下，接著把頁面往自己這邊收近。「這個我記得。她特別交代的。」','你在自己的索引上只寫「受訪者」，把原名留在原稿裡。三頁找回來了，接下來才輪到把整條路徑重新拼一次。']}}}
 };
 
 function renderMap(){var grid=$('mapGrid');grid.innerHTML='';Object.keys(locations).forEach(function(id){var l=locations[id],open=state.unlocked.indexOf(id)>=0,b=document.createElement('button');b.className='map-btn'+(state.visited.indexOf(id)>=0?' visited':'')+(open?'':' locked');b.disabled=!open;b.innerHTML='<strong>'+l.name+'</strong><small>'+(open?l.sub:'尚未取得前往線索')+'</small>';b.onclick=function(){state.location=id;if(state.visited.indexOf(id)<0)state.visited.push(id);state.flags.lastResult=null;save();setTab('scene')};grid.appendChild(b)})}
@@ -132,9 +132,9 @@ function renderRecords(){var ev=$('evidenceGrid'),pp=$('peopleGrid');ev.innerHTM
 function showEvidence(){renderRecords();$('evidenceSection').classList.remove('hidden');$('peopleSection').classList.add('hidden');$('recordEvidenceBtn').classList.add('active');$('recordPeopleBtn').classList.remove('active')}
 function showPeople(){renderRecords();$('peopleSection').classList.remove('hidden');$('evidenceSection').classList.add('hidden');$('recordPeopleBtn').classList.add('active');$('recordEvidenceBtn').classList.remove('active')}
 function loseFocus(msg){state.focus=Math.max(0,state.focus-1);state.flags.mistakes++;state.flags.deductionFeedback=msg;save();renderFocus();if(state.focus<=0){failCase();return}renderDeduction()}
-function renderDeduction(){var box=$('deductionBox');box.innerHTML='';if(!state.flags.deductionReady){box.innerHTML='<h2>推理尚未開放</h2><p>先找到三頁失落筆記並仔細閱讀。</p><div class="method-note"><strong>手上的線索</strong><br>目前還差找回三頁筆記，推理會在那之後開放。</div>';return}var step=deduction[state.deductionStep];if(!step){finishCase();return}box.innerHTML='<h2>'+step.q+'</h2><p>選一個你認為最符合目前線索的說法，再挑出最關鍵的紀錄。</p><div class="method-note">'+step.teach+'</div><div class="failure-warning">選錯推論會消耗推理專注。</div>';var opts=document.createElement('div');opts.className='deduction-options';step.opts.forEach(function(pair){var b=document.createElement('button');b.className='deduction-option';b.innerHTML='<strong>'+pair[1]+'</strong>';b.onclick=function(){if(pair[0]!==step.correct){loseFocus('這個說法和你目前找到的線索對不上。');return}renderEvidencePicker(step)};opts.appendChild(b)});box.appendChild(opts);if(state.flags.deductionFeedback){var f=document.createElement('div');f.className='feedback';f.textContent=state.flags.deductionFeedback;box.appendChild(f)}}
-function renderEvidencePicker(step){var box=$('deductionBox');if(!has(step.need)){box.innerHTML='<h2>還缺少直接證據</h2><p>推論方向可能合理，但目前沒有能直接支撐它的紀錄。</p><button class="deduction-option" id="backInvestigate"><strong>回到調查</strong></button>';$('backInvestigate').onclick=function(){setTab('scene')};return}box.innerHTML='<h2>提出證物</h2><p>哪一件已取得的案件紀錄最能直接支撐剛才的推論？</p>';var opts=document.createElement('div');opts.className='deduction-options';state.evidence.forEach(function(id){var e=evidence[id],b=document.createElement('button');b.className='deduction-option';b.innerHTML='<strong>'+e.name+'</strong><small>'+e.type+'</small>';b.onclick=function(){if(id!==step.need){loseFocus('這件紀錄和剛才的推論連得不夠直接。');return}state.deductionStep++;state.flags.deductionFeedback='';save();toast('推理成立');renderDeduction()};opts.appendChild(b)});box.appendChild(opts)}
-function finishCase(){state.finished=true;save();hideAll();$('completeScreen').classList.remove('hidden');$('caseChip').textContent='CASE 01・CLOSED';var build=document.querySelector('.build');if(build)build.textContent='BUILD 6.0・CASE 01';var box=$('completeText');box.innerHTML='<p>三頁紙在印刷行整理時混進日常廢紙，沿著平常的市場物流離開，最後被舊書攤老闆夾進工具書保存。</p><p>周老闆一開始少說了那捆廢紙的去向，原因是紙上寫著人名，他擔心從店裡流出去會惹麻煩。市場裡那名郵務人員當天則在處理錯投地址，後來的轉述把他和失頁扯到了一起。</p><p>你把第 21 頁的原名遮住，只在整理好的紀錄上寫「受訪者」。阿川把三頁重新夾回冊子，準備另做一份匿名抄本。</p>'}
+function renderDeduction(){var box=$('deductionBox');box.innerHTML='';if(!state.flags.deductionReady){box.innerHTML='<h2>還拼不完整</h2><p>三頁紙的去向還沒走到盡頭。先把它們找回來，再回頭整理整條路徑。</p><div class="method-note"><strong>目前缺的那一塊</strong><br>找到失頁本身，看看紙上還留下哪些能和前面線索接起來的細節。</div>';return}var step=deduction[state.deductionStep];if(!step){finishCase();return}box.innerHTML='<h2>'+step.q+'</h2><p>把一路記下來的物件、時間和說法排在一起，選出最能把它們接成一條線的解釋。</p><div class="method-note">'+step.teach+'</div><div class="failure-warning">選錯推論會消耗推理專注。</div>';var opts=document.createElement('div');opts.className='deduction-options';step.opts.forEach(function(pair){var b=document.createElement('button');b.className='deduction-option';b.innerHTML='<strong>'+pair[1]+'</strong>';b.onclick=function(){if(pair[0]!==step.correct){loseFocus('這條說法接不上你手裡的幾個關鍵細節。');return}renderEvidencePicker(step)};opts.appendChild(b)});box.appendChild(opts);if(state.flags.deductionFeedback){var f=document.createElement('div');f.className='feedback';f.textContent=state.flags.deductionFeedback;box.appendChild(f)}}
+function renderEvidencePicker(step){var box=$('deductionBox');if(!has(step.need)){box.innerHTML='<h2>還缺少直接證據</h2><p>推論方向可能合理，但目前沒有能直接支撐它的紀錄。</p><button class="deduction-option" id="backInvestigate"><strong>回到調查</strong></button>';$('backInvestigate').onclick=function(){setTab('scene')};return}box.innerHTML='<h2>提出證物</h2><p>哪一件已取得的案件紀錄最能直接支撐剛才的推論？</p>';var opts=document.createElement('div');opts.className='deduction-options';state.evidence.forEach(function(id){var e=evidence[id],b=document.createElement('button');b.className='deduction-option';b.innerHTML='<strong>'+e.name+'</strong><small>'+e.type+'</small>';b.onclick=function(){if(id!==step.need){loseFocus('這件紀錄很重要，但不是剛才那個推論最關鍵的一環。');return}state.deductionStep++;state.flags.deductionFeedback='';save();toast('推理成立');renderDeduction()};opts.appendChild(b)});box.appendChild(opts)}
+function finishCase(){state.finished=true;save();hideAll();$('completeScreen').classList.remove('hidden');$('caseChip').textContent='CASE 01・CLOSED';var build=document.querySelector('.build');if(build)build.textContent='BUILD 6.0・CASE 01';var box=$('completeText');box.innerHTML='<p>三頁紙沒有被藏進什麼祕密地方。它們在印刷行收桌時混進廢紙，跟著竹籃到了市場；一部分紙被拿去墊箱、包貨，寫得較滿的幾張則被跑腿少年抽出來，最後夾進舊書攤的一本字典。</p><p>周老闆確實把那一段省掉了。他怕的不是阿川，而是紙上的人名從自己店裡流出去，日後有人循著那些字找回說話的人。至於市場裡那個越傳越可疑的郵務人員，最後只剩下一張老闆順手抄下的問路地址：另一條巷子、另一個姓陳的收件人。</p><p>回到茶行時，阿川把三頁一張張放回原位。第 21 頁的原名被另外覆住，索引只留下「受訪者」三個字。冊子重新完整了，卻和失去那三頁以前不太一樣——你們現在知道，一份紀錄除了記下別人的話，也會把別人的生活一起帶在身上。</p><p>阿川闔上冊子，外頭的鐵門正一扇扇落下。你忽然覺得，找回三頁紙其實是最短的那一段路。</p>'}
 function failCase(){state.failed=true;save();hideAll();$('failScreen').classList.remove('hidden');$('caseChip').textContent='CASE 01・FAILED';$('failDetail').textContent='你在本案做出了 '+state.flags.mistakes+' 次錯誤推論。'}
 function restart(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}location.reload()}
 function loadCase(){var n=load();if(!n){$('bootStatus').textContent='找不到可讀取的案件一存檔。';return}state=n;if(state.finished){finishCase();return}if(state.failed){failCase();return}currentTab='scene';showGame()}
