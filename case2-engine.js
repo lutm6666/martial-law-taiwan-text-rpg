@@ -127,15 +127,15 @@ function loadRainRuntime(done){
 
  function loadEngine(){
   if(window.Case2RainCanon){flushLoaded();return}
-  loadScript('case2-rain-canon-engine.js?v=13',function(ok){
-   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=13');return}
+  loadScript('case2-rain-canon-engine.js?v=14',function(ok){
+   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=14');return}
    flushLoaded();
   });
  }
 
  if(window.CASE2_RAIN_CANON){loadEngine();return}
- loadScript('case2-rain-canon.js?v=12',function(ok){
-  if(!ok||!window.CASE2_RAIN_CANON){reportLoadError('case2-rain-canon.js?v=12');return}
+ loadScript('case2-rain-canon.js?v=13',function(ok){
+  if(!ok||!window.CASE2_RAIN_CANON){reportLoadError('case2-rain-canon.js?v=13');return}
   loadEngine();
  });
 }
