@@ -48,7 +48,7 @@ var people={
  bookseller:{name:'舊書攤老闆',desc:'收舊書也收能再利用的紙。覺得寫滿字的紙拿來包吃食不妥，便常順手夾進工具書裡。'}
 };
 var locations={
- tea:{name:'茶行',sub:'第一晚・傍晚',intro:['茶行快打烊了。半扇鐵門已經拉下來，街上的光從門縫斜切進桌面。阿川沒有碰眼前那杯茶，只把一本線裝訪談冊推到你手邊。','「我下午整理才發現少了三頁。」他壓低聲音。冊子裡夾著幾張便條，邊角被翻得發毛；真正空掉的地方卻很乾淨。'],actions:['tea_index','tea_ask','tea_compare']},
+ tea:{name:'茶行',sub:'第一晚・傍晚',intro:['茶行快打烊了。半扇鐵門已經拉下來，街上的光從門縫斜切進桌面。阿川沒有碰眼前那杯茶，只把一本裝訂訪談冊推到你手邊。','「我下午整理才發現少了三頁。」他壓低聲音。冊子裡夾著幾張便條，邊角被翻得發毛；真正空掉的地方卻很乾淨。'],actions:['tea_index','tea_ask','tea_compare']},
  print:{name:'印刷行',sub:'隔日下午・油墨與紙堆',intro:['最後一聲鉛字碰撞剛停，店裡還浮著油墨、紙灰與熱機器混在一起的味道。周老闆正把鉛字歸回格子，你一進門，他先看見你手裡的冊子。','「阿川叫你來的？」他擦了擦手，語氣很平，動作卻慢了一拍。後間比前場昏暗，紙堆與工具靠牆塞得很滿，單看一眼分不出哪一樣和失頁有關。'],actions:['print_ledger','print_zhou','print_waste']},
  market:{name:'市場',sub:'同日下午・物流與傳聞',intro:['市場正是最吵的時候。菜販叫價、腳踏車鈴、木箱落地的聲音混成一片；在這裡，紙很少只做一次紙。','你才走過兩排攤位，就聽見有人提起昨天那個「穿制服、到處問地址的人」。一句話從魚攤傳到花生攤，細節也跟著多了一層。'],actions:['market_stalls','market_runner','market_postman']},
  bookstall:{name:'舊書攤',sub:'同日下午稍晚・紙頁之間',intro:['騎樓深處比街上暗一截。書架從地面一路疊到肩高，舊紙受潮後特有的氣味混著樟腦味。','老闆正坐在櫃檯後整理一疊剛收來的舊書。你提到跑腿少年，他手上的動作停了一下：「昨天是有個孩子來過。」'],actions:['book_owner','book_search','book_stub','book_pages']}
@@ -121,7 +121,7 @@ function completeAction(id,lines){if(!done(id))state.done.push(id);state.flags.a
 function runAction(id){var a=actions[id],res;if(done(id)&&state.flags.actionResults[id]&&!a.dynamic){res={complete:true,lines:state.flags.actionResults[id]}}else{res=a.run();if(res.complete!==false)completeAction(id,res.lines)}state.flags.lastResult={location:state.location,lines:res.lines};save();renderScene();renderFocus()}
 
 var actions={
- tea_index:{label:'檢查缺頁位置',hint:'看看紙是怎麼離開冊子的',run:function(){gain('missing_index');return{lines:['你把線裝冊攤平，用指腹壓住翻翹的紙角。第 17 頁只剩一道斜斜的紙根；往後翻到 21、22 頁，缺口更寬，兩頁像是連著被扯走。','阿川原先用鉛筆寫下的頁碼還在。你把三個缺口的方向和位置抄進自己的筆記，順手畫了小圖。']}}},
+ tea_index:{label:'檢查缺頁位置',hint:'看看紙是怎麼離開冊子的',run:function(){gain('missing_index');return{lines:['你把裝訂冊攤平，用指腹壓住翻翹的紙角。第 17 頁只剩一道斜斜的紙根；往後翻到 21、22 頁，缺口更寬，兩頁像是連著被扯走。','阿川原先用鉛筆寫下的頁碼還在。你把三個缺口的方向和位置抄進自己的筆記，順手畫了小圖。']}}},
  tea_ask:{label:'問阿川最後在哪裡用過冊子',hint:'把冊子最後幾次移動排出來',run:function(){know('achuan');unlock('print');return{lines:['阿川皺著眉想了一會兒。前一晚要去周老闆的印刷行試排時，他先挑出第 17、21、22 頁，沿著裝訂邊把三頁取下，好讓排字時能各自壓在工作桌旁對稿。','第二天他回去歸還借來的鉛字盒，收工後以為三頁也跟著帶回來了。「回茶行我就把冊子塞進抽屜，今天下午重翻才發現根本不在。」你把「三頁曾單獨離開原冊」和「印刷行」一起圈了起來。']}}},
  tea_compare:{label:'比對缺口前後內容',hint:'看看三頁原本夾在哪些訪談裡',run:function(){return{lines:['第 16 頁還在記一名女工的夜班，第 18 頁已接到工資與輪班；第 20 頁末尾換成另一段訪談開頭，23 頁則已是別人的家務瑣事。','三個缺頁不屬於同一段完整文章，卻都出現在阿川最近整理、準備排字的幾組訪談之間。你把「夜班」兩字特別畫了一道線。']}}},
  print_ledger:{label:'查看借物簿',hint:'把阿川來店裡的日期對清楚',run:function(){gain('print_ledger');return{lines:['玻璃底下的借物簿沾著指印。十二日那欄寫著「川：鉛字盒一只」，十三日的歸還欄又有一筆同樣的名字；上下幾筆字跡、墨色都連得起來。','周老闆站在旁邊沒催你。你把十三日抄下來，再抬頭時，他已經把擦手布折了兩次。']}}},
