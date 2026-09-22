@@ -26,7 +26,6 @@ index.html
 ├─ case2-engine.js
 │  ├─ case2-rain-canon.js        （案件二需要時載入）
 │  └─ case2-rain-canon-engine.js （案件二需要時載入）
-└─ start-screen-hotfix.js
 ```
 
 正式圖片資源：
@@ -45,8 +44,7 @@ assets/v2/canon/
 - `case2-engine.js`：第二案入口與延遲載入控制。
 - `case2-rain-canon.js`：第二案 Canon、證物、人物、場景與推理資料。
 - `case2-rain-canon-engine.js`：第二案執行引擎。
-- `start-screen-hotfix.js`：首頁入口補強。
-- `assets/`：正式與歷史圖片資源；正式部署只會帶入目前遊戲需要的子目錄。
+- `assets/`：正式圖片資源；歷史素材統一放在 `archive/`。
 - `assets-src/`：部分場景圖片的可重建來源，不是瀏覽器執行依賴。
 - `tools/`：驗證與維護工具。
 - `archive/`：過去版本與舊式模組，只供追溯，不屬於正式執行鏈。

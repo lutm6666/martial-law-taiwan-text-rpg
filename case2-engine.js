@@ -34,7 +34,6 @@ function normalizeRainSave(){
  if(changed){try{localStorage.setItem(RAIN_SAVE,JSON.stringify(v))}catch(e){}}
  return v;
 }
-function hasRainSave(){var v=normalizeRainSave();return !!(v&&v.caseId===RAIN_CASE)}
 function setStatus(text){var status=$('bootStatus');if(status)status.textContent=text||''}
 function installProgressiveVisibility(){
  if($('case2ProgressiveVisibilityStyle'))return;
@@ -125,8 +124,8 @@ function loadRainRuntime(done){
 
  function loadEngine(){
   if(window.Case2RainCanon){flushLoaded();return}
-  loadScript('case2-rain-canon-engine.js?v=11',function(ok){
-   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=11');return}
+  loadScript('case2-rain-canon-engine.js?v=12',function(ok){
+   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=12');return}
    flushLoaded();
   });
  }

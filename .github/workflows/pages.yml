@@ -33,7 +33,6 @@ jobs:
           node --check case2-engine.js
           node --check case2-rain-canon.js
           node --check case2-rain-canon-engine.js
-          node --check start-screen-hotfix.js
           node tools/verify-javascript.js
 
       - name: Verify canonical assets
@@ -57,7 +56,6 @@ jobs:
           cp case2-engine.js _site/
           cp case2-rain-canon.js _site/
           cp case2-rain-canon-engine.js _site/
-          cp start-screen-hotfix.js _site/
           cp -R assets/case1 _site/assets/case1
           cp -R assets/v2/canon _site/assets/v2/canon
 

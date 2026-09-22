@@ -3,7 +3,7 @@
 
 var SAVE_KEY='mist-taiwan-case-save-v4';
 var MAX_FOCUS=4;
-var state=null,currentTab='scene',prologueIndex=0;
+var state=null,currentTab='scene';
 
 function $(id){return document.getElementById(id)}
 function toast(msg){var t=$('toast');if(!t)return;t.textContent=msg;t.className='toast show';clearTimeout(window.__mistToast);window.__mistToast=setTimeout(function(){t.className='toast'},1800)}
@@ -14,7 +14,7 @@ function done(id){return state.done.indexOf(id)!==-1}
 function gain(id){if(evidence[id]&&!has(id)){state.evidence.push(id);toast('新增紀錄：'+evidence[id].name)}}
 function know(id){if(people[id]&&state.people.indexOf(id)===-1)state.people.push(id)}
 function unlock(id){if(locations[id]&&state.unlocked.indexOf(id)===-1)state.unlocked.push(id)}
-function hideAll(){['startScreen','prologueScreen','gameScreen','completeScreen','failScreen'].forEach(function(id){var el=$(id);if(el)el.classList.add('hidden')})}
+function hideAll(){['startScreen','gameScreen','completeScreen','failScreen'].forEach(function(id){var el=$(id);if(el)el.classList.add('hidden')})}
 
 var art={
  tea:'assets/case1/tea.webp?v=9',
@@ -53,12 +53,6 @@ var locations={
  market:{name:'市場',sub:'同日下午・物流與傳聞',intro:['市場正是最吵的時候。菜販叫價、腳踏車鈴、木箱落地的聲音混成一片；在這裡，紙很少只做一次紙。','你才走過兩排攤位，就聽見有人提起昨天那個「穿制服、到處問地址的人」。一句話從魚攤傳到花生攤，細節也跟著多了一層。'],actions:['market_stalls','market_runner','market_postman']},
  bookstall:{name:'舊書攤',sub:'同日下午稍晚・紙頁之間',intro:['騎樓深處比街上暗一截。書架從地面一路疊到肩高，舊紙受潮後特有的氣味混著樟腦味。','老闆正坐在櫃檯後整理一疊剛收來的舊書。你提到跑腿少年，他手上的動作停了一下：「昨天是有個孩子來過。」'],actions:['book_owner','book_search','book_stub','book_pages']}
 };
-
-var prologue=[
- {date:'1958 年 9 月・臺北',title:'傍晚的口信',html:'<p>天色剛沉，街上的店家一間間把鐵門拉下一半。收音機從茶行、理髮店、雜貨舖裡各自傳出不同節目，聲音疊在騎樓下，誰也沒有特別去聽清楚。</p><p>阿川的口信就是這時送到的。紙條折得很窄，只寫了一句：</p><p class="quote-line">「我少了三頁訪談稿。你有空的話，過來幫我看一眼。」</p>'},
- {date:'你家・傍晚',title:'長輩留下的習慣',html:'<p>你家裡的人懂地方科儀。小時候跟在長輩身邊，你看過同一場祭儀被三個人說成三種來歷，也看過一個禁忌在幾年裡越講越完整，完整得像真的發生過。</p><p>長輩從不急著拆穿誰，只會把香案、時辰、做法和每個人的說法分開記。久了，你也養成同樣的習慣：先把留下來的東西擺在一起，再看故事是從哪裡長出來的。</p>'},
- {date:'茶行門口',title:'缺掉的三頁',html:'<p>阿川近來在替工人、學生、店家與家屬做生活訪談。那些筆記很碎，薪水、夜班、家裡的事、街坊閒話，全都擠在同一本冊子裡。</p><p>今晚，他把冊子放在最裡面的桌上等你。茶已經冷了，缺頁的位置卻一眼就看得出來。</p><p class="quote-line">「我想不起來是在哪裡少的。你幫我從頭看。」</p>'}
-];
 
 var deduction=[
  {q:'第一問：印刷行那批紙是怎麼被送到市場的？',opts:[['steal','有人趁周老闆不注意偷走'],['waste','收桌時和廢紙綁成一捆，由跑腿少年帶走'],['achuan','阿川自己把那批紙交給陌生人']],correct:'waste',need:'waste_route',teach:'周老闆的說法交代了送出流程；市場紙角和找回的頁面再把這批紙與阿川的冊子接起來。'},
@@ -110,9 +104,7 @@ function normalize(v){
 function unlockFor(n,id){if(locations[id]&&n.unlocked.indexOf(id)<0)n.unlocked.push(id)}
 function load(){return normalize(parse())}
 
-function showPrologue(){hideAll();$('prologueScreen').classList.remove('hidden');prologueIndex=0;renderPrologue()}
-function renderPrologue(){var p=prologue[prologueIndex];$('prologueDate').textContent=p.date;$('prologueTitle').textContent=p.title;$('prologueText').innerHTML=p.html;$('prologueCounter').textContent=(prologueIndex+1)+' / '+prologue.length;$('prologueNext').textContent=prologueIndex===prologue.length-1?'走進茶行':'繼續'}
-function nextPrologue(){if(prologueIndex<prologue.length-1){prologueIndex++;renderPrologue();return}state=fresh($('nameInput').value);save();currentTab='scene';showGame()}
+function startCase(){state=fresh($('nameInput').value);save();currentTab='scene';showGame();try{window.scrollTo({top:0,behavior:'instant'})}catch(e){window.scrollTo(0,0)}}
 function showGame(){hideAll();$('gameScreen').classList.remove('hidden');$('playerLabel').textContent=state.name+'・民俗家學調查者';$('caseChip').textContent='CASE 01・失落的三頁';var build=document.querySelector('.build');if(build)build.textContent='BUILD 6.0・UNIFIED PROTAGONIST';if($('failImage'))$('failImage').src=art.failed;renderFocus();setTab(currentTab)}
 function renderFocus(){var box=$('focusDots');box.innerHTML='';for(var i=0;i<MAX_FOCUS;i++){var d=document.createElement('i');if(i<state.focus)d.classList.add('on');if(state.focus===1&&i===0)d.classList.add('danger');box.appendChild(d)}$('focusLabel').textContent='推理專注 '+state.focus+'/'+MAX_FOCUS}
 function setTab(tab){currentTab=tab;var panels={scene:'scenePanel',map:'mapPanel',record:'recordPanel',deduction:'deductionPanel'};document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.tab===tab)});Object.keys(panels).forEach(function(k){$(panels[k]).classList.toggle('hidden',k!==tab)});if(tab==='scene')renderScene();if(tab==='map')renderMap();if(tab==='record')renderRecords();if(tab==='deduction')renderDeduction()}
@@ -195,14 +187,14 @@ function failCase(){state.failed=true;save();hideAll();$('failScreen').classList
 function restart(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}location.reload()}
 function loadCase(){var n=load();if(!n){$('bootStatus').textContent='找不到可讀取的案件一存檔。';return}state=n;if(state.finished){finishCase();return}if(state.failed){failCase();return}currentTab='scene';showGame()}
 function init(){
- $('startBtn').onclick=showPrologue;$('prologueNext').onclick=nextPrologue;$('loadBtn').onclick=loadCase;
+ $('startBtn').onclick=startCase;$('loadBtn').onclick=loadCase;
  document.querySelectorAll('.tab-btn').forEach(function(b){b.onclick=function(){setTab(b.dataset.tab)}});
  $('recordEvidenceBtn').onclick=showEvidence;$('recordPeopleBtn').onclick=showPeople;
  $('restartBtn').onclick=function(){if(confirm('確定重新開始案件？目前案件一進度會被清除。'))restart()};
  $('retryBtn').onclick=restart;$('failHomeBtn').onclick=restart;$('homeBtn').onclick=restart;
  $('nextCaseBtn').onclick=function(){toast('案件二：《雨夜敲門》')};
  var old=parse();if(old&&old.caseId==='case1'&&typeof old.name==='string'&&old.name.trim())$('nameInput').value=old.name.trim();
- $('loadBtn').disabled=!load();$('bootStatus').textContent=load()?'可繼續案件一；也可以輸入姓名重新開始。':'固定主角背景：民俗家學調查者。輸入姓名後即可開始。';
+  var saved=load();$('loadBtn').disabled=!saved;$('bootStatus').textContent=saved?'可繼續案件一；也可以輸入姓名重新開始。':'寫下姓名，去赴阿川的約。';
 }
 init();
 })();
