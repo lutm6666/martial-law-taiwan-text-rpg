@@ -237,20 +237,32 @@ function renderRecords(){
 function focusDots(){var h='<div class="c2-dots">';for(var i=0;i<MAX_FOCUS;i++)h+='<i class="'+(i<s.focus?'on':'')+'"></i>';return h+'</div>'}
 function renderDeduction(){
  var d=DATA.deductions[s.deduction];if(!d){return finishCorrect()}
- var html=renderHeader()+'<article class="c2-deduction card"><p class="c2-kicker">最終推理 '+(s.deduction+1)+' / '+DATA.deductions.length+'</p><h2>'+esc(d.q)+'</h2>'+focusDots();
+ var html=renderHeader()+'<article class="c2-deduction card"><p class="c2-kicker">'+esc(d.stage||'最終推理')+'｜'+(s.deduction+1)+' / '+DATA.deductions.length+'</p><h2>'+esc(d.q)+'</h2>'+focusDots();
  if(s.feedback)html+='<div class="c2-note">'+esc(s.feedback)+'</div>';
  html+='<div class="c2-warning">每一步推論都會影響剩餘的推理專注。</div>';
  d.options.forEach(function(o){html+='<button class="c2-option" data-opt="'+esc(o.id)+'">'+esc(o.text)+'</button>'});html+='</article>';
  $('v2RainMain').innerHTML=html;
  Array.prototype.forEach.call(document.querySelectorAll('[data-opt]'),function(b){b.onclick=function(){answerDeduction(b.getAttribute('data-opt'))}});
 }
+function answerFailureType(answer){
+ if(!answer||answer.ok)return'';
+ if(answer.failureType)return answer.failureType;
+ for(var i=0;i<DATA.deductions.length;i++){var d=DATA.deductions[i];if(d.id!==answer.q)continue;for(var j=0;j<d.options.length;j++){var o=d.options[j];if(o.id===answer.a)return o.failureType||'overreach'}}
+ return'overreach';
+}
+function dominantFailureEnding(lastType){
+ var counts={weak:0,falseAccusation:0,overreach:0};
+ (s.answers||[]).forEach(function(a){var t=answerFailureType(a);if(counts[t]!==undefined)counts[t]++});
+ var max=Math.max(counts.weak,counts.falseAccusation,counts.overreach),leaders=Object.keys(counts).filter(function(k){return counts[k]===max});
+ return leaders.indexOf(lastType)>=0?lastType:leaders[0]||lastType||'overreach';
+}
 function answerDeduction(id){
  var d=DATA.deductions[s.deduction],opt=null;for(var i=0;i<d.options.length;i++){if(d.options[i].id===id){opt=d.options[i];break}}
- var ok=id===d.correct;s.answers.push({q:d.id,a:id,ok:ok});
- if(ok){s.feedback=d.explain;s.deduction++;save();render();return}
+ var ok=id===d.correct,failType=ok?'':((opt&&opt.failureType)||'overreach');s.answers.push({q:d.id,a:id,ok:ok,failureType:failType});
+ if(ok){s.feedback='上一題成立｜'+d.explain;s.deduction++;save();render();return}
  s.focus--;
- if(s.focus<=0){s.ending=(opt&&opt.failureType)||'overreach';s.finished=true;s.phase='done';save();render();return}
- s.feedback='這個說法和目前找到的線索對不上。'+d.explain;save();render();
+ if(s.focus<=0){s.ending=dominantFailureEnding(failType);s.finished=true;s.phase='done';save();render();return}
+ s.feedback='這個說法還跨過了一步證據。提示：'+(d.hint||'重新檢查直接證據與推測之間的界線。');save();render();
 }
 function finishCorrect(){s.ending='correct';s.finished=true;s.phase='done';s.feedback='';save();render()}
 
