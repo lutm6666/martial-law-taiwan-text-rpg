@@ -27,7 +27,7 @@ function normalizeRainSave(){
  if(!Array.isArray(v.answers)){v.answers=[];changed=true}
  if(['home','corridor','entrance','yonghe','stairs','spare','rooftop'].indexOf(v.loc)<0){v.loc='home';changed=true}
  if(['investigate','deduction','done'].indexOf(v.phase)<0){v.phase=v.finished?'done':'investigate';changed=true}
- var deductionOrder=['who_knocked','moveout','footprints','belongings','sealed_letter','cause'],solved={};
+ var deductionOrder=['who_knocked','moveout','timeline','belongings','sealed_letter','cause'],solved={};
  v.answers.forEach(function(a){if(a&&a.ok===true&&deductionOrder.indexOf(a.q)>=0)solved[a.q]=true});
  var expectedDeduction=0;while(expectedDeduction<deductionOrder.length&&solved[deductionOrder[expectedDeduction]])expectedDeduction++;
  if(typeof v.deduction!=='number'||!isFinite(v.deduction)||v.deduction<0||v.deduction>=deductionOrder.length||v.deduction!==expectedDeduction){v.deduction=expectedDeduction;changed=true}
@@ -127,15 +127,15 @@ function loadRainRuntime(done){
 
  function loadEngine(){
   if(window.Case2RainCanon){flushLoaded();return}
-  loadScript('case2-rain-canon-engine.js?v=12',function(ok){
-   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=12');return}
+  loadScript('case2-rain-canon-engine.js?v=13',function(ok){
+   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=13');return}
    flushLoaded();
   });
  }
 
  if(window.CASE2_RAIN_CANON){loadEngine();return}
- loadScript('case2-rain-canon.js?v=8',function(ok){
-  if(!ok||!window.CASE2_RAIN_CANON){reportLoadError('case2-rain-canon.js?v=8');return}
+ loadScript('case2-rain-canon.js?v=9',function(ok){
+  if(!ok||!window.CASE2_RAIN_CANON){reportLoadError('case2-rain-canon.js?v=9');return}
   loadEngine();
  });
 }
