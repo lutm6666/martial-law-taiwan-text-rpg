@@ -102,7 +102,7 @@ function phaseLabel(){
 }
 
 function renderHeader(){return '<article class="c2-head card"><h2>'+esc(s.name)+'｜案件二・雨夜敲門</h2><div class="c2-meta">1958・臺北</div><span class="c2-kicker">'+esc(phaseLabel())+'</span></article>'}
-function imageHtml(src,alt){return '<div class="c2-art-wrap"><img class="c2-art" src="'+esc(src)+'" alt="'+esc(alt)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="c2-art-fallback">'+esc(alt)+'<br><small>正式圖片路徑已保留，等待素材同步。</small></div></div>'}
+function imageHtml(src,alt){return '<div class="c2-art-wrap"><img class="c2-art" src="'+esc(src)+'" alt="'+esc(alt)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="c2-art-fallback">'+esc(alt)+'<br><small>圖片載入失敗，請重新整理頁面後再試。</small></div></div>'}
 function narrativeHtml(text){
  var marked=String(text||'').replace(/。(?!」)/g,'。\n\n');
  return marked.split(/\n\n+/).filter(function(p){return p.trim()}).map(function(p){
