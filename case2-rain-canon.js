@@ -54,11 +54,11 @@ window.CASE2_RAIN_CANON={
 
   locations:{
     home:{name:'林家玄關／客廳',sub:'案件起點',image:'assets/v2/canon/01_林家玄關客廳.png',initial:true,actions:['inspect_footprints','inspect_yue_mark','ask_lin']},
-    corridor:{name:'二樓公共走廊',sub:'證詞與現場核對',image:'assets/v2/canon/02_二樓公共走廊.png',unlock:['e01','e02'],actions:['check_rain_path','ask_chen']},
-    entrance:{name:'一樓入口／住戶板',sub:'租住紀錄',image:'assets/v2/canon/03_一樓入口住戶板區.png',unlockFlags:['chen_mentions_xu'],actions:['inspect_board','inspect_ledger','confront_landlord']},
+    corridor:{name:'二樓公共走廊',sub:'證詞與現場核對',image:'assets/v2/canon/02_二樓公共走廊.png',unlock:['e01','e02'],actions:['check_rain_path','ask_chen','ask_chen_last_seen']},
+    entrance:{name:'一樓入口／住戶板',sub:'租住紀錄',image:'assets/v2/canon/03_一樓入口住戶板區.png',unlockFlags:['chen_mentions_xu'],actions:['inspect_board','inspect_ledger','confront_landlord','press_landlord_date','ask_landlord_upstairs']},
     yonghe:{name:'永和行雜貨店',sub:'時間線交叉驗證',image:'assets/v2/canon/04_永和行雜貨店.png',unlock:['e03','e04'],actions:['ask_shopkeeper','inspect_yonghe_ledger']},
     stairs:{name:'樓梯間',sub:'第一次異常事件',image:'assets/v2/canon/05_樓梯間.png',unlockFlags:['timeline_conflict'],actions:['staircase_event']},
-    spare:{name:'空置舊租客房',sub:'張文德留下的東西',image:'assets/v2/canon/06_空置舊租客房.png',unlockFlags:['staircase_event_seen'],actions:['inspect_sisters_photo','inspect_wende_note','find_rooftop_key']},
+    spare:{name:'空置舊租客房',sub:'張文德留下的東西',image:'assets/v2/canon/06_空置舊租客房.png',unlockFlags:['spare_access'],actions:['inspect_sisters_photo','inspect_wende_note','find_rooftop_key']},
     rooftop:{name:'屋頂曬衣場／儲藏間',sub:'核心證物',image:'assets/v2/canon/07_屋頂雜物間.png',unlock:['e08'],actions:['open_storage','inspect_bag_contents','inspect_postcard','inspect_sealed_letter']}
   },
 
@@ -73,6 +73,9 @@ window.CASE2_RAIN_CANON={
     confront_landlord:{requires:['e03'],know:'landlord',text:'你把租冊翻回201那頁，沒有先問人，只把那行「民國44年5月搬離」推到黃先生面前。他看了一眼，答得很快：「就是那年搬走的。」你接著問五月哪一天、誰替她收了房、鑰匙又是什麼時候交回來的。他的回答忽然慢了下來。停了一會，他只說：「那麼久了，我哪記得這麼細。」'},
     ask_shopkeeper:{know:'shopkeeper',text:'吳添福把眼鏡往上推了推，說那年六月有個雨夜，許月琴來買洋火、棉線和肥皂。她離開前幾次回頭看店外，像是在等人，又像怕有人跟上來。'},
     inspect_yonghe_ledger:{gain:'e05',set:{timeline_conflict:true},text:'賒帳簿翻到民國44年6月17日，許月琴的名字還在。洋火一盒、棉線一卷、肥皂一塊——三樣尋常日用品，日期卻比租冊上的「五月搬離」晚了整整一個多月。'},
+    ask_chen_last_seen:{requires:['e05'],set:{last_seen_account:true},text:'你帶著六月十七日的日期再去問陳太太。她沉默很久，才想起那年六月後的一個雨夜：她在樓梯口看見許月琴和兩個從沒見過的男人一起往外走。她只看見幾步和背影，沒有聽見爭吵，也無法判斷月琴是自己跟著走，還是受了逼迫。「那之後，我就沒再見過她。」'},
+    press_landlord_date:{requires:['e05'],set:{landlord_admitted_edit:true},text:'你把永和行六月十七日的賒帳日期壓在租冊旁。黃先生盯著兩筆紀錄看了很久，最後承認「五月搬離」是後來補上的。那陣子有人來問許月琴的事，他怕自己和這棟房子被牽進去，便把日期往前寫成五月，想讓紀錄看起來像她早已搬走。你問來問話的是誰，他只搖頭：「那時候我連問都不敢問。」'},
+    ask_landlord_upstairs:{requiresFlags:['staircase_event_seen'],set:{spare_access:true,wende_room_known:true},know:'wende',text:'你問起樓梯上方那扇長期關著的房門。黃先生說，那間以前租給一個叫張文德的男人，三年前搬走後一直空著。他從抽屜找出空房鑰匙交給你，答應讓你查看，只要求裡面的東西照原樣放回。'},
     staircase_event:{once:true,eventImage:'',set:{staircase_event_seen:true},text:'你走到樓梯轉角時，先看見窗玻璃上的人影。濕透的女子站在半層平台，頭髮貼著臉側，沒有撐傘。樓下忽然傳來一聲關門響，你下意識回頭；再轉回來，平台已經空了。階梯邊緣只剩幾點新鮮水跡，一級一級往樓上去。'},
     inspect_sisters_photo:{gain:'e06',text:'抽屜底壓著一張已經翹角的合照。兩個年輕女子並肩站著，眉眼和臉形很像；翻到背面，褪色鉛筆寫著兩個名字：「月琴、秋蘭」。你想起林秀雲描述的雨夜女子。'},
     inspect_wende_note:{gain:'e07',know:'wende',text:'紙條被壓在抽屜最裡面，只有幾個字：「若她回來，東西還在樓上。別交給別人。——文德」沒有日期，也沒有寫出那個「她」是誰。'},
@@ -84,51 +87,53 @@ window.CASE2_RAIN_CANON={
   },
 
   events:{
-    qiulan_reveal:{trigger:{all:['e06','e09','e11'],flag:'final_ready'},text:'你把帆布袋帶回201不久，門外又響起三下、停一拍、再兩下。這次女子沒有躲開。她看見袋上的名字，臉色一下變了：「那是我姐姐的。」她說自己叫許秋蘭，幾天前收到一張沒有署名的紙條，只寫著姐姐的東西還留在舊住處。她停了一下，又補了一句：「前幾晚也是我來敲門。有人靠近時，我不敢久留。」',set:{qiulan_revealed:true},know:'qiulan'},
+    qiulan_reveal:{trigger:{all:['e06','e09','e11'],flag:'final_ready'},text:'你把帆布袋帶回201不久，門外又響起三下、停一拍、再兩下。這次女子沒有躲開。她看見袋上的名字，臉色一下變了：「那是我姐姐的。」她說自己叫許秋蘭，幾天前收到一張沒有署名的紙條，只寫著姐姐的東西還留在舊住處。匿名讓她一直懷疑這可能是陷阱，也怕三年前讓姐姐消失的人還在附近，所以只敢趁雨夜來，聽見有人靠近就離開。她看向林秀雲：「第二晚妳問我的時候，我本來想回答，可樓梯一有腳步聲，我就不敢了。」她又說，三下、停一拍、再兩下，是姊妹從小約好的敲門方式；走到姐姐住過的門前，她幾乎是下意識照著敲。「前幾晚也是我。」',set:{qiulan_revealed:true},know:'qiulan'},
     final_knock:{after:'correct_final_deduction',text:'許秋蘭抱著帆布袋離開後，雨聲又填滿走廊。過了一會，門外忽然傳來三下、停一拍、再兩下。你立刻開門——走廊空著。回到客廳時，門檻內多出一串剛留下的濕腳印，一路延伸到桌前；原本扣著的姐妹合照，不知何時已翻到正面。'}
   },
 
   deductions:[
     {id:'who_knocked',q:'前三晚的敲門者最可能是誰？',requires:['e06'],correct:'qiulan',options:[
-      {id:'yueqin',text:'許月琴'},
+      {id:'yueqin',text:'許月琴',failureType:'falseAccusation'},
       {id:'qiulan',text:'許秋蘭'},
-      {id:'ghost',text:'無法判斷是否為人'}
-    ],explain:'照片顯示秋蘭與月琴外貌相近，而秋蘭現身後也承認前幾晚都是她來敲門。前三晚的敲門者因此可以確認。'},
+      {id:'ghost',text:'無法判斷是否為人',failureType:'weak'}
+    ],explain:'照片顯示秋蘭與月琴外貌相近，而秋蘭現身後也承認前幾晚都是她來敲門；三下、停一拍、再兩下，還是姊妹從小約好的敲門方式。'},
     {id:'moveout',q:'租冊上的「1955年5月搬離」能否直接當作可靠事實？',requires:['e03','e05'],correct:'no',options:[
-      {id:'yes',text:'可以，租冊已足以確認她在五月搬離'},
+      {id:'yes',text:'可以，租冊已足以確認她在五月搬離',failureType:'overreach'},
       {id:'no',text:'不行，後補字跡與六月賒帳使這個日期不可靠'},
-      {id:'unknown',text:'完全無法判斷她是否曾經搬離201'}
-    ],explain:'租冊的五月搬離是後補字跡，六月十七日的賒帳又證明許月琴仍在附近出現。這足以質疑五月這個日期，但不能單靠兩筆紀錄重建她真正搬離或失蹤的時間。'},
-    {id:'footprints',q:'201門外的濕腳印，最穩妥能證明什麼？',requires:['e01'],correct:'visitor',options:[
-      {id:'visitor',text:'有人曾沿走廊走到201門前'},
-      {id:'yueqin',text:'許月琴曾在第三晚回到201'},
-      {id:'ghost',text:'敲門者不是活人'}
-    ],explain:'腳印只把「有人走到201門前」留在現場。鞋印本身不能確認身分，更不能證明超自然原因。'},
+      {id:'unknown',text:'完全無法判斷她是否曾經搬離201',failureType:'overreach'}
+    ],explain:'租冊的五月搬離是後補字跡，六月十七日的賒帳又證明許月琴仍在附近出現；黃先生也承認日期是事後補寫。這足以否定五月日期的可靠性，但仍不能重建她真正離開201的確切時間。'},
+    {id:'timeline',q:'依目前能確認的紀錄，下列哪一組時間順序最穩妥？',requires:['e03','e05','e06'],correct:'ordered',options:[
+      {id:'ordered',text:'1953年入住201 → 1955年6月17日仍在附近留下賒帳 → 1958年秋蘭依匿名紙條來201尋物'},
+      {id:'may_move',text:'1953年入住201 → 1955年5月確定搬離 → 1955年6月17日才第一次到永和行',failureType:'overreach'},
+      {id:'returning',text:'1955年6月17日才入住201 → 1958年由許月琴本人回來敲門',failureType:'falseAccusation'}
+    ],explain:'能直接排進時間線的是1953年的入住、1955年6月17日仍在附近留下的賒帳，以及1958年秋蘭來201尋找姐姐遺物；「五月搬離」本身已被證明不可靠。'},
     {id:'belongings',q:'張文德紙條和屋頂帆布袋放在一起，最能支持哪項結論？',requires:['e07','e09'],correct:'kept',options:[
       {id:'kept',text:'有人刻意把許月琴的物品留在樓上保管'},
-      {id:'crime',text:'帆布袋裡一定藏有犯罪證據'},
-      {id:'whereabouts',text:'張文德知道許月琴最後去了哪裡'}
+      {id:'crime',text:'帆布袋裡一定藏有犯罪證據',failureType:'overreach'},
+      {id:'whereabouts',text:'張文德知道許月琴最後去了哪裡',failureType:'overreach'}
     ],explain:'紙條說「東西還在樓上」，帆布袋又有許月琴姓名標籤。兩者能接出物品被刻意保留的事實，卻不能推出袋內內容或月琴最後去向。'},
     {id:'sealed_letter',q:'那封至今未拆的信，能否證明許月琴知道信中內容或曾參與政治活動？',requires:['e12'],correct:'no',options:[
-      {id:'yes',text:'可以，既然信在她的袋子裡就足以證明'},
+      {id:'yes',text:'可以，既然信在她的袋子裡就足以證明',failureType:'overreach'},
       {id:'no',text:'不能，封口完整，內容與她是否知情都仍未知'},
-      {id:'partial',text:'只能證明她知道內容，但不能證明政治活動'}
+      {id:'partial',text:'只能證明她知道內容，但不能證明政治活動',failureType:'overreach'}
     ],explain:'信封至今未拆，只能證明它被保存下來。內容是什麼、月琴是否知道內容，以及它是否涉及政治活動，都不能從封著的信推出。'},
     {id:'cause',q:'綜合目前證據，能否確定許月琴究竟因為什麼事情失蹤？',requires:['e07','e11','e12'],correct:'unknown',options:[
-      {id:'politics',text:'參與地下政治組織'},
-      {id:'intel',text:'替人傳遞情報'},
-      {id:'landlord',text:'被房東陷害'},
+      {id:'politics',text:'參與地下政治組織',failureType:'overreach'},
+      {id:'intel',text:'替人傳遞情報',failureType:'overreach'},
+      {id:'landlord',text:'被房東陷害',failureType:'falseAccusation'},
       {id:'unknown',text:'仍然不能確定'}
-    ],explain:'紙條、明信片和密封信都留下了不安的痕跡，卻沒有交代她最後遭遇了什麼。能確認的事實與仍然未知的部分，必須分開留下。'}
+    ],explain:'陳太太只記得月琴最後一次出現時與兩名陌生男子同行；紙條、明信片和密封信也都沒有交代她最後遭遇了什麼。能確認的事實與仍然未知的部分，必須分開留下。'}
   ],
 
   ending:{
     correctTitle:'她曾經存在',
-    correctText:'你仍不知道許月琴最後去了哪裡。能留下來的，是她確實住過201、六月十七日仍在附近出現，以及那只被藏了三年的帆布袋。秋蘭把姐姐留下的東西抱在懷裡，第一次有人把這段往事完整地說出她的名字。',
+    correctText:'你仍不知道許月琴最後去了哪裡。能留下來的，是她確實住過201、六月十七日仍在附近出現、曾把物品留在樓上，以及陳太太最後一次看見她時，她正和兩名陌生男子一起離開。那是不是自願、兩個男人是誰，都不能從現有證據判斷。秋蘭把姐姐留下的東西抱在懷裡，第一次有人把這段往事完整地說出她的名字。',
     weakTitle:'雨夜怪談',
     weakText:'你把一切都歸進雨夜怪談。住戶很快有了新的版本：有人說是女鬼，有人說是索命。至於許月琴曾經住過201、留下過什麼，反而沒有人再提。',
     falseAccusationTitle:'錯誤的名字',
-    falseAccusationText:'你把一個人的名字寫進結論，卻沒能把那個名字和許月琴的失蹤接起來。新的說法很快蓋過舊的空白，而真正發生過什麼，仍舊沒有人知道。'
+    falseAccusationText:'你把一個人的名字寫進結論，卻沒能把那個名字和許月琴的失蹤接起來。新的說法很快蓋過舊的空白，而真正發生過什麼，仍舊沒有人知道。',
+    overreachTitle:'超出證據的結論',
+    overreachText:'你把幾個彼此相鄰的線索連成了一個完整故事，但其中有一段並沒有證據支撐。當推測被寫成事實，真正能確認的部分反而一起變得模糊。'
   }
 };
 })();
