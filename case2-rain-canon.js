@@ -99,12 +99,27 @@ window.CASE2_RAIN_CANON={
       {id:'no',text:'不行，後補字跡與六月賒帳使這個日期不可靠'},
       {id:'unknown',text:'完全無法判斷她是否曾經搬離201'}
     ],explain:'租冊的五月搬離是後補字跡，六月十七日的賒帳又證明許月琴仍在附近出現。這足以質疑五月這個日期，但不能單靠兩筆紀錄重建她真正搬離或失蹤的時間。'},
-    {id:'cause',q:'目前證據能否證明許月琴因為什麼事情失蹤？',requires:['e07','e11','e12'],correct:'unknown',options:[
+    {id:'footprints',q:'201門外的濕腳印，最穩妥能證明什麼？',requires:['e01'],correct:'visitor',options:[
+      {id:'visitor',text:'有人曾沿走廊走到201門前'},
+      {id:'yueqin',text:'許月琴曾在第三晚回到201'},
+      {id:'ghost',text:'敲門者不是活人'}
+    ],explain:'腳印只把「有人走到201門前」留在現場。鞋印本身不能確認身分，更不能證明超自然原因。'},
+    {id:'belongings',q:'張文德紙條和屋頂帆布袋放在一起，最能支持哪項結論？',requires:['e07','e09'],correct:'kept',options:[
+      {id:'kept',text:'有人刻意把許月琴的物品留在樓上保管'},
+      {id:'crime',text:'帆布袋裡一定藏有犯罪證據'},
+      {id:'whereabouts',text:'張文德知道許月琴最後去了哪裡'}
+    ],explain:'紙條說「東西還在樓上」，帆布袋又有許月琴姓名標籤。兩者能接出物品被刻意保留的事實，卻不能推出袋內內容或月琴最後去向。'},
+    {id:'sealed_letter',q:'那封至今未拆的信，能否證明許月琴知道信中內容或曾參與政治活動？',requires:['e12'],correct:'no',options:[
+      {id:'yes',text:'可以，既然信在她的袋子裡就足以證明'},
+      {id:'no',text:'不能，封口完整，內容與她是否知情都仍未知'},
+      {id:'partial',text:'只能證明她知道內容，但不能證明政治活動'}
+    ],explain:'信封至今未拆，只能證明它被保存下來。內容是什麼、月琴是否知道內容，以及它是否涉及政治活動，都不能從封著的信推出。'},
+    {id:'cause',q:'綜合目前證據，能否確定許月琴究竟因為什麼事情失蹤？',requires:['e07','e11','e12'],correct:'unknown',options:[
       {id:'politics',text:'參與地下政治組織'},
       {id:'intel',text:'替人傳遞情報'},
       {id:'landlord',text:'被房東陷害'},
-      {id:'unknown',text:'不能確定'}
-    ],explain:'紙條、明信片和密封信都留下了不安的痕跡，卻沒有交代她最後遭遇了什麼。那封信甚至至今未拆。'}
+      {id:'unknown',text:'仍然不能確定'}
+    ],explain:'紙條、明信片和密封信都留下了不安的痕跡，卻沒有交代她最後遭遇了什麼。能確認的事實與仍然未知的部分，必須分開留下。'}
   ],
 
   ending:{
