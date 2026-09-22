@@ -60,10 +60,23 @@ function maybeQiulanReveal(){
  setFlags(ev.set);know(ev.know);s.feedback=ev.text;notify('人物確認：許秋蘭');return true;
 }
 
+function revisitText(id){
+ var t={
+  home:'你重新回到201。林秀雲仍留在客廳，門外的雨聲沒有斷過。先前看過的門框與腳印都還在，現在可以把新取得的線索重新和這間房對在一起。',
+  corridor:'你再次走上二樓外廊。雨仍沿著欄杆與牆面往下滑，201門前沒有新的動靜；先前查過的痕跡都還留在原處。',
+  entrance:'你又回到一樓入口。住戶板與舊租冊仍擺在房東桌旁，沒有多出新的紙卡或更動。',
+  yonghe:'你折回永和行。櫃檯後的賒帳簿仍在原位，店裡照常做生意；先前問到的那筆日期沒有改變。',
+  stairs:flag('staircase_event_seen')?'你再走到樓梯轉角。半層平台空著，窗玻璃上只有雨水與街燈的反光。沒有任何人的蹤跡；先前那幾點新鮮水跡也已被濕氣與往來腳步抹淡。樓上樓下只剩雨聲。':'你再次走進樓梯間。窗沒有關緊，雨氣仍從縫裡灌進來，除此之外沒有新的異常。',
+  spare:'你重新推開空房的門。灰塵、舊家具和抽屜都還維持先前的樣子；已經翻過的地方沒有突然多出新的東西。',
+  rooftop:'你再次上到屋頂。風和雨仍打在曬衣架與儲藏間外牆上，先前打開的地方都維持原狀。'
+ };
+ return t[id]||('你再次回到'+(DATA.locations[id]?DATA.locations[id].name:'這裡')+'，先前查過的地方沒有新的變化。');
+}
 function enterLocation(id){
- if(!locationUnlocked(id))return;
- var from=s.loc;
- if(id!==from)s.feedback='';
+ if(!locationUnlocked(id)||id===s.loc)return;
+ var from=s.loc,firstVisit=!s.visited[id];
+ s.flags.lastAction='';
+ s.feedback=firstVisit?'':revisitText(id);
  if(id==='home'&&from!=='home')s.flags.returned_home=true;
  s.loc=id;s.visited[id]=true;
  if(id==='home')maybeQiulanReveal();
@@ -77,6 +90,7 @@ function doAction(id){
  if(a.gain)addEvidence(a.gain);
  if(a.know)know(a.know);
  setFlags(a.set);
+ s.flags.lastAction=id;
  s.feedback=a.text||'';
  save();render();
 }
@@ -113,6 +127,25 @@ function renderOpening(){
  if(next)next.onclick=function(){s.flags.opening_seen=true;save();render()};
 }
 
+function activeEventAction(){
+ var id=s.flags.lastAction;
+ if(id&&DATA.actions[id]&&Object.prototype.hasOwnProperty.call(DATA.actions[id],'eventImage'))return id;
+ if(s.loc==='stairs'&&actionDone('staircase_event')&&s.feedback===DATA.actions.staircase_event.text)return'staircase_event';
+ return'';
+}
+function currentSceneImage(){
+ var id=activeEventAction(),a=id&&DATA.actions[id];
+ if(a)return a.eventImage||'';
+ return DATA.locations[s.loc].image||'';
+}
+function currentSceneAlt(){
+ var id=activeEventAction();
+ return id?actionLabel(id):DATA.locations[s.loc].name;
+}
+function currentLocationSub(){
+ if(s.loc==='stairs'&&actionDone('staircase_event')&&activeEventAction()!=='staircase_event')return'回訪・雨夜樓梯間';
+ return DATA.locations[s.loc].sub;
+}
 function currentSceneHtml(){
  var showingQiulanEvent=s.loc==='home'&&flag('qiulan_revealed')&&s.feedback===DATA.events.qiulan_reveal.text;
  if(showingQiulanEvent)return '<div class="c2-story-title">敲門者現身</div>'+narrativeHtml(DATA.events.qiulan_reveal.text);
@@ -120,11 +153,11 @@ function currentSceneHtml(){
  return sceneIntroHtml(sceneIntro(s.loc));
 }
 function renderInvestigation(){
- var l=DATA.locations[s.loc];
+ var l=DATA.locations[s.loc],src=currentSceneImage();
  var html=renderHeader();
- html+='<article class="c2-scene card">'+imageHtml(l.image,l.name)+'<div class="c2-body"><p class="c2-kicker">'+esc(l.sub)+'</p><h2>'+esc(l.name)+'</h2><div class="c2-scene-intro">'+currentSceneHtml()+'</div>';
+ html+='<article class="c2-scene card">'+(src?imageHtml(src,currentSceneAlt()):'')+'<div class="c2-body"><p class="c2-kicker">'+esc(currentLocationSub())+'</p><h2>'+esc(l.name)+'</h2><div class="c2-scene-intro">'+currentSceneHtml()+'</div>';
  html+='<div class="c2-actions">';
- l.actions.forEach(function(id){var a=DATA.actions[id],ready=actionReady(a),done=actionDone(id);html+='<button class="c2-btn '+(done?'done':'')+'" data-action="'+esc(id)+'" '+(!ready||a.once&&done?'disabled':'')+'><strong>'+esc(actionLabel(id))+'</strong><small>'+esc(actionHint(id,a))+'</small></button>'});
+ l.actions.forEach(function(id){var a=DATA.actions[id],ready=actionReady(a),done=actionDone(id);if(a.once&&done)return;html+='<button class="c2-btn '+(done?'done':'')+'" data-action="'+esc(id)+'" '+(!ready?'disabled':'')+'><strong>'+esc(actionLabel(id))+'</strong><small>'+esc(actionHint(id,a))+'</small></button>'});
  html+='</div></div></article>';
  html+=navHtml('scene');
  $('v2RainMain').innerHTML=html;
@@ -179,7 +212,7 @@ function renderView(view){if(view==='map')return renderMap();if(view==='records'
 
 function renderMap(){
  var html=renderHeader()+'<article class="card c2-body"><p class="c2-kicker">調查地圖</p><h2>前往地點</h2><div class="c2-map">';
- Object.keys(DATA.locations).forEach(function(id){var l=DATA.locations[id],u=locationUnlocked(id);html+='<button data-go="'+id+'" class="'+(s.loc===id?'current':'')+'" '+(!u?'disabled':'')+'><strong>'+esc(l.name)+'</strong><small>'+(u?esc(l.sub):'尚未解鎖')+'</small></button>'});
+ Object.keys(DATA.locations).forEach(function(id){var l=DATA.locations[id],u=locationUnlocked(id),current=s.loc===id,sub=(id==='stairs'&&actionDone('staircase_event'))?'雨夜樓梯間':l.sub;html+='<button data-go="'+id+'" class="'+(current?'current':'')+'" '+(!u||current?'disabled':'')+'><strong>'+esc(l.name)+'</strong><small>'+(current?'目前位置':u?esc(sub):'尚未解鎖')+'</small></button>'});
  html+='</div>';
  if(finalReady())html+='<button id="c2StartDeduction" class="primary" type="button">進入最終推理</button>';
  else if(flag('final_ready')&&!flag('qiulan_revealed'))html+='<div class="c2-note">帆布袋裡的東西已經看完。回201時，也許還有人會來敲門。</div>';
