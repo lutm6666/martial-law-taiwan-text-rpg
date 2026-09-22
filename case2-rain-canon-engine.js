@@ -49,8 +49,8 @@ function locationUnlocked(id){
  if(l.unlockFlags&&!flagsAll(l.unlockFlags))return false;
  return true;
 }
-function actionReady(a){return !a.requires||hasAll(a.requires)}
-function finalReady(){return flag('qiulan_revealed')&&hasAll(['e03','e05','e06','e07','e09','e11','e12'])}
+function actionReady(a){return (!a.requires||hasAll(a.requires))&&(!a.requiresFlags||flagsAll(a.requiresFlags))}
+function finalReady(){return flag('qiulan_revealed')&&flag('last_seen_account')&&flag('landlord_admitted_edit')&&hasAll(['e03','e05','e06','e07','e09','e11','e12'])}
 
 function maybeQiulanReveal(){
  if(flag('qiulan_revealed'))return false;
@@ -66,7 +66,7 @@ function revisitText(id){
   entrance:'你又回到一樓入口。住戶板與舊租冊仍擺在房東桌旁，沒有多出新的紙卡或更動。',
   yonghe:'你折回永和行。櫃檯後的賒帳簿仍在原位，店裡照常做生意；先前問到的那筆日期沒有改變。',
   stairs:flag('staircase_event_seen')?'你再走到樓梯轉角。半層平台空著，窗玻璃上只有雨水與街燈的反光。沒有任何人的蹤跡；先前那幾點新鮮水跡也已被濕氣與往來腳步抹淡。樓上樓下只剩雨聲。':'你再次走進樓梯間。窗沒有關緊，雨氣仍從縫裡灌進來，除此之外沒有新的異常。',
-  spare:'你重新推開空房的門。灰塵、舊家具和抽屜都還維持先前的樣子；已經翻過的地方沒有突然多出新的東西。',
+  spare:'你用黃先生交給你的空房鑰匙重新推開門。灰塵、舊家具和抽屜都還維持先前的樣子；已經翻過的地方沒有突然多出新的東西。',
   rooftop:'你再次上到屋頂。風和雨仍打在曬衣架與儲藏間外牆上，先前打開的地方都維持原狀。'
  };
  return t[id]||('你再次回到'+(DATA.locations[id]?DATA.locations[id].name:'這裡')+'，先前查過的地方沒有新的變化。');
@@ -173,14 +173,15 @@ function sceneIntro(id){
   entrance:'你順著樓梯走到一樓，雨聲被牆面隔掉一層，空氣也比樓上乾一些。入口旁的住戶板貼著一張張姓名紙卡，像是把整棟樓此刻的住戶固定在牆上。\n\n房東的小桌就在旁邊，桌角壓著幾本用了多年的租冊。新紙卡和舊冊子放在同一處，正好把「現在住誰」和「以前住誰」分成兩種紀錄。',
   yonghe:'永和行就在巷口，門外的雨聲一進店裡就被木櫃和貨架吸掉大半。肥皂、乾貨與舊木頭的氣味混在一起，櫃檯後方則一冊冊疊著賒帳簿。\n\n這裡的記憶不像住戶口中的年份那麼模糊。買過什麼、欠了多少、哪一天記上一筆，只要帳還在，就有機會重新對出時間。',
   stairs:'你離開一樓時，雨勢忽然加重。樓梯間的窗沒有關緊，風一陣陣把濕氣灌進來，牆角的光也跟著忽明忽暗。\n\n木扶手摸上去一片冰涼。樓上沒有說話聲，只有雨點敲窗和你的腳步在轉角間來回反響。',
-  spare:'門推開時比想像中更沉。這間房空了很久，窗框和桌面都覆著一層完整的灰，連光照進來都顯得發白。\n\n屋裡沒有明顯被翻找過的痕跡，幾件留下來的舊家具仍在原位。抽屜拉動時帶出潮木味，也讓人更清楚感覺到：有人離開後，這裡很久沒再真正住過人。',
+  spare:'你用黃先生交給你的空房鑰匙開門。門推開時比想像中更沉，窗框和桌面都覆著一層完整的灰，連光照進來都顯得發白。\n\n黃先生說這裡以前租給張文德，三年前搬走後便一直空著。屋裡沒有明顯被翻找過的痕跡，幾件留下來的舊家具仍在原位。',
   rooftop:'你帶著那把舊鑰匙走上屋頂。風比樓下強得多，曬衣繩被吹得一下下抽在鐵架上，遠處的屋瓦和街燈都浸在雨霧裡。\n\n儲藏間縮在屋頂一角，門鎖已經生鏽。從門縫只能聞到潮木和灰塵的氣味，看不清裡頭放了什麼；真正藏在樓上的東西，還隔著這一道門。'
  };return t[id]||'';
 }
 function actionLabel(id){var m={
- inspect_footprints:'檢查門外濕腳印',inspect_yue_mark:'查看門框刻痕',ask_lin:'詢問林秀雲',check_rain_path:'核對雨水流向',ask_chen:'詢問陳太太',inspect_board:'查看住戶一覽板',inspect_ledger:'翻查舊租冊',confront_landlord:'追問房東',ask_shopkeeper:'詢問永和行老闆',inspect_yonghe_ledger:'查看賒帳簿',staircase_event:'走近窗邊女子',inspect_sisters_photo:'查看姐妹合照',inspect_wende_note:'查看張文德紙條',find_rooftop_key:'翻找抽屜夾層',open_storage:'打開屋頂儲藏間',inspect_bag_contents:'整理提袋內容',inspect_postcard:'查看未寄明信片',inspect_sealed_letter:'檢查密封信件'};return m[id]||id}
+ inspect_footprints:'檢查門外濕腳印',inspect_yue_mark:'查看門框刻痕',ask_lin:'詢問林秀雲',check_rain_path:'核對雨水流向',ask_chen:'詢問陳太太',inspect_board:'查看住戶一覽板',inspect_ledger:'翻查舊租冊',confront_landlord:'追問房東',ask_shopkeeper:'詢問永和行老闆',inspect_yonghe_ledger:'查看賒帳簿',ask_chen_last_seen:'追問最後一次見到月琴',press_landlord_date:'拿六月賒帳再問房東',ask_landlord_upstairs:'詢問樓上的空房',staircase_event:'走近窗邊女子',inspect_sisters_photo:'查看姐妹合照',inspect_wende_note:'查看張文德紙條',find_rooftop_key:'翻找抽屜夾層',open_storage:'打開屋頂儲藏間',inspect_bag_contents:'整理提袋內容',inspect_postcard:'查看未寄明信片',inspect_sealed_letter:'檢查密封信件'};return m[id]||id}
 function actionHint(id,a){
  if(a.requires&&!hasAll(a.requires))return '需要先取得：'+a.requires.map(function(x){return DATA.evidence[x].name}).join('、');
+ if(a.requiresFlags&&!flagsAll(a.requiresFlags))return '需要先追到前一段線索';
  if(actionDone(id))return '已完成';
  var m={
   inspect_footprints:'先確認腳印停在哪裡',
@@ -193,6 +194,9 @@ function actionHint(id,a){
   confront_landlord:'拿租冊上的異常追問日期',
   ask_shopkeeper:'問問他是否還記得許月琴',
   inspect_yonghe_ledger:'用帳簿把記憶釘在日期上',
+  ask_chen_last_seen:'把六月之後的記憶再往後追',
+  press_landlord_date:'用六月十七日逼近那筆後補日期',
+  ask_landlord_upstairs:'先弄清那扇空房門以前住過誰',
   staircase_event:'看看半層平台上的人影',
   inspect_sisters_photo:'辨認照片裡的兩個名字',
   inspect_wende_note:'讀清紙條留下的指向',
@@ -241,10 +245,11 @@ function renderDeduction(){
  Array.prototype.forEach.call(document.querySelectorAll('[data-opt]'),function(b){b.onclick=function(){answerDeduction(b.getAttribute('data-opt'))}});
 }
 function answerDeduction(id){
- var d=DATA.deductions[s.deduction];var ok=id===d.correct;s.answers.push({q:d.id,a:id,ok:ok});
+ var d=DATA.deductions[s.deduction],opt=null;for(var i=0;i<d.options.length;i++){if(d.options[i].id===id){opt=d.options[i];break}}
+ var ok=id===d.correct;s.answers.push({q:d.id,a:id,ok:ok});
  if(ok){s.feedback=d.explain;s.deduction++;save();render();return}
  s.focus--;
- if(s.focus<=0){s.ending=(id==='ghost')?'weak':'falseAccusation';s.finished=true;s.phase='done';save();render();return}
+ if(s.focus<=0){s.ending=(opt&&opt.failureType)||'overreach';s.finished=true;s.phase='done';save();render();return}
  s.feedback='這個說法和目前找到的線索對不上。'+d.explain;save();render();
 }
 function finishCorrect(){s.ending='correct';s.finished=true;s.phase='done';s.feedback='';save();render()}
@@ -253,9 +258,10 @@ function renderEnding(){
  var e=DATA.ending,kind=s.ending||'correct',title,text;
  if(kind==='weak'){title=e.weakTitle;text=e.weakText}
  else if(kind==='falseAccusation'){title=e.falseAccusationTitle;text=e.falseAccusationText}
+ else if(kind==='overreach'){title=e.overreachTitle;text=e.overreachText}
  else{title=e.correctTitle;text=e.correctText}
  var html='<article class="c2-ending card paper"><p class="eyebrow" style="color:#715c34">CASE CLOSED・雨夜敲門</p><h2>'+esc(title)+'</h2><div class="c2-ending-lead">'+narrativeHtml(text)+'</div>';
- if(kind==='correct')html+='<div class="c2-story"><div class="c2-story-title">最後一次敲門</div>'+narrativeHtml(DATA.events.final_knock.text)+'</div><div class="c2-summary"><div><strong>留下來的紀錄</strong><br>許月琴曾住201；租冊上的1955年5月搬離日期與6月17日的賒帳紀錄衝突；1958年的敲門女子是前來尋找姐姐遺物的許秋蘭。</div><div><strong>仍然空著的位置</strong><br>許月琴最後去了哪裡、密封信裡寫了什麼、她是否知道信中內容，以及當年帶她離開的人究竟是誰。</div></div>';
+ if(kind==='correct')html+='<div class="c2-story"><div class="c2-story-title">最後一次敲門</div>'+narrativeHtml(DATA.events.final_knock.text)+'</div><div class="c2-summary"><div><strong>留下來的紀錄</strong><br>許月琴曾住201；房東承認「1955年5月搬離」是事後補寫；6月17日她仍在附近留下賒帳；陳太太最後一次看見她時，她正和兩名陌生男子一起離開；1958年的敲門者則是前來尋找姐姐遺物的許秋蘭。</div><div><strong>仍然空著的位置</strong><br>許月琴最後去了哪裡、兩名陌生男子是誰、她是否自願離開、密封信裡寫了什麼、她是否知道信中內容，以及把匿名紙條寄給秋蘭的人究竟是誰。</div></div>';
  html+='<div class="c2-home-row"><button id="c2Home" class="primary" type="button">回到標題</button><button id="c2Again" class="secondary" type="button">重新調查</button></div></article>';
  $('v2RainMain').innerHTML=html;
  $('c2Home').onclick=function(){location.reload()};$('c2Again').onclick=function(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}s=fresh();save();render()};
