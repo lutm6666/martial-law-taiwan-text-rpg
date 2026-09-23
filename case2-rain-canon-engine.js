@@ -178,7 +178,7 @@ function sceneIntro(id){
  };return t[id]||'';
 }
 function actionLabel(id){var m={
- inspect_footprints:'檢查門外濕腳印',inspect_yue_mark:'查看門框刻痕',ask_lin:'詢問林秀雲',check_rain_path:'核對雨水流向',ask_chen:'詢問陳太太',inspect_board:'查看住戶一覽板',inspect_ledger:'翻查舊租冊',confront_landlord:'追問房東',ask_shopkeeper:'詢問永和行老闆',inspect_yonghe_ledger:'查看賒帳簿',ask_chen_last_seen:'追問最後一次見到月琴',press_landlord_date:'拿六月賒帳再問房東',ask_landlord_upstairs:'詢問樓上的空房',staircase_event:'走近窗邊女子',inspect_sisters_photo:'查看姐妹合照',inspect_wende_note:'查看張文德紙條',find_rooftop_key:'翻找抽屜夾層',open_storage:'打開屋頂儲藏間',inspect_bag_contents:'整理提袋內容',inspect_postcard:'查看未寄明信片',inspect_sealed_letter:'檢查密封信件'};return m[id]||id}
+ inspect_footprints:'檢查門外濕腳印',inspect_yue_mark:'查看門框刻痕',ask_lin:'詢問林秀雲',check_rain_path:'核對雨水流向',ask_chen:'詢問陳太太',inspect_board:'查看住戶一覽板',inspect_ledger:'翻查舊租冊',confront_landlord:'追問房東',ask_shopkeeper:'詢問永和行老闆',inspect_yonghe_ledger:'查看賒帳簿',ask_chen_last_seen:'追問最後一次見到月琴',press_landlord_date:'拿六月賒帳再問房東',ask_landlord_upstairs:'詢問樓上的空房',staircase_event:'查看半層平台',inspect_sisters_photo:'查看姐妹合照',inspect_wende_note:'查看張文德紙條',find_rooftop_key:'翻找抽屜夾層',open_storage:'打開屋頂儲藏間',inspect_bag_contents:'整理提袋內容',inspect_postcard:'查看未寄明信片',inspect_sealed_letter:'檢查密封信件'};return m[id]||id}
 function actionHint(id,a){
  if(a.requires&&!hasAll(a.requires))return '需要先取得：'+a.requires.map(function(x){return DATA.evidence[x].name}).join('、');
  if(a.requiresFlags&&!flagsAll(a.requiresFlags))return '需要先追到前一段線索';
@@ -197,7 +197,7 @@ function actionHint(id,a){
   ask_chen_last_seen:'把六月之後的記憶再往後追',
   press_landlord_date:'用六月十七日逼近那筆後補日期',
   ask_landlord_upstairs:'先弄清那扇空房門以前住過誰',
-  staircase_event:'看看半層平台上的人影',
+  staircase_event:'確認樓梯轉角是否有異常',
   inspect_sisters_photo:'辨認照片裡的兩個名字',
   inspect_wende_note:'讀清紙條留下的指向',
   find_rooftop_key:'看看抽屜深處還藏著什麼',
