@@ -57,7 +57,7 @@ window.CASE2_RAIN_CANON={
     corridor:{name:'二樓公共走廊',sub:'證詞與現場核對',image:'assets/v2/canon/02_二樓公共走廊.png',unlock:['e01','e02'],actions:['check_rain_path','ask_chen','ask_chen_last_seen']},
     entrance:{name:'一樓入口／住戶板',sub:'租住紀錄',image:'assets/v2/canon/03_一樓入口住戶板區.png',unlockFlags:['chen_mentions_xu'],actions:['inspect_board','inspect_ledger','confront_landlord','press_landlord_date','ask_landlord_upstairs']},
     yonghe:{name:'永和行雜貨店',sub:'時間線交叉驗證',image:'assets/v2/canon/04_永和行雜貨店.png',unlock:['e03','e04'],actions:['ask_shopkeeper','inspect_yonghe_ledger']},
-    stairs:{name:'樓梯間',sub:'第一次異常事件',image:'assets/v2/canon/05_樓梯間.png',unlockFlags:['timeline_conflict'],actions:['staircase_event']},
+    stairs:{name:'樓梯間',sub:'半層平台',image:'assets/v2/canon/05_樓梯間.png',unlockFlags:['timeline_conflict'],actions:['staircase_event']},
     spare:{name:'空置舊租客房',sub:'張文德留下的東西',image:'assets/v2/canon/06_空置舊租客房.png',unlockFlags:['spare_access'],actions:['inspect_sisters_photo','inspect_wende_note','find_rooftop_key']},
     rooftop:{name:'屋頂曬衣場／儲藏間',sub:'核心證物',image:'assets/v2/canon/07_屋頂雜物間.png',unlock:['e08'],actions:['open_storage','inspect_bag_contents','inspect_postcard','inspect_sealed_letter']}
   },
@@ -76,7 +76,7 @@ window.CASE2_RAIN_CANON={
     ask_chen_last_seen:{requires:['e05'],set:{last_seen_account:true},text:'你帶著六月十七日的賒帳日期再去問陳太太。她先搖頭，說自己不能把三年前的某個晚上硬釘在某一天；但那個日期讓她想起另一個下雨的夜晚。她在樓梯口看見許月琴和兩個從沒見過的男人一起往外走，只看見幾步和背影，沒有聽見爭吵，也沒看見誰拉扯誰。「我不能說她是自己跟著走，還是不得不走。」陳太太停了一會兒，「我只記得，那是我最後一次看見她。」'},
     press_landlord_date:{requires:['e05'],set:{landlord_admitted_edit:true},text:'你把永和行六月十七日的賒帳日期壓在租冊旁，再問一次「五月搬離」是誰寫的。黃先生這次沒有把冊子收回去。他承認那行字是自己事後補上的，而且根本沒有一個能對得上的五月搬離日。許月琴失去消息後，曾有人到這棟樓打聽她；黃先生怕自己、住戶和房子都被牽進去，便把月份往前寫成五月，想讓紀錄看起來像她早已離開。你問那些人是誰、哪一天來，他只搖頭：「我不知道。那時候我只想讓他們別再問。」這份承認能證明租冊被改過，卻仍不能證明許月琴真正離開201的日期。'},
     ask_landlord_upstairs:{requiresFlags:['staircase_event_seen'],set:{spare_access:true},know:'wende',text:'你問起樓梯上方那扇長期關著的房門。黃先生說，那間以前租給一個叫張文德的男人，三年前搬走後一直空著。他從抽屜找出空房鑰匙交給你，答應讓你查看，只要求裡面的東西照原樣放回。'},
-    staircase_event:{once:true,eventImage:'',set:{staircase_event_seen:true},text:'你走到樓梯轉角時，先看見窗玻璃上的人影。濕透的女子站在半層平台，頭髮貼著臉側，沒有撐傘。樓下忽然傳來一聲關門響，你下意識回頭；再轉回來，平台已經空了。階梯邊緣只剩幾點新鮮水跡，一級一級往樓上去，最後消失在那扇長期關著的房門附近。要知道那間房以前住過誰，還得回去問房東。'},
+    staircase_event:{once:true,eventImage:'assets/v2/canon/spooky.png',set:{staircase_event_seen:true},text:'你走到樓梯轉角時，先看見窗玻璃上的人影。濕透的女子站在半層平台，頭髮貼著臉側，沒有撐傘。樓下忽然傳來一聲關門響，你下意識回頭；再轉回來，平台已經空了。階梯邊緣只剩幾點新鮮水跡，一級一級往樓上去，最後消失在那扇長期關著的房門附近。要知道那間房以前住過誰，還得回去問房東。'},
     inspect_sisters_photo:{gain:'e06',text:'抽屜底壓著一張已經翹角的合照。兩個年輕女子並肩站著，眉眼和臉形很像；翻到背面，褪色鉛筆寫著兩個名字：「月琴、秋蘭」。你想起林秀雲描述的雨夜女子。'},
     inspect_wende_note:{gain:'e07',know:'wende',text:'紙條被壓在抽屜最裡面，只有幾個字：「若她回來，東西還在樓上。別交給別人。——文德」沒有日期，也沒有寫出那個「她」是誰。'},
     find_rooftop_key:{gain:'e08',text:'抽屜拉到底時卡了一下。你摸到後板與底板之間有一道薄縫，撬開鬆動的木片，裡面躺著一把用布條包住的舊鑰匙；布條上只寫了兩個字：「屋頂」。'},
