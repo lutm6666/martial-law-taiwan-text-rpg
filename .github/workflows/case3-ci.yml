@@ -6,6 +6,8 @@ on:
     paths:
       - "case3-film-canon.js"
       - "case3-film-engine.js"
+      - "case3-film-ui.js"
+      - "case3-preview.html"
       - "CASE3_DESIGN.md"
       - "CASE3_IMPLEMENTATION.md"
       - "tools/test-case3-engine.js"
@@ -27,6 +29,7 @@ jobs:
         run: |
           node --check case3-film-canon.js
           node --check case3-film-engine.js
+          node --check case3-film-ui.js
           node --check tools/test-case3-engine.js
           node --check tools/validate-case3.js
 
