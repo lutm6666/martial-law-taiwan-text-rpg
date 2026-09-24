@@ -10,12 +10,30 @@ var C = {
   version:1,
 
   locations:{
-    studio:{name:'明光照相館',sub:'前台與完成件區'},
-    darkroom:{name:'暗房／工作間',sub:'沖洗與放大作業區'},
-    alley:{name:'後巷側門',sub:'照片中的位置'},
-    newsstand:{name:'街口書報攤',sub:'街角攤位'},
-    supplier:{name:'照相材料行',sub:'配送與取件櫃台'},
-    chen_home:{name:'陳家',sub:'陳啟明住處'}
+    studio:{
+      name:'明光照相館',sub:'前台與完成件區',
+      intro:'店門半掩著，前台後方排著完成件封套與工作簿。鄭文雄把 A-217 放到桌面上：接觸印樣、現存負片與封套是三件不同的東西，先分開核對，才不會把後來的解釋混進眼前的物件。'
+    },
+    darkroom:{
+      name:'暗房／工作間',sub:'沖洗與放大作業區',
+      intro:'紅色安全燈照著放大機、藥盤與工作桌。牆邊掛著待乾的底片夾，桌上則是按日期排列的工作簿。這裡首先能說明的是照片怎麼被沖洗、接觸印樣與加洗。'
+    },
+    alley:{
+      name:'後巷側門',sub:'照片中的位置',
+      intro:'照片裡的側門就在這條窄巷。排水管、牆角與巷口的位置都還能辨認；若要判斷第 13 格是否真的接在前後影格之間，應先比對不會因說法而改變的畫面細節。'
+    },
+    newsstand:{
+      name:'街口書報攤',sub:'街角攤位',
+      intro:'報刊、香菸與零散照片擠在狹窄攤位上。蔡阿成從紙堆下取出一只照片袋，說沈瑞芳前幾天確實留了一張單格放大照給他。'
+    },
+    supplier:{
+      name:'照相材料行',sub:'配送與取件櫃台',
+      intro:'櫃台後堆著相紙、藥品與送貨用紙袋，靠牆的配送簿按日期記錄出貨。現在能追的是照片中袋面留下的標記，而不是先替紙袋內容下結論。'
+    },
+    chen_home:{
+      name:'陳家',sub:'陳啟明住處',
+      intro:'屋內陳設簡單。陳秀蓮坐在桌邊，回答得很慢。這裡要先分清她親眼看過什麼、別人對她說過什麼，以及她後來自己做過什麼。'
+    }
   },
 
   people:{
@@ -82,25 +100,118 @@ var C = {
   },
 
   actions:{
-    studio_opening:{location:'studio',label:'檢查 A-217',hint:'先核對接觸印樣、現存負片與封套。',effects:['gain:E01','gain:E02','gain:E03','conclude:C01','unlock:darkroom','unlock:alley','unlock:newsstand']},
-    studio_b084_ledger:{location:'studio',label:'查找 B-084',hint:'用照片袋上的工作號碼回查追加放大紀錄。',requires:'canFindB084Ledger',effects:['gain:E06','conclude:C07']},
-    studio_receiving:{location:'studio',label:'查找 M-317 收貨紀錄',hint:'用完整包件編號核對照相館的收貨帳。',requires:'canCheckReceivingLedger',effects:['gain:E08','conclude:C10']},
-    studio_duty:{location:'studio',label:'查看店務紀錄',hint:'核對近期代班與完成件整理紀錄。',requires:'canCheckDutyRecord',effects:['gain:E09','conclude:C13']},
-    studio_loose_procedure:{location:'studio',label:'詢問單格底片如何處理',hint:'了解無法立即歸件的單格負片通常放在哪裡。',requires:'canReviewLooseFilmProcedure',effects:['flag:looseFilmProcedureKnown']},
-    studio_loose_search:{location:'studio',label:'查看舊零片',hint:'依照相館的整理方式，檢查尚未歸件的單格負片。',requires:'canSearchLooseFilms',effects:['gain:E10','flag:e10Found']},
-    studio_verify_e10:{location:'studio',label:'比對這格負片',hint:'把它與接觸印樣及相鄰影格重新核對。',requires:'canVerifyE10',effects:['conclude:C14','flag:e10Verified']},
+    studio_opening:{
+      location:'studio',
+      label:'檢查 A-217',
+      hint:'先核對接觸印樣、現存負片與封套。',
+      result:'你把三樣東西並排。接觸印樣上能看到案件標示的第 11～15 格，第 13 格清楚存在；現存負片卻只剩 11｜12 與 14｜15 兩段。封套寫著沈瑞芳、9 月 16 日「明光附近街景」、9 月 17 日收件，以及 9 月 22 日預定取件。此刻能確定的只有：做接觸印樣時第 13 格存在，而現在保存的底片組裡沒有它。',
+      effects:['gain:E01','gain:E02','gain:E03','conclude:C01','unlock:darkroom','unlock:alley','unlock:newsstand']
+    },
+    studio_b084_ledger:{
+      location:'studio',
+      label:'查找 B-084',
+      hint:'用照片袋上的工作號碼回查追加放大紀錄。',
+      requires:'canFindB084Ledger',
+      result:'追加放大簿裡找到 B-084：原片單格放大、影格 13、9 月 19 日完成並取件，操作人記為鄭文雄。這表示第 13 格至少到 9 月 19 日仍能被拿來正常放大；缺片的時間必須再往後縮。',
+      effects:['gain:E06','conclude:C07']
+    },
+    studio_receiving:{
+      location:'studio',
+      label:'查找 M-317 收貨紀錄',
+      hint:'用完整包件編號核對照相館的收貨帳。',
+      requires:'canCheckReceivingLedger',
+      result:'明光自己的收貨簿也有 M-317：9 月 16 日、後側門收件、經手陳啟明。它和材料行的配送簿是兩套不同來源的紀錄；兩者能共同補足照片周圍的業務背景，但照片本身仍看不見紙袋內裝了什麼。',
+      effects:['gain:E08','conclude:C10']
+    },
+    studio_duty:{
+      location:'studio',
+      label:'查看店務紀錄',
+      hint:'核對近期代班與完成件整理紀錄。',
+      requires:'canCheckDutyRecord',
+      result:'例行店務簿記著 9 月 21 日晚陳秀蓮來店內幫忙，工作項目包含整理完成件。這只把她放進「能接觸 A-217 的人」之列，還不能單靠這一行紀錄決定第 13 格是誰取下的。',
+      effects:['gain:E09','conclude:C13']
+    },
+    studio_loose_procedure:{
+      location:'studio',
+      label:'詢問單格底片如何處理',
+      hint:'了解無法立即歸件的單格負片通常放在哪裡。',
+      requires:'canReviewLooseFilmProcedure',
+      result:'鄭文雄說，偶爾會碰到一時無法歸回原封套的單格負片。店裡不會立刻丟掉，而是先放進一只標作「未辨識零片」的舊紙袋，等日後確認來源再歸件。這提供了一個可以實際檢查的地方。',
+      effects:['flag:looseFilmProcedureKnown']
+    },
+    studio_loose_search:{
+      location:'studio',
+      label:'查看舊零片',
+      hint:'依照相館的整理方式，檢查尚未歸件的單格負片。',
+      requires:'canSearchLooseFilms',
+      result:'舊紙袋裡混著幾格來源不明的負片。你在其中挑出一格：畫面輪廓似乎也有那道側門與人物，但光憑肉眼相似還不夠。先把它記作「舊零片中的單格負片」，再和接觸印樣及相鄰影格比對。',
+      effects:['gain:E10','flag:e10Found']
+    },
+    studio_verify_e10:{
+      location:'studio',
+      label:'比對這格負片',
+      hint:'把它與接觸印樣及相鄰影格重新核對。',
+      requires:'canVerifyE10',
+      result:'放大後，這格負片的畫面與接觸印樣第 13 格一致；人物與移動物體的位置也能接上第 12、14 格。片幅、齒孔與裁切位置沒有出現互相矛盾之處。依目前能取得的資料，足以把這格零片確認為 A-217 缺失的第 13 格原片。',
+      effects:['conclude:C14','flag:e10Verified']
+    },
 
-    darkroom_workflow:{location:'darkroom',label:'了解 A-217 處理流程',hint:'查看收件、沖洗、接觸印樣與完成件如何流轉。',effects:['gain:E04','conclude:C02']},
+    darkroom_workflow:{
+      location:'darkroom',
+      label:'了解 A-217 處理流程',
+      hint:'查看收件、沖洗、接觸印樣與完成件如何流轉。',
+      result:'工作紀錄顯示 A-217 在 9 月 17 日收件後依一般流程完成沖洗與接觸印樣，再放入完成件區等待後續處理。這份紀錄沒有指出第 13 格何時離開原封套，只能把「它曾正常進入沖洗流程」這件事固定下來。',
+      effects:['gain:E04','conclude:C02']
+    },
 
-    alley_frames:{location:'alley',label:'比對第 11～15 格',hint:'分別檢查人物位置、移動物體與固定背景。',effects:['mechanic:frame_compare']},
+    alley_frames:{
+      location:'alley',
+      label:'比對第 11～15 格',
+      hint:'分別檢查人物位置、移動物體與固定背景。',
+      result:'你把第 11～15 格排成一列。第 13 格不能只當成一張孤立照片來看；要先分別檢查人物、移動物體與固定背景的連續變化，再決定這組影像能支持到哪一步。',
+      effects:['mechanic:frame_compare']
+    },
 
-    newsstand_visit:{location:'newsstand',label:'查看蔡阿成收到的照片',hint:'確認沈瑞芳追加製作的照片現在是什麼樣子。',effects:['gain:E05','key:b084','key:packageMarkPartial','flag:b084SeenOutsideStudio']},
-    newsstand_xiulian:{location:'newsstand',label:'詢問誰看過這張照片',hint:'只記錄蔡阿成實際記得的人與說法。',effects:['testimony:T_CAI_XIULIAN','flag:xiulianSawPhoto','unlock:chen_home']},
+    newsstand_visit:{
+      location:'newsstand',
+      label:'查看蔡阿成收到的照片',
+      hint:'確認沈瑞芳追加製作的照片現在是什麼樣子。',
+      result:'蔡阿成把照片袋推過來。裡面是一張只放大第 13 格的照片，沒有前後影格；紙袋上能辨認的標記只剩「…317」和一小部分店章。蔡說沈瑞芳覺得畫面「像電影」，才特地多洗一張給他，並不是請他保管什麼秘密證據。',
+      effects:['gain:E05','key:b084','key:packageMarkPartial','flag:b084SeenOutsideStudio']
+    },
+    newsstand_xiulian:{
+      location:'newsstand',
+      label:'詢問誰看過這張照片',
+      hint:'只記錄蔡阿成實際記得的人與說法。',
+      result:'蔡阿成記得秀蓮在 20 日前後看過這張照片，也有人站在攤前說它像「偷偷交東西」。至於最早是誰先這樣說、之後又怎麼傳開，他說不準。這裡能留下的是誰看過照片，以及他實際記得的幾句話，不是一條完整的傳言來源鏈。',
+      effects:['testimony:T_CAI_XIULIAN','flag:xiulianSawPhoto','unlock:chen_home']
+    },
 
-    supplier_trace:{location:'supplier',label:'追查紙袋上的標記',hint:'用照片中可辨認的部分標記查找配送紀錄。',requires:'canTracePackage',effects:['gain:E07','key:m317']},
+    supplier_trace:{
+      location:'supplier',
+      label:'追查紙袋上的標記',
+      hint:'用照片中可辨認的部分標記查找配送紀錄。',
+      requires:'canTracePackage',
+      result:'配送簿在 9 月 16 日有一筆 M-317：送往明光照相館，送件人洪明義。簿上的編號能和照片中露出的「…317」對上，但這份資料本身沒有讓你從照片裡直接看見紙袋內容。',
+      effects:['gain:E07','key:m317']
+    },
 
-    chen_first:{location:'chen_home',label:'詢問陳秀蓮',hint:'詢問她看過的照片，以及後來聽到的說法。',requires:'canVisitChenHome',effects:['testimony:T_XIULIAN_GOODS','testimony:T01','flag:strongerInterpretationKnown']},
-    chen_final:{location:'chen_home',label:'再次詢問陳秀蓮',hint:'只告訴她第 13 格已經找到，不透露發現位置。',requires:'canFinalAskXiulian',effects:['flag:xiulianAdmission','testimony:T02']}
+    chen_first:{
+      location:'chen_home',
+      label:'詢問陳秀蓮',
+      hint:'詢問她看過的照片，以及後來聽到的說法。',
+      requires:'canVisitChenHome',
+      result:'秀蓮承認自己看過蔡阿成那張單格照片。她說哥哥曾告訴她「那只是店裡的貨」，但當時她無法拿出帳目證明；她也記得後來有人把說法講成「偷偷交東西」，甚至說紙袋裡可能是文件。她把自己看見的照片、哥哥的說法和外面聽來的解讀混在一起時，明顯變得緊張。',
+      effects:['testimony:T_XIULIAN_GOODS','testimony:T01','flag:strongerInterpretationKnown']
+    },
+    chen_final:{
+      location:'chen_home',
+      label:'再次詢問陳秀蓮',
+      hint:'只告訴她第 13 格已經找到，不透露發現位置。',
+      requires:'canFinalAskXiulian',
+      result:'你只說：「第 13 格找到了。」秀蓮沉默了一會，先問：「是在那袋舊零片裡嗎？」你沒有回答。她接著承認，9 月 21 日整理完成件時把第 13 格剪下，塞進那袋零片。她說自己知道已經流出去的照片收不回來，只是不想讓原片再被加洗、再被拿去說更多事。藏匿位置與你的實際發現吻合；至於她心裡真正有多害怕、為什麼最後做出這個決定，仍主要來自她自己的陳述。',
+      effects:['flag:xiulianAdmission','testimony:T02']
+    }
   },
 
   frameAnalysis:{
