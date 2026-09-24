@@ -66,6 +66,7 @@ keys(C.actions).forEach(id=>{
   expect(exists(C.locations,a.location),'action '+id+' references unknown location '+a.location);
   expect(typeof a.label==='string'&&a.label.trim(),'action '+id+' missing label');
   expect(typeof a.hint==='string'&&a.hint.trim(),'action '+id+' missing hint');
+  expect(typeof a.result==='string'&&a.result.trim(),'action '+id+' missing player-visible result narrative');
   if(a.requires) expect(typeof C.predicates[a.requires]==='function','action '+id+' references unknown predicate '+a.requires);
   expect(Array.isArray(a.effects),'action '+id+' effects must be an array');
   (a.effects||[]).forEach(effect=>{
@@ -147,12 +148,15 @@ function lintPublicText(scope,text){
   banned.forEach(rx=>{if(rx.test(text))err('spoiler-prone UI text in '+scope+': '+text)});
 }
 keys(C.locations).forEach(id=>{
+  expect(typeof C.locations[id].intro==='string'&&C.locations[id].intro.trim(),'location '+id+' missing intro narrative');
   lintPublicText('location '+id+' name',C.locations[id].name);
   lintPublicText('location '+id+' sub',C.locations[id].sub);
+  lintPublicText('location '+id+' intro',C.locations[id].intro);
 });
 keys(C.actions).forEach(id=>{
   lintPublicText('action '+id+' label',C.actions[id].label);
   lintPublicText('action '+id+' hint',C.actions[id].hint);
+  lintPublicText('action '+id+' result',C.actions[id].result);
 });
 keys(C.evidence).forEach(id=>{
   lintPublicText('evidence '+id+' name',C.evidence[id].name);
@@ -172,5 +176,6 @@ if(errors.length){
   process.exit(1);
 }
 console.log('PASS Case 3 schema/reference validation');
+console.log('PASS Case 3 narrative completeness');
 console.log('PASS Case 3 anti-spoiler UI lint');
 console.log('PASS Case 3 save-key isolation checks');
