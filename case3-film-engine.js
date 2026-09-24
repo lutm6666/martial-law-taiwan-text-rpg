@@ -96,7 +96,9 @@ function actionAvailable(s,id){
  return !a.requires||predicate(s,a.requires);
 }
 function availableActions(s){
- return Object.keys(C.actions).filter(function(id){return actionAvailable(s,id)}).map(function(id){return C.actions[id]});
+ return Object.keys(C.actions).filter(function(id){return actionAvailable(s,id)}).map(function(id){
+  var a=Object.assign({},C.actions[id]);a.id=id;return a;
+ });
 }
 function visibleLocations(s){
  derive(s);
