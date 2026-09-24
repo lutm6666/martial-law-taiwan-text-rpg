@@ -17,7 +17,7 @@ function fresh(name){
   flags:{
    b084SeenOutsideStudio:false,b084LedgerMatched:false,xiulianSawPhoto:false,
    strongerInterpretationKnown:false,xiulianAccessWindowKnown:false,
-   looseFilmProcedureKnown:false,e10Found:false,e10Verified:false,xiulianAdmission:false
+   looseFilmProcedureKnown:false,frameCompareOpen:false,e10Found:false,e10Verified:false,xiulianAdmission:false
   },
   deduction:{index:0,answers:[],ending:null}
  };
@@ -87,11 +87,12 @@ function save(s){try{localStorage.setItem(KEY,JSON.stringify(s));return true}cat
 function load(){try{return normalize(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(e){return fresh('')}}
 function reset(name){var s=fresh(name);save(s);return s}
 
-function predicate(s,name){var fn=C.predicates[name];return typeof fn==='function'?!!fn(s):true}
+function predicate(s,name){var fn=C.predicates[name];return typeof fn==='function'?!!fn(s):false}
 function actionAvailable(s,id){
+ if(s.phase!=='investigate')return false;
  var a=C.actions[id];
  if(!a||a.location!==s.loc)return false;
- if(s.actionsDone[id]&&id!=='chen_final')return false;
+ if(s.actionsDone[id])return false;
  return !a.requires||predicate(s,a.requires);
 }
 function availableActions(s){
@@ -103,6 +104,7 @@ function visibleLocations(s){
 }
 function travel(s,id){
  derive(s);
+ if(s.phase!=='investigate')return {ok:false,reason:'phase',state:s};
  if(!C.locations[id]||s.unlocked.indexOf(id)<0)return {ok:false,reason:'locked',state:s};
  s.loc=id;add(s.visited,id);save(s);return {ok:true,state:s};
 }
@@ -125,12 +127,23 @@ function tryConclude(s,id){
  if(id==='C14')s.flags.e10Verified=true;
  return true;
 }
+function effectValid(s,effect){
+ var p=String(effect).split(':'),kind=p.shift(),id=p.join(':');
+ if(kind==='gain')return !!C.evidence[id];
+ if(kind==='conclude')return !!C.conclusions[id];
+ if(kind==='testimony')return !!C.testimonies[id];
+ if(kind==='unlock')return !!C.locations[id];
+ if(kind==='flag')return Object.prototype.hasOwnProperty.call(s.flags,id);
+ if(kind==='key')return Object.prototype.hasOwnProperty.call(s.keys,id);
+ if(kind==='mechanic')return id==='frame_compare';
+ return false;
+}
 function applyEffect(s,effect){
  var p=String(effect).split(':'),kind=p.shift(),id=p.join(':');
- if(kind==='gain'&&C.evidence[id])add(s.evidence,id);
+ if(kind==='gain')add(s.evidence,id);
  else if(kind==='conclude')tryConclude(s,id);
- else if(kind==='testimony'&&C.testimonies[id])add(s.testimonies,id);
- else if(kind==='unlock'&&C.locations[id])add(s.unlocked,id);
+ else if(kind==='testimony')add(s.testimonies,id);
+ else if(kind==='unlock')add(s.unlocked,id);
  else if(kind==='flag')s.flags[id]=true;
  else if(kind==='key')s.keys[id]=true;
  else if(kind==='mechanic'&&id==='frame_compare')s.flags.frameCompareOpen=true;
@@ -138,10 +151,13 @@ function applyEffect(s,effect){
 function runAction(s,id){
  var a=C.actions[id];
  if(!a)return {ok:false,reason:'unknown_action',state:s};
+ if(s.phase!=='investigate')return {ok:false,reason:'phase',state:s};
  if(a.location!==s.loc)return {ok:false,reason:'wrong_location',state:s};
  if(a.requires&&!predicate(s,a.requires))return {ok:false,reason:'requirements',state:s};
- if(s.actionsDone[id]&&id!=='chen_final')return {ok:false,reason:'done',state:s};
- arr(a.effects).forEach(function(e){applyEffect(s,e)});
+ if(s.actionsDone[id])return {ok:false,reason:'done',state:s};
+ var effects=arr(a.effects);
+ if(effects.some(function(e){return !effectValid(s,e)}))return {ok:false,reason:'invalid_effect',state:s};
+ effects.forEach(function(e){applyEffect(s,e)});
  s.actionsDone[id]=true;
  derive(s);save(s);
  return {ok:true,state:s};
