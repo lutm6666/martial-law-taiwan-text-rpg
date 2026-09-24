@@ -90,9 +90,9 @@ function routeC(){
 function negativeChecks(){
  let s=opening(E.fresh('N'));
  assert(!C.predicates.canTracePackage(s),'package tracing available too early');
- assert(!E.createHypothesis(s,'H_SIDE_DOOR').ok===false);
  // Fresh state must not contain hypotheses until the player creates one.
  let n=E.fresh('H');assert.deepStrictEqual(Object.keys(n.hypotheses),[]);
+ assert(!E.availableActions(s).some(a=>a.label==='查看店務紀錄'),'duty record leaked before Xiulian lead');
  let r=E.createHypothesis(n,'H_SIDE_DOOR');assert(r.ok);
  assert(n.hypotheses.H_SIDE_DOOR,'player-created hypothesis missing');
  r=E.reviewHypothesis(n,'H_SIDE_DOOR','withdrawn');assert(r.ok);
@@ -110,10 +110,10 @@ function negativeChecks(){
 
 function saveIsolation(){
  storage['mist-taiwan-case-save-v4']='CASE1_SENTINEL';
- storage['case2-sentinel']='CASE2_SENTINEL';
+ storage['mist-taiwan-rain-canon-v1']='CASE2_SENTINEL';
  let s=E.fresh('save');E.save(s);
  assert.strictEqual(storage['mist-taiwan-case-save-v4'],'CASE1_SENTINEL');
- assert.strictEqual(storage['case2-sentinel'],'CASE2_SENTINEL');
+ assert.strictEqual(storage['mist-taiwan-rain-canon-v1'],'CASE2_SENTINEL');
  assert(storage[C.saveKey],'Case 3 save missing');
 }
 
