@@ -7,15 +7,6 @@ if(!C||!E){console.error('Case 3 canon and engine are required before case3-film
 
 var state=null,root=null,view='scene',recordFilter='E',notice='';
 
-var SCENE_TEXT={
- studio:'前台後方排著完成件封套與工作簿。A-217 的接觸印樣、現存負片與封套都在桌上；先把眼前物件分開記，再決定下一步。',
- darkroom:'紅色安全燈照著放大機、藥盤和工作桌。這裡留下的是日常沖洗與放大流程，不代表任何人已經做過可疑的事。',
- alley:'照片中的側門就在眼前。牆角、排水管與巷口的位置仍可辨認；這裡適合把第 11～15 格的背景與人物變化重新對在一起。',
- newsstand:'報刊、香菸與零散照片擠在狹窄攤位上。蔡阿成保存著沈瑞芳追加製作給他的那張單格放大照片。',
- supplier:'櫃台後堆著相紙、藥品與配送帳簿。現在要追的是照片中紙袋上的標記，而不是先替紙袋內容下結論。',
- chen_home:'屋內陳設簡單。這次來訪的重點是確認秀蓮在什麼時候看過照片、又在什麼時候聽到後來的說法。'
-};
-
 var FRAME_NOTES={
  personMovement:'人物位置在相鄰影格之間呈現連續變化。',
  movingObject:'畫面中的移動物體在相鄰影格間依序改變位置。',
@@ -29,7 +20,7 @@ function has(arr,id){return Array.isArray(arr)&&arr.indexOf(id)>=0}
 function saveNotice(t){notice=t||''}
 function ensureStyle(){
  if(document.getElementById('case3FilmStyle'))return;
- var st=document.createElement('style');st.id='case3FilmStyle';st.textContent='.c3-shell{--c3-bg:#10110e;--c3-panel:#191b16;--c3-ink:#ece8dc;--c3-muted:#9d9a8e;--c3-line:#3a3d33;--c3-accent:#b69b5f;color:var(--c3-ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;max-width:760px;margin:0 auto;padding:16px 16px 94px}.c3-card{background:linear-gradient(180deg,#1e211a,#181a16);border:1px solid #34372e;border-radius:17px;padding:16px;box-shadow:0 12px 30px rgba(0,0,0,.2)}.c3-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.c3-kicker{font-size:.68rem;letter-spacing:.12em;color:#9a917c}.c3-head h1{font-size:1.35rem;margin:4px 0}.c3-chip{border:1px solid #56594c;border-radius:999px;padding:6px 10px;font-size:.68rem;color:#c6c1b2;background:#171914;white-space:nowrap}.c3-sub{color:#99968a;font-size:.76rem;line-height:1.55}.c3-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:12px 0}.c3-tabs button,.c3-record-tabs button{border:1px solid #3a3d33;background:#181a16;color:#a6a397;border-radius:11px;padding:10px}.c3-tabs button.active,.c3-record-tabs button.active{background:#302d21;border-color:#8c7b50;color:#eee4ce}.c3-scene h2,.c3-card h2{margin:4px 0 10px}.c3-scene p{line-height:1.82;color:#d5d0c4}.c3-actions,.c3-map,.c3-record-list{display:grid;gap:9px;margin-top:12px}.c3-action,.c3-map button,.c3-frame-btn,.c3-hypothesis-btn{border:1px solid #3d4036;background:#1b1d18;color:#ece8dc;border-radius:13px;padding:12px;text-align:left}.c3-action strong,.c3-map strong,.c3-frame-btn strong{display:block}.c3-action small,.c3-map small,.c3-frame-btn small{display:block;color:#969386;margin-top:5px;line-height:1.5}.c3-action:disabled,.c3-map button:disabled,.c3-frame-btn:disabled{opacity:.42}.c3-map button.current{border-color:#9b8754;background:#292719}.c3-note{margin-top:12px;padding:11px 12px;border-left:3px solid #8d7853;background:#211e18;line-height:1.65;color:#c8c1b1}.c3-empty{color:#908d82;line-height:1.65}.c3-record-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}.c3-record{border:1px solid #35382f;border-radius:12px;padding:12px;background:#171914}.c3-record strong{display:block}.c3-record small{display:block;color:#9d9a8f;line-height:1.62;margin-top:5px}.c3-tag{display:inline-block;margin-top:8px;border:1px solid #4a4c42;border-radius:999px;padding:3px 7px;font-size:.66rem;color:#aaa79b}.c3-frame-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:13px 0}.c3-frame{aspect-ratio:3/2;border:1px solid #4a4b42;border-radius:8px;background:linear-gradient(145deg,#272a23,#11130f);display:flex;align-items:center;justify-content:center;color:#aaa799;font-weight:700}.c3-frame:nth-child(3){border-style:dashed;border-color:#8f7a4d}.c3-frame-grid{display:grid;gap:8px}.c3-frame-btn.done{border-color:#756b4b;background:#242318}.c3-status-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.c3-status{padding:10px;border:1px solid #34372f;border-radius:10px;background:#151713}.c3-status small{display:block;color:#8f8c80}.c3-status strong{display:block;margin-top:3px}.c3-reset{width:100%;margin-top:14px;border:1px solid #484a40;background:transparent;color:#aaa79b;border-radius:12px;padding:11px}.c3-ready{border-left-color:#b69b5f}.c3-locked{opacity:.66}.c3-footer{margin-top:14px;color:#77786f;font-size:.7rem;line-height:1.55}@media(min-width:640px){.c3-actions,.c3-map{grid-template-columns:1fr 1fr}.c3-frame-grid{grid-template-columns:repeat(3,1fr)}}';
+ var st=document.createElement('style');st.id='case3FilmStyle';st.textContent='.c3-shell{--c3-bg:#10110e;--c3-panel:#191b16;--c3-ink:#ece8dc;--c3-muted:#9d9a8e;--c3-line:#3a3d33;--c3-accent:#b69b5f;color:var(--c3-ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;max-width:760px;margin:0 auto;padding:16px 16px 94px}.c3-card{background:linear-gradient(180deg,#1e211a,#181a16);border:1px solid #34372e;border-radius:17px;padding:16px;box-shadow:0 12px 30px rgba(0,0,0,.2)}.c3-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.c3-kicker{font-size:.68rem;letter-spacing:.12em;color:#9a917c}.c3-head h1{font-size:1.35rem;margin:4px 0}.c3-chip{border:1px solid #56594c;border-radius:999px;padding:6px 10px;font-size:.68rem;color:#c6c1b2;background:#171914;white-space:nowrap}.c3-sub{color:#99968a;font-size:.76rem;line-height:1.55}.c3-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:12px 0}.c3-tabs button,.c3-record-tabs button{border:1px solid #3a3d33;background:#181a16;color:#a6a397;border-radius:11px;padding:10px}.c3-tabs button.active,.c3-record-tabs button.active{background:#302d21;border-color:#8c7b50;color:#eee4ce}.c3-scene h2,.c3-card h2{margin:4px 0 10px}.c3-scene p{line-height:1.82;color:#d5d0c4}.c3-story{margin-top:12px;padding:13px 14px;border-left:3px solid #8d7853;background:rgba(182,155,95,.07);border-radius:0 12px 12px 0}.c3-story-title{font-size:.7rem;letter-spacing:.08em;color:#c5b482;font-weight:700;margin-bottom:7px}.c3-story p{margin:0;line-height:1.82;color:#ddd6c6}.c3-actions,.c3-map,.c3-record-list{display:grid;gap:9px;margin-top:12px}.c3-action,.c3-map button,.c3-frame-btn,.c3-hypothesis-btn{border:1px solid #3d4036;background:#1b1d18;color:#ece8dc;border-radius:13px;padding:12px;text-align:left}.c3-action strong,.c3-map strong,.c3-frame-btn strong{display:block}.c3-action small,.c3-map small,.c3-frame-btn small{display:block;color:#969386;margin-top:5px;line-height:1.5}.c3-action:disabled,.c3-map button:disabled,.c3-frame-btn:disabled{opacity:.42}.c3-map button.current{border-color:#9b8754;background:#292719}.c3-note{margin-top:12px;padding:11px 12px;border-left:3px solid #8d7853;background:#211e18;line-height:1.65;color:#c8c1b1}.c3-empty{color:#908d82;line-height:1.65}.c3-record-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}.c3-record{border:1px solid #35382f;border-radius:12px;padding:12px;background:#171914}.c3-record strong{display:block}.c3-record small{display:block;color:#9d9a8f;line-height:1.62;margin-top:5px}.c3-tag{display:inline-block;margin-top:8px;border:1px solid #4a4c42;border-radius:999px;padding:3px 7px;font-size:.66rem;color:#aaa79b}.c3-frame-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:13px 0}.c3-frame{aspect-ratio:3/2;border:1px solid #4a4b42;border-radius:8px;background:linear-gradient(145deg,#272a23,#11130f);display:flex;align-items:center;justify-content:center;color:#aaa799;font-weight:700}.c3-frame:nth-child(3){border-style:dashed;border-color:#8f7a4d}.c3-frame-grid{display:grid;gap:8px}.c3-frame-btn.done{border-color:#756b4b;background:#242318}.c3-status-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.c3-status{padding:10px;border:1px solid #34372f;border-radius:10px;background:#151713}.c3-status small{display:block;color:#8f8c80}.c3-status strong{display:block;margin-top:3px}.c3-reset{width:100%;margin-top:14px;border:1px solid #484a40;background:transparent;color:#aaa79b;border-radius:12px;padding:11px}.c3-ready{border-left-color:#b69b5f}.c3-locked{opacity:.66}.c3-footer{margin-top:14px;color:#77786f;font-size:.7rem;line-height:1.55}@media(min-width:640px){.c3-actions,.c3-map{grid-template-columns:1fr 1fr}.c3-frame-grid{grid-template-columns:repeat(3,1fr)}}';
  document.head.appendChild(st);
 }
 
@@ -65,9 +56,29 @@ function render(){
  bind();
 }
 
+function sceneIntroText(){
+ var l=C.locations[state.loc],text=(l&&l.intro)||'重新核對目前已有的紀錄。';
+ if(state.loc==='studio'&&state.flags.e10Found&&!state.flags.e10Verified){
+  return '你再次回到明光照相館。舊零片已經攤在工作桌上，其中有一格和第 13 格的畫面非常相似；現在真正要做的是驗證，而不是因為「看起來像」就直接替它命名。';
+ }
+ if(state.loc==='studio'&&has(state.conclusions,'C07')&&has(state.conclusions,'C13')&&!state.flags.e10Found){
+  return '你帶著追加放大紀錄與 9 月 21 日店務紀錄回到前台。第 13 格最後一次確定存在的時間，以及誰有機會接觸 A-217，現在都比開場時清楚得多。';
+ }
+ if(state.loc==='chen_home'&&state.flags.e10Verified&&!state.flags.xiulianAdmission){
+  return '你再次來到陳家。這次手上多了一格已完成比對的原片，但你沒有告訴秀蓮它是在哪裡找到的。';
+ }
+ return text;
+}
+function actionResultHtml(){
+ var id=state.lastAction,a=id&&C.actions[id];
+ if(!a||a.location!==state.loc||!a.result)return '';
+ return '<div class="c3-story"><div class="c3-story-title">調查結果</div><p>'+esc(a.result)+'</p></div>';
+}
+
 function renderScene(){
  var l=C.locations[state.loc],actions=E.availableActions(state);
- var html='<article class="c3-card c3-scene"><div class="c3-kicker">'+esc(l.sub)+'</div><h2>'+esc(l.name)+'</h2><p>'+esc(SCENE_TEXT[state.loc]||'重新核對目前已有的紀錄。')+'</p>';
+ var html='<article class="c3-card c3-scene"><div class="c3-kicker">'+esc(l.sub)+'</div><h2>'+esc(l.name)+'</h2><p>'+esc(sceneIntroText())+'</p>';
+ html+=actionResultHtml();
  if(state.loc==='alley'&&state.flags.frameCompareOpen)html+=renderFrameCompare();
  html+='<div class="c3-actions">';
  if(actions.length){
