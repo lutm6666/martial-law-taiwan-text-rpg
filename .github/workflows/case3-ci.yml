@@ -1,0 +1,37 @@
+name: Case 3 validation
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "case3-film-canon.js"
+      - "case3-film-engine.js"
+      - "CASE3_DESIGN.md"
+      - "CASE3_IMPLEMENTATION.md"
+      - "tools/test-case3-engine.js"
+      - "tools/validate-case3.js"
+      - ".github/workflows/case3-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check case3-film-canon.js
+          node --check case3-film-engine.js
+          node --check tools/test-case3-engine.js
+          node --check tools/validate-case3.js
+
+      - name: Validate Case 3 schema and UI text
+        run: node tools/validate-case3.js
+
+      - name: Run Case 3 state-engine regression tests
+        run: node tools/test-case3-engine.js
