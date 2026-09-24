@@ -1,6 +1,6 @@
 # 第三案實作規格｜第十三張底片
 
-狀態：第一階段系統規格。依據 CASE3_DESIGN.md Canon 候選基準，不接入正式案件選單、不改動 Case 1／2 runtime。
+狀態：核心資料模型與狀態引擎已建立，進入自動驗證階段。依據 CASE3_DESIGN.md Canon 候選基準，尚未接入正式案件選單，也不改動 Case 1／2 runtime。
 
 ## 1. Runtime 邊界
 
@@ -11,7 +11,7 @@
 - `case3-film-engine.js`：狀態、渲染、互動與存檔。
 - 後續正式接入時才修改 `case2-engine.js` 的案件選擇器／第二案結案入口。
 
-本階段不建立上述 runtime 檔案；先固定 schema 與依賴圖。
+`case3-film-canon.js` 與 `case3-film-engine.js` 已建立；目前仍保持獨立，不由正式網站載入。任何接入案件選單的變更必須等自動驗證與 UI 原型完成後再做。
 
 ### Save namespace
 `mist-taiwan-case3-film-v1`
@@ -60,6 +60,7 @@
     strongerInterpretationKnown: false,
     xiulianAccessWindowKnown: false,
     looseFilmProcedureKnown: false,
+    frameCompareOpen: false,
     e10Found: false,
     e10Verified: false,
     xiulianAdmission: false
@@ -243,9 +244,17 @@ canCheckReceivingLedger(state) =
 canVisitChenHome(state) =
   state.flags.xiulianSawPhoto
 
+canCheckDutyRecord(state) =
+  state.flags.strongerInterpretationKnown
+
+canReviewLooseFilmProcedure(state) =
+  hasConclusion("C07") &&
+  hasConclusion("C13")
+
 canSearchLooseFilms(state) =
   state.flags.looseFilmProcedureKnown &&
-  hasConclusion("C_MISSING_WINDOW")
+  hasConclusion("C07") &&
+  hasConclusion("C13")
 
 canVerifyE10(state) =
   hasEvidence("E10") &&
@@ -400,7 +409,7 @@ code review 時檢查 label/hint 不得引用 effects 才會揭示的資訊。
 
 ## 15. 第一階段驗收條件
 
-開始寫 runtime 前，規格必須能通過：
+進入第三案 UI 實作前，runtime 與規格必須能通過：
 1. 正向路徑：studio → darkroom → alley → newsstand → supplier → chen_home → final。
 2. 亂序路徑：studio → newsstand → chen_home → darkroom → alley → supplier → final。
 3. 另一亂序路徑：studio → darkroom → alley → supplier lead pending → newsstand → supplier → chen_home → final。
@@ -408,3 +417,19 @@ code review 時檢查 label/hint 不得引用 effects 才會揭示的資訊。
 5. 任一路徑都不能在 E10 驗證前把它命名為第13格原片。
 6. 任一路徑都不能自動建立玩家未選過的 H。
 7. Case 3 save 不得改變 Case 1／2 localStorage。
+
+
+## 16. 自動驗證與防劇透守門
+
+現有工具：
+- `tools/validate-case3.js`：檢查 location/action/predicate/effect/evidence/conclusion 引用、結論依賴循環、六問／四結局完整性、存檔 key 隔離，以及初始 UI 文本的防劇透規則。
+- `tools/test-case3-engine.js`：執行三條不同調查順序、負向 gate、E10 動態命名、假說只由玩家建立、Case 1／2 save key 不被改寫等回歸測試。
+- `.github/workflows/case3-ci.yml`：凡 Case 3 核心檔案、規格或測試有變更，即在 GitHub Actions 執行 JavaScript syntax check、validator 與 regression tests。
+
+Runtime 守門原則：
+- 未知 predicate 必須 fail closed，不得把 typo 當成可執行。
+- 未知 effect 必須拒絕整個 action，不得靜默忽略。
+- deduction／done 階段不得繼續執行 investigation action。
+- 「查看店務紀錄」只有在玩家已取得秀蓮知情線索後才可見，避免 UI 提前把 9/21 標成關鍵日期。
+- 「詢問單格底片如何處理」只有在缺片時間窗與接觸機會已有足夠資料後才可見。
+- E10 驗證前永遠顯示為「舊零片中的單格負片」。
