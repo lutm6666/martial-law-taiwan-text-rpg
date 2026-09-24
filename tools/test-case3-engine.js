@@ -104,7 +104,11 @@ function negativeChecks(){
  assert(!has(x.conclusions,'C10'),'business context concluded before E07/E08');
 
  let y=opening(E.fresh('Y'));
- y=go(y,'studio');y=act(y,'studio_duty');y=act(y,'studio_loose_procedure');
+ y=go(y,'studio');
+ let duty=E.runAction(y,'studio_duty');
+ assert(!duty.ok&&duty.reason==='requirements','duty record should remain gated before Xiulian lead');
+ let loose=E.runAction(y,'studio_loose_procedure');
+ assert(!loose.ok&&loose.reason==='requirements','loose-film procedure should remain gated before missing-window/access evidence');
  assert(!C.predicates.canSearchLooseFilms(y),'loose-film search available before narrowed missing window');
 }
 
