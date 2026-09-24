@@ -29,7 +29,7 @@ function frames(s){
  return s;
 }
 function has(a,x){return a.indexOf(x)>=0}
-function opening(s){s=act(s,'studio_opening');assert(has(s.unlocked,'darkroom')&&has(s.unlocked,'alley')&&has(s.unlocked,'newsstand'));return s}
+function opening(s){s=act(s,'studio_opening');assert(has(s.unlocked,'darkroom')&&has(s.unlocked,'alley')&&has(s.unlocked,'newsstand'));assert.strictEqual(s.lastAction,'studio_opening');return s}
 function b084(s){
  s=go(s,'newsstand');s=act(s,'newsstand_visit');s=act(s,'newsstand_xiulian');
  s=go(s,'studio');s=act(s,'studio_b084_ledger');return s;
@@ -112,6 +112,20 @@ function negativeChecks(){
  assert(!C.predicates.canSearchLooseFilms(y),'loose-film search available before narrowed missing window');
 }
 
+function narrativeState(){
+ let s=opening(E.fresh('story'));
+ assert(C.actions[s.lastAction]&&C.actions[s.lastAction].result,'lastAction result narrative missing');
+ s=go(s,'darkroom');
+ assert.strictEqual(s.lastAction,'','travel should clear location-specific action narrative');
+ s=act(s,'darkroom_workflow');
+ assert.strictEqual(s.lastAction,'darkroom_workflow');
+ let loaded=E.normalize(JSON.parse(JSON.stringify(s)));
+ assert.strictEqual(loaded.lastAction,'darkroom_workflow','normalize lost lastAction narrative state');
+ loaded.lastAction='not_real';
+ loaded=E.normalize(loaded);
+ assert.strictEqual(loaded.lastAction,'','normalize should drop unknown lastAction ids');
+}
+
 function saveIsolation(){
  storage['mist-taiwan-case-save-v4']='CASE1_SENTINEL';
  storage['mist-taiwan-rain-canon-v1']='CASE2_SENTINEL';
@@ -122,7 +136,7 @@ function saveIsolation(){
 }
 
 const results=[];
-[['route A',routeA],['route B',routeB],['route C',routeC],['negative gates',negativeChecks],['save isolation',saveIsolation]].forEach(([name,fn])=>{
+[['route A',routeA],['route B',routeB],['route C',routeC],['negative gates',negativeChecks],['narrative state',narrativeState],['save isolation',saveIsolation]].forEach(([name,fn])=>{
  fn();results.push('PASS '+name);
 });
 console.log(results.join('\n'));
