@@ -8,7 +8,7 @@ var KEY=C.saveKey;
 
 function fresh(name){
  return {
-  version:C.version,playerName:name||'',phase:'investigate',loc:'studio',
+  version:C.version,playerName:name||'',phase:'investigate',loc:'studio',lastAction:'',
   visited:['studio'],unlocked:['studio'],
   evidence:[],conclusions:[],testimonies:[],hypotheses:{},
   actionsDone:{},observations:{},
@@ -36,6 +36,7 @@ function normalize(raw){
  s.playerName=base.playerName;
  s.phase=['investigate','deduction','done'].indexOf(s.phase)>=0?s.phase:'investigate';
  s.loc=C.locations[s.loc]?s.loc:'studio';
+ s.lastAction=typeof s.lastAction==='string'&&C.actions[s.lastAction]?s.lastAction:'';
  s.visited=uniq(arr(s.visited).filter(function(x){return !!C.locations[x]}));
  if(s.visited.indexOf(s.loc)<0)s.visited.push(s.loc);
  s.unlocked=uniq(arr(s.unlocked).filter(function(x){return !!C.locations[x]}));
@@ -108,7 +109,7 @@ function travel(s,id){
  derive(s);
  if(s.phase!=='investigate')return {ok:false,reason:'phase',state:s};
  if(!C.locations[id]||s.unlocked.indexOf(id)<0)return {ok:false,reason:'locked',state:s};
- s.loc=id;add(s.visited,id);save(s);return {ok:true,state:s};
+ s.loc=id;s.lastAction='';add(s.visited,id);save(s);return {ok:true,state:s};
 }
 
 function canConclude(s,id){
@@ -160,7 +161,7 @@ function runAction(s,id){
  var effects=arr(a.effects);
  if(effects.some(function(e){return !effectValid(s,e)}))return {ok:false,reason:'invalid_effect',state:s};
  effects.forEach(function(e){applyEffect(s,e)});
- s.actionsDone[id]=true;
+ s.actionsDone[id]=true;s.lastAction=id;
  derive(s);save(s);
  return {ok:true,state:s};
 }
@@ -232,7 +233,7 @@ function answerDeduction(s,answer){
 
 function snapshot(s){
  return {
-  loc:s.loc,phase:s.phase,unlocked:s.unlocked.slice(),evidence:s.evidence.slice(),
+  loc:s.loc,phase:s.phase,lastAction:s.lastAction,unlocked:s.unlocked.slice(),evidence:s.evidence.slice(),
   conclusions:s.conclusions.slice(),testimonies:s.testimonies.slice(),
   frameAnalysis:Object.assign({},s.frameAnalysis),keys:Object.assign({},s.keys),
   flags:Object.assign({},s.flags),hypotheses:JSON.parse(JSON.stringify(s.hypotheses))
