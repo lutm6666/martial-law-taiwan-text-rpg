@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10110e">
+<title>第三案 UI 原型｜第十三張底片</title>
+<style>
+html{background:#10110e}body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#1b1e17 0,#10110e 48%);color:#ece8dc}
+.preview-note{max-width:760px;margin:0 auto;padding:14px 16px 0;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;color:#8f8c80;font-size:.74rem;line-height:1.55}
+</style>
+</head>
+<body>
+<div class="preview-note">CASE 03 INTERNAL PREVIEW｜此頁只供第三案獨立 UI 驗證，不由正式網站入口載入。</div>
+<div id="case3PreviewRoot"></div>
+<script src="case3-film-canon.js"></script>
+<script src="case3-film-engine.js"></script>
+<script src="case3-film-ui.js"></script>
+<script>
+(function(){
+  if(window.Case3FilmUI)window.Case3FilmUI.mount('case3PreviewRoot',{playerName:'林默'});
+})();
+</script>
+</body>
+</html>
