@@ -108,6 +108,8 @@ frameReq.forEach(x=>expect(exists(C.frameAnalysis.categories,x),'frameAnalysis.c
 });
 
 const deductionIds=new Set();
+const optionIds=new Set();
+const errorTypes=new Set(['image_literalism','overcorrection','forced_origin']);
 (C.deductions||[]).forEach((q,i)=>{
   expect(q&&typeof q.id==='string','deduction #'+(i+1)+' missing id');
   if(q&&q.id){
@@ -115,12 +117,37 @@ const deductionIds=new Set();
     deductionIds.add(q.id);
   }
   expect(q&&typeof q.question==='string'&&q.question.trim(),'deduction '+(q&&q.id||i)+' missing question');
-  expect(q&&typeof q.correct==='string'&&q.correct.trim(),'deduction '+(q&&q.id||i)+' missing correct text');
+  expect(q&&typeof q.explain==='string'&&q.explain.trim(),'deduction '+(q&&q.id||i)+' missing explanation');
+  expect(q&&Array.isArray(q.options)&&q.options.length>=3,'deduction '+(q&&q.id||i)+' needs playable options');
+  let correctCount=0;
+  (q&&q.options||[]).forEach(o=>{
+    expect(o&&typeof o.id==='string'&&o.id.trim(),'deduction '+q.id+' option missing id');
+    if(o&&o.id){
+      expect(!optionIds.has(o.id),'duplicate deduction option id '+o.id);
+      optionIds.add(o.id);
+    }
+    expect(o&&typeof o.text==='string'&&o.text.trim(),'deduction '+q.id+' option '+(o&&o.id||'?')+' missing text');
+    expect(o&&typeof o.feedback==='string'&&o.feedback.trim(),'deduction '+q.id+' option '+(o&&o.id||'?')+' missing feedback');
+    if(o&&o.ok===true){
+      correctCount++;
+      expect(o.errorType==null,'correct deduction option '+o.id+' must not have errorType');
+    }else{
+      expect(o&&errorTypes.has(o.errorType),'wrong deduction option '+(o&&o.id||'?')+' has invalid errorType');
+    }
+  });
+  expect(correctCount===1,'deduction '+(q&&q.id||i)+' must have exactly one correct option');
 });
 expect(C.deductions.length===6,'Case 3 should have exactly six final deduction questions');
 
 ['image_literalism','overcorrection','forced_origin','evidence_boundary']
-  .forEach(id=>expect(exists(C.endings,id),'missing ending '+id));
+  .forEach(id=>{
+    expect(exists(C.endings,id),'missing ending '+id);
+    if(exists(C.endings,id)){
+      expect(typeof C.endings[id].name==='string'&&C.endings[id].name.trim(),'ending '+id+' missing name');
+      expect(typeof C.endings[id].title==='string'&&C.endings[id].title.trim(),'ending '+id+' missing title');
+      expect(typeof C.endings[id].text==='string'&&C.endings[id].text.trim(),'ending '+id+' missing text');
+    }
+  });
 
 const evidenceIds=keys(C.evidence);
 for(let i=1;i<=10;i++){
@@ -162,6 +189,17 @@ keys(C.evidence).forEach(id=>{
   lintPublicText('evidence '+id+' name',C.evidence[id].name);
   if(C.evidence[id].verifiedName) lintPublicText('evidence '+id+' verifiedName',C.evidence[id].verifiedName);
 });
+(C.deductions||[]).forEach(q=>{
+  lintPublicText('deduction '+q.id+' question',q.question);
+  (q.options||[]).forEach(o=>{
+    lintPublicText('deduction '+q.id+' option '+o.id,o.text);
+    lintPublicText('deduction '+q.id+' feedback '+o.id,o.feedback);
+  });
+});
+keys(C.endings).forEach(id=>{
+  lintPublicText('ending '+id+' title',C.endings[id].title);
+  lintPublicText('ending '+id+' text',C.endings[id].text);
+});
 
 const initialActions=E.availableActions(fresh).map(a=>a.label);
 if(initialActions.includes('查看店務紀錄'))err('duty record is visible before Xiulian lead');
@@ -177,5 +215,6 @@ if(errors.length){
 }
 console.log('PASS Case 3 schema/reference validation');
 console.log('PASS Case 3 narrative completeness');
+console.log('PASS Case 3 deduction option schema');
 console.log('PASS Case 3 anti-spoiler UI lint');
 console.log('PASS Case 3 save-key isolation checks');
