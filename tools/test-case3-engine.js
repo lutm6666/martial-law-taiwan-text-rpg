@@ -126,6 +126,58 @@ function narrativeState(){
  assert.strictEqual(loaded.lastAction,'','normalize should drop unknown lastAction ids');
 }
 
+function answerBy(s,pick){
+ let start=E.startDeduction(s);assert(start.ok,'deduction failed to start: '+start.reason);s=start.state;
+ C.deductions.forEach(q=>{
+  let option=pick(q);
+  assert(option,'missing deduction option for '+q.id);
+  let r=E.answerDeduction(s,option.id);
+  assert(r.ok,'answer failed for '+q.id+': '+r.reason);
+  s=r.state;
+ });
+ assert.strictEqual(s.phase,'done','deduction did not finish');
+ return s;
+}
+
+function deductionCorrect(){
+ let s=routeA();
+ s=answerBy(s,q=>q.options.find(o=>o.ok===true));
+ assert.strictEqual(s.deduction.ending,'evidence_boundary','all-correct deduction should reach evidence boundary ending');
+}
+
+function deductionErrorEndings(){
+ ['image_literalism','overcorrection','forced_origin'].forEach(type=>{
+  let s=routeA();
+  s=answerBy(s,q=>q.options.find(o=>o.errorType===type));
+  assert.strictEqual(s.deduction.ending,type,'wrong ending classifier for '+type);
+ });
+}
+
+function deductionTieBreak(){
+ let s=routeA(),start=E.startDeduction(s);assert(start.ok);s=start.state;
+ const order=['image_literalism','overcorrection','forced_origin','image_literalism','overcorrection','forced_origin'];
+ C.deductions.forEach((q,i)=>{
+  let option=q.options.find(o=>o.errorType===order[i]);assert(option);
+  let r=E.answerDeduction(s,option.id);assert(r.ok);s=r.state;
+ });
+ assert.strictEqual(s.deduction.ending,'forced_origin','tied error counts should use the last selected tied error type');
+}
+
+function deductionIgnoresWithdrawnHypothesis(){
+ let s=routeA();
+ let h=E.createHypothesis(s,'H_XIULIAN');assert(h.ok);
+ h=E.reviewHypothesis(s,'H_XIULIAN','withdrawn');assert(h.ok);
+ s=answerBy(s,q=>q.options.find(o=>o.ok===true));
+ assert.strictEqual(s.deduction.ending,'evidence_boundary','withdrawn hypothesis should not force a bad ending');
+}
+
+function deductionRejectsUnknownOption(){
+ let s=routeA(),start=E.startDeduction(s);assert(start.ok);s=start.state;
+ let before=s.deduction.index,r=E.answerDeduction(s,'not-a-real-option');
+ assert(!r.ok&&r.reason==='unknown_option','unknown deduction option should be rejected');
+ assert.strictEqual(s.deduction.index,before,'unknown option advanced deduction index');
+}
+
 function saveIsolation(){
  storage['mist-taiwan-case-save-v4']='CASE1_SENTINEL';
  storage['mist-taiwan-rain-canon-v1']='CASE2_SENTINEL';
@@ -136,7 +188,7 @@ function saveIsolation(){
 }
 
 const results=[];
-[['route A',routeA],['route B',routeB],['route C',routeC],['negative gates',negativeChecks],['narrative state',narrativeState],['save isolation',saveIsolation]].forEach(([name,fn])=>{
+[['route A',routeA],['route B',routeB],['route C',routeC],['negative gates',negativeChecks],['narrative state',narrativeState],['deduction correct',deductionCorrect],['deduction error endings',deductionErrorEndings],['deduction tie break',deductionTieBreak],['deduction ignores withdrawn hypothesis',deductionIgnoresWithdrawnHypothesis],['deduction rejects unknown option',deductionRejectsUnknownOption],['save isolation',saveIsolation]].forEach(([name,fn])=>{
  fn();results.push('PASS '+name);
 });
 console.log(results.join('\n'));
