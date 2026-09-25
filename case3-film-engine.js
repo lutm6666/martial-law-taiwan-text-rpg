@@ -26,6 +26,19 @@ function arr(v){return Array.isArray(v)?v:[]}
 function obj(v){return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}
 function uniq(a){return a.filter(function(v,i){return a.indexOf(v)===i})}
 function add(a,v){if(a.indexOf(v)<0)a.push(v)}
+function deductionOption(q,id){
+ if(!q||!Array.isArray(q.options))return null;
+ for(var i=0;i<q.options.length;i++)if(q.options[i].id===id)return q.options[i];
+ return null;
+}
+function sanitizeDeductionAnswers(v){
+ return arr(v).map(function(a){
+  a=obj(a);var q=null;
+  for(var i=0;i<C.deductions.length;i++)if(C.deductions[i].id===a.q){q=C.deductions[i];break}
+  var o=q&&deductionOption(q,a.a);
+  return q&&o?{q:q.id,a:o.id,ok:o.ok===true,errorType:o.ok?null:o.errorType}:null;
+ }).filter(Boolean);
+}
 function hasEvidence(s,id){return s.evidence.indexOf(id)>=0}
 function hasConclusion(s,id){return s.conclusions.indexOf(id)>=0}
 function hasTestimony(s,id){return s.testimonies.indexOf(id)>=0}
@@ -60,9 +73,10 @@ function normalize(raw){
  s.keys=Object.assign(base.keys,obj(s.keys));Object.keys(base.keys).forEach(function(k){s.keys[k]=!!s.keys[k]});
  s.flags=Object.assign(base.flags,obj(s.flags));Object.keys(base.flags).forEach(function(k){s.flags[k]=!!s.flags[k]});
  s.deduction=Object.assign(base.deduction,obj(s.deduction));
- s.deduction.answers=arr(s.deduction.answers);
- s.deduction.index=Number.isFinite(s.deduction.index)?Math.max(0,Math.min(C.deductions.length,s.deduction.index)):0;
+ s.deduction.answers=sanitizeDeductionAnswers(s.deduction.answers);
+ s.deduction.index=Math.max(0,Math.min(C.deductions.length,s.deduction.answers.length));
  s.deduction.ending=C.endings[s.deduction.ending]?s.deduction.ending:null;
+ if(s.phase==='done'&&!s.deduction.ending)s.phase='deduction';
  derive(s);
  return s;
 }
@@ -208,27 +222,38 @@ function testimonyView(s,id){
 }
 
 function startDeduction(s){
+ if(s.phase!=='investigate')return {ok:false,reason:'phase',state:s};
  if(!C.predicates.canStartDeduction(s))return {ok:false,reason:'requirements',state:s};
  s.phase='deduction';s.deduction.index=0;s.deduction.answers=[];s.deduction.ending=null;save(s);
  return {ok:true,state:s};
 }
+function classifyEnding(answers){
+ var bad=arr(answers).filter(function(x){return x&&!x.ok});
+ if(!bad.length)return'evidence_boundary';
+ var counts={image_literalism:0,overcorrection:0,forced_origin:0};
+ bad.forEach(function(x){if(Object.prototype.hasOwnProperty.call(counts,x.errorType))counts[x.errorType]++});
+ var max=Math.max(counts.image_literalism,counts.overcorrection,counts.forced_origin);
+ for(var i=bad.length-1;i>=0;i--){
+  var type=bad[i].errorType;
+  if(Object.prototype.hasOwnProperty.call(counts,type)&&counts[type]===max)return type;
+ }
+ return'overcorrection';
+}
 function answerDeduction(s,answer){
  if(s.phase!=='deduction')return {ok:false,reason:'not_deduction',state:s};
  var q=C.deductions[s.deduction.index];if(!q)return {ok:false,reason:'complete',state:s};
- var a=obj(answer);
- s.deduction.answers.push({q:q.id,ok:a.ok===true,errorType:a.errorType||null});
+ var optionId=typeof answer==='string'?answer:(obj(answer).id||obj(answer).a||'');
+ var option=deductionOption(q,optionId);
+ if(!option)return {ok:false,reason:'unknown_option',state:s};
+ var record={q:q.id,a:option.id,ok:option.ok===true,errorType:option.ok?null:option.errorType};
+ s.deduction.answers.push(record);
  s.deduction.index++;
  if(s.deduction.index>=C.deductions.length){
-  var bad=s.deduction.answers.filter(function(x){return !x.ok});
-  if(!bad.length)s.deduction.ending='evidence_boundary';
-  else{
-   var counts={image_literalism:0,overcorrection:0,forced_origin:0};
-   bad.forEach(function(x){if(Object.prototype.hasOwnProperty.call(counts,x.errorType))counts[x.errorType]++});
-   s.deduction.ending=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a]})[0];
-  }
+  s.deduction.ending=classifyEnding(s.deduction.answers);
   s.phase='done';
  }
- save(s);return {ok:true,state:s};
+ save(s);
+ return {ok:true,state:s,question:q,option:option,answer:record,complete:s.phase==='done'};
 }
 
 function snapshot(s){
@@ -245,7 +270,7 @@ global.Case3FilmEngine={
  visibleLocations:visibleLocations,travel:travel,availableActions:availableActions,
  runAction:runAction,observeFrame:observeFrame,createHypothesis:createHypothesis,
  reviewHypothesis:reviewHypothesis,evidenceView:evidenceView,testimonyView:testimonyView,
- startDeduction:startDeduction,answerDeduction:answerDeduction,snapshot:snapshot,
+ startDeduction:startDeduction,answerDeduction:answerDeduction,classifyEnding:classifyEnding,snapshot:snapshot,
  canConclude:canConclude,tryConclude:tryConclude
 };
 })(window);
