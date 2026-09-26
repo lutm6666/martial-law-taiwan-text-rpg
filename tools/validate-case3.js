@@ -22,9 +22,11 @@ function load(file){
 }
 load('case3-film-canon.js');
 load('case3-film-engine.js');
+load('case3-art-manifest.js');
 
 const C=context.CASE3_FILM_CANON;
 const E=context.Case3FilmEngine;
+const A=context.CASE3_ART_MANIFEST;
 const errors=[];
 const warnings=[];
 
@@ -36,7 +38,8 @@ function expect(cond,msg){if(!cond)err(msg)}
 
 expect(C&&typeof C==='object','CASE3_FILM_CANON missing');
 expect(E&&typeof E==='object','Case3FilmEngine missing');
-if(!C||!E){
+expect(A&&typeof A==='object','CASE3_ART_MANIFEST missing');
+if(!C||!E||!A){
   console.error(errors.join('\n'));
   process.exit(1);
 }
@@ -201,6 +204,32 @@ keys(C.endings).forEach(id=>{
   lintPublicText('ending '+id+' text',C.endings[id].text);
 });
 
+const sceneArtIds=keys(A.scenes);
+expect(sceneArtIds.length===keys(C.locations).length,'art manifest scene count does not match locations');
+keys(C.locations).forEach(id=>{
+  expect(exists(A.scenes,id),'art manifest missing scene '+id);
+  if(exists(A.scenes,id)){
+    expect(/^assets\/case3\/scenes\//.test(A.scenes[id].path),'scene '+id+' path outside assets/case3/scenes');
+    expect(A.scenes[id].status==='planned'||A.scenes[id].status==='ready','scene '+id+' invalid art status');
+  }
+});
+for(let i=11;i<=15;i++){
+  const id='F'+i;
+  expect(exists(A.frames,id),'art manifest missing frame '+id);
+  if(exists(A.frames,id))expect(/^assets\/case3\/frames\//.test(A.frames[id].path),'frame '+id+' path outside assets/case3/frames');
+}
+for(let i=1;i<=10;i++){
+  const id='E'+String(i).padStart(2,'0');
+  expect(exists(A.evidence,id),'art manifest missing evidence '+id);
+  if(exists(A.evidence,id))expect(/^assets\/case3\/evidence\//.test(A.evidence[id].path),'evidence '+id+' path outside assets/case3/evidence');
+}
+const allArtPaths=[
+  ...keys(A.scenes).map(id=>A.scenes[id].path),
+  ...keys(A.frames).map(id=>A.frames[id].path),
+  ...keys(A.evidence).map(id=>A.evidence[id].path)
+];
+expect(new Set(allArtPaths).size===allArtPaths.length,'duplicate Case 3 art asset path');
+
 const initialActions=E.availableActions(fresh).map(a=>a.label);
 if(initialActions.includes('查看店務紀錄'))err('duty record is visible before Xiulian lead');
 if(initialActions.includes('詢問單格底片如何處理'))err('loose-film procedure is visible before missing-window/access evidence');
@@ -218,3 +247,4 @@ console.log('PASS Case 3 narrative completeness');
 console.log('PASS Case 3 deduction option schema');
 console.log('PASS Case 3 anti-spoiler UI lint');
 console.log('PASS Case 3 save-key isolation checks');
+console.log('PASS Case 3 art manifest coverage');
