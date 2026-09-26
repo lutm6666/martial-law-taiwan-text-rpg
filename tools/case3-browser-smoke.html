@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head><meta charset="utf-8"><title>Case3 Browser Smoke</title></head>
+<body>
+<div id="root"></div>
+<pre id="result">RUNNING</pre>
+<script src="../case3-film-canon.js"></script>
+<script src="../case3-film-engine.js"></script>
+<script src="../case3-film-ui.js"></script>
+<script>
+(function(){
+ 'use strict';
+ var out=[],errors=[];
+ window.onerror=function(m){errors.push(String(m))};
+ function ok(cond,msg){if(!cond)throw new Error(msg);out.push('PASS '+msg)}
+ function q(sel){return document.querySelector(sel)}
+ function click(sel){var el=q(sel);if(!el)throw new Error('missing '+sel);el.click();return el}
+ function action(id){return click('[data-action="'+id+'"]')}
+ function go(id){click('[data-view="map"]');return click('[data-go="'+id+'"]')}
+ try{
+  localStorage.removeItem(CASE3_FILM_CANON.saveKey);
+  ok(Case3FilmUI.mount('root',{playerName:'Smoke',reset:true})===true,'mount');
+  ok(!!q('[data-action="studio_opening"]'),'opening action visible');
+  action('studio_opening');
+  go('newsstand');
+  ok(!q('[data-action="newsstand_xiulian"]'),'newsstand follow-up gated before photo');
+  action('newsstand_visit');
+  ok(!!q('[data-action="newsstand_xiulian"]'),'newsstand follow-up unlocks after photo');
+  action('newsstand_xiulian');
+  go('studio');action('studio_b084_ledger');
+  go('darkroom');action('darkroom_workflow');
+  go('alley');action('alley_frames');
+  click('[data-frame="personMovement"]');
+  click('[data-frame="movingObject"]');
+  click('[data-frame="fixedBackground"]');
+  ok(document.body.textContent.indexOf('相關調查結論已寫入紀錄')>=0,'frame comparison completes');
+  go('supplier');action('supplier_trace');
+  go('studio');action('studio_receiving');
+  go('chen_home');action('chen_first');
+  go('studio');action('studio_duty');action('studio_loose_procedure');action('studio_loose_search');
+  ok(document.body.textContent.indexOf('舊零片中的單格負片')>=0,'E10 remains neutral before verification');
+  action('studio_verify_e10');
+  click('[data-view="records"]');click('[data-record-filter="E"]');
+  ok(document.body.textContent.indexOf('A-217 第 13 格原片')>=0,'E10 renames after verification');
+  go('chen_home');action('chen_final');
+  click('[data-view="deduction"]');
+  ok(!!q('[data-start-deduction]'),'deduction gate unlocks');
+  click('[data-start-deduction]');
+  ['q1_b','q2_a','q3_b','q4_a','q5_a','q6_a'].forEach(function(id){click('[data-deduction-option="'+id+'"]')});
+  ok(q('.c3-ending-name')&&q('.c3-ending-name').textContent.indexOf('證據邊界')>=0,'correct ending renders');
+  ok(document.body.textContent.indexOf('照片本身不能證明紙袋內容或秘密活動')>=0,'ending preserves image evidence boundary');
+  ok(document.body.textContent.indexOf('不足以指定唯一的傳言源頭')>=0,'ending preserves rumor-source uncertainty');
+  ok(errors.length===0,'no browser JavaScript errors');
+  document.getElementById('result').textContent=out.join('\n')+'\nPASS FULL BROWSER FLOW';
+  document.title='PASS Case3 Browser Smoke';
+ }catch(e){
+  document.getElementById('result').textContent=out.join('\n')+'\nFAIL '+e.message+'\n'+errors.join('\n');
+  document.title='FAIL Case3 Browser Smoke';
+ }
+})();
+</script>
+</body>
+</html>
