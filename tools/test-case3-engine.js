@@ -31,7 +31,11 @@ function frames(s){
 function has(a,x){return a.indexOf(x)>=0}
 function opening(s){s=act(s,'studio_opening');assert(has(s.unlocked,'darkroom')&&has(s.unlocked,'alley')&&has(s.unlocked,'newsstand'));assert.strictEqual(s.lastAction,'studio_opening');return s}
 function b084(s){
- s=go(s,'newsstand');s=act(s,'newsstand_visit');s=act(s,'newsstand_xiulian');
+ s=go(s,'newsstand');
+ assert(!E.availableActions(s).some(a=>a.id==='newsstand_xiulian'),'newsstand follow-up leaked before viewing B-084');
+ s=act(s,'newsstand_visit');
+ assert(E.availableActions(s).some(a=>a.id==='newsstand_xiulian'),'newsstand follow-up did not unlock after viewing B-084');
+ s=act(s,'newsstand_xiulian');
  s=go(s,'studio');s=act(s,'studio_b084_ledger');return s;
 }
 function supplier(s){
@@ -178,6 +182,30 @@ function deductionRejectsUnknownOption(){
  assert.strictEqual(s.deduction.index,before,'unknown option advanced deduction index');
 }
 
+function deductionSaveRepair(){
+ let s=routeA(),start=E.startDeduction(s);assert(start.ok);s=start.state;
+ for(let i=0;i<2;i++){
+  const q=C.deductions[s.deduction.index],o=q.options.find(x=>x.ok===true);
+  let r=E.answerDeduction(s,o.id);assert(r.ok);s=r.state;
+ }
+ let damaged=JSON.parse(JSON.stringify(s));
+ damaged.phase='done';damaged.deduction.ending='image_literalism';damaged.deduction.index=99;
+ let repaired=E.normalize(damaged);
+ assert.strictEqual(repaired.phase,'deduction','partial deduction save should resume deduction');
+ assert.strictEqual(repaired.deduction.index,2,'partial deduction save index should be derived from valid answers');
+ assert.strictEqual(repaired.deduction.ending,null,'partial deduction save must discard stale ending');
+
+ let complete=routeA();start=E.startDeduction(complete);assert(start.ok);complete=start.state;
+ C.deductions.forEach(q=>{
+  const o=q.options.find(x=>x.ok===true),r=E.answerDeduction(complete,o.id);assert(r.ok);complete=r.state;
+ });
+ let brokenComplete=JSON.parse(JSON.stringify(complete));
+ brokenComplete.phase='deduction';brokenComplete.deduction.ending=null;brokenComplete.deduction.index=0;
+ repaired=E.normalize(brokenComplete);
+ assert.strictEqual(repaired.phase,'done','complete deduction answers should normalize to done');
+ assert.strictEqual(repaired.deduction.ending,'evidence_boundary','complete answers should recompute ending');
+}
+
 function saveIsolation(){
  storage['mist-taiwan-case-save-v4']='CASE1_SENTINEL';
  storage['mist-taiwan-rain-canon-v1']='CASE2_SENTINEL';
@@ -188,7 +216,7 @@ function saveIsolation(){
 }
 
 const results=[];
-[['route A',routeA],['route B',routeB],['route C',routeC],['negative gates',negativeChecks],['narrative state',narrativeState],['deduction correct',deductionCorrect],['deduction error endings',deductionErrorEndings],['deduction tie break',deductionTieBreak],['deduction ignores withdrawn hypothesis',deductionIgnoresWithdrawnHypothesis],['deduction rejects unknown option',deductionRejectsUnknownOption],['save isolation',saveIsolation]].forEach(([name,fn])=>{
+[['route A',routeA],['route B',routeB],['route C',routeC],['negative gates',negativeChecks],['narrative state',narrativeState],['deduction correct',deductionCorrect],['deduction error endings',deductionErrorEndings],['deduction tie break',deductionTieBreak],['deduction ignores withdrawn hypothesis',deductionIgnoresWithdrawnHypothesis],['deduction rejects unknown option',deductionRejectsUnknownOption],['deduction save repair',deductionSaveRepair],['save isolation',saveIsolation]].forEach(([name,fn])=>{
  fn();results.push('PASS '+name);
 });
 console.log(results.join('\n'));
