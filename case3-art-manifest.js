@@ -1,0 +1,37 @@
+;(function(global){
+'use strict';
+
+global.CASE3_ART_MANIFEST={
+ version:1,
+ base:'assets/case3/',
+ sceneSize:{source:'1536x1152',aspect:'4:3'},
+ evidenceSize:{source:'1536x1024',aspect:'3:2'},
+ scenes:{
+  studio:{id:'S01',path:'assets/case3/scenes/01-mingguang-studio.webp',status:'planned'},
+  darkroom:{id:'S02',path:'assets/case3/scenes/02-darkroom.webp',status:'planned'},
+  alley:{id:'S03',path:'assets/case3/scenes/03-rear-alley.webp',status:'planned'},
+  newsstand:{id:'S04',path:'assets/case3/scenes/04-newsstand.webp',status:'planned'},
+  supplier:{id:'S05',path:'assets/case3/scenes/05-photo-supplier.webp',status:'planned'},
+  chen_home:{id:'S06',path:'assets/case3/scenes/06-chen-home.webp',status:'planned'}
+ },
+ frames:{
+  F11:{path:'assets/case3/frames/frame-11.webp',status:'planned'},
+  F12:{path:'assets/case3/frames/frame-12.webp',status:'planned'},
+  F13:{path:'assets/case3/frames/frame-13.webp',status:'planned'},
+  F14:{path:'assets/case3/frames/frame-14.webp',status:'planned'},
+  F15:{path:'assets/case3/frames/frame-15.webp',status:'planned'}
+ },
+ evidence:{
+  E01:{path:'assets/case3/evidence/e01-contact-sheet.webp',status:'planned'},
+  E02:{path:'assets/case3/evidence/e02-existing-negatives.webp',status:'planned'},
+  E03:{path:'assets/case3/evidence/e03-envelope.webp',status:'planned'},
+  E04:{path:'assets/case3/evidence/e04-work-ledger.webp',status:'planned'},
+  E05:{path:'assets/case3/evidence/e05-b084-print.webp',status:'planned'},
+  E06:{path:'assets/case3/evidence/e06-enlargement-ledger.webp',status:'planned'},
+  E07:{path:'assets/case3/evidence/e07-supplier-ledger.webp',status:'planned'},
+  E08:{path:'assets/case3/evidence/e08-receiving-ledger.webp',status:'planned'},
+  E09:{path:'assets/case3/evidence/e09-duty-ledger.webp',status:'planned'},
+  E10:{path:'assets/case3/evidence/e10-loose-negative.webp',status:'planned'}
+ }
+};
+})(window);
