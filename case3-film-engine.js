@@ -76,7 +76,14 @@ function normalize(raw){
  s.deduction.answers=sanitizeDeductionAnswers(s.deduction.answers);
  s.deduction.index=Math.max(0,Math.min(C.deductions.length,s.deduction.answers.length));
  s.deduction.ending=C.endings[s.deduction.ending]?s.deduction.ending:null;
- if(s.phase==='done'&&!s.deduction.ending)s.phase='deduction';
+ if(s.deduction.answers.length>=C.deductions.length){
+  s.deduction.ending=classifyEnding(s.deduction.answers);
+  s.phase='done';
+ }else{
+  s.deduction.ending=null;
+  if(s.deduction.answers.length>0)s.phase='deduction';
+  else if(s.phase==='done')s.phase=C.predicates.canStartDeduction(s)?'deduction':'investigate';
+ }
  derive(s);
  return s;
 }
