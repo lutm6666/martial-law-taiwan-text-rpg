@@ -12,6 +12,7 @@ on:
       - "CASE3_IMPLEMENTATION.md"
       - "tools/test-case3-engine.js"
       - "tools/validate-case3.js"
+      - "tools/case3-browser-smoke.html"
       - ".github/workflows/case3-ci.yml"
   workflow_dispatch:
 
@@ -38,3 +39,14 @@ jobs:
 
       - name: Run Case 3 state-engine regression tests
         run: node tools/test-case3-engine.js
+
+      - name: Run Case 3 browser smoke playthrough
+        run: |
+          node -e "const http=require('http'),fs=require('fs'),path=require('path');http.createServer((req,res)=>{const p=path.join(process.cwd(),req.url==='/'?'tools/case3-browser-smoke.html':req.url.slice(1));fs.readFile(p,(e,d)=>{if(e){res.statusCode=404;return res.end('not found')}res.end(d)})}).listen(8765,'127.0.0.1')" >/tmp/case3-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID' EXIT
+          sleep 1
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME"
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --dump-dom http://127.0.0.1:8765/tools/case3-browser-smoke.html > /tmp/case3-smoke-dom.html
+          grep -q "PASS FULL BROWSER FLOW" /tmp/case3-smoke-dom.html
