@@ -87,6 +87,7 @@ var C = {
     canTracePackage:function(s){return !!(s.frameAnalysis&&s.frameAnalysis.continuityComplete&&s.keys&&s.keys.packageMarkPartial)},
     canCheckReceivingLedger:function(s){return !!(s.keys&&s.keys.m317)},
     canVisitChenHome:function(s){return !!(s.flags&&s.flags.xiulianSawPhoto)},
+    canAskWhoSawB084:function(s){return !!(s.flags&&s.flags.b084SeenOutsideStudio)},
     canCheckDutyRecord:function(s){return !!(s.flags&&s.flags.strongerInterpretationKnown)},
     canReviewLooseFilmProcedure:function(s){return hasConclusion(s,'C07')&&hasConclusion(s,'C13')},
     canSearchLooseFilms:function(s){return !!(s.flags&&s.flags.looseFilmProcedureKnown&&hasConclusion(s,'C07')&&hasConclusion(s,'C13'))},
@@ -183,6 +184,7 @@ var C = {
       location:'newsstand',
       label:'詢問誰看過這張照片',
       hint:'只記錄蔡阿成實際記得的人與說法。',
+      requires:'canAskWhoSawB084',
       result:'蔡阿成記得秀蓮在 20 日前後看過這張照片，也有人站在攤前說它像「偷偷交東西」。至於最早是誰先這樣說、之後又怎麼傳開，他說不準。這裡能留下的是誰看過照片，以及他實際記得的幾句話，不是一條完整的傳言來源鏈。',
       effects:['testimony:T_CAI_XIULIAN','flag:xiulianSawPhoto','unlock:chen_home']
     },
