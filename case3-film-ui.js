@@ -8,9 +8,9 @@ if(!C||!E){console.error('Case 3 canon and engine are required before case3-film
 var state=null,root=null,view='scene',recordFilter='E',notice='';
 
 var FRAME_NOTES={
- personMovement:'人物位置在相鄰影格之間呈現連續變化。',
- movingObject:'畫面中的移動物體在相鄰影格間依序改變位置。',
- fixedBackground:'固定建築線條與背景參照物保持一致。'
+ personMovement:'第 12 格兩名男子逐漸靠近；第 13 格雙手都在紙袋附近；到第 14、15 格，兩人的位置再次拉開。',
+ movingObject:'自行車在相鄰影格中持續移動；第 13 到 14 格之間，紙袋的位置從一人手側移到另一人手側。',
+ fixedBackground:'側門、牆角與排水管在第 11～15 格的位置關係保持一致，沒有因第 13 格出現不連續的背景跳動。'
 };
 
 function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
