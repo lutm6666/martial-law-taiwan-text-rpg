@@ -10,7 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  project_validate:
+    name: project-validate
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
