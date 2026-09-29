@@ -1,0 +1,41 @@
+name: AI task
+description: 自動派給 Claude、Codex 或 handoff 的開發任務
+title: "[AI] "
+labels: ["dispatch:ready"]
+body:
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Workstream
+      options:
+        - Canon / Logic / State / Tests
+        - Frontend / UI / Responsive / Accessibility
+        - Art / Assets
+        - Mixed / Cross-boundary
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: 完成後應該具備什麼行為？
+      placeholder: 清楚描述完成條件。
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Relevant files / scope
+      description: 已知檔案、案件、場景或模組。
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: 可驗證的完成條件，每行一項。
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints / Canon notes
+      description: 不可改動的規則、防劇透條件或相容性要求。
