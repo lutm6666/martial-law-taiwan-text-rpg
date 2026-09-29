@@ -8,6 +8,11 @@ permissions:
   contents: read
   issues: write
 
+concurrency:
+  group: ai-dispatch-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+
 jobs:
   dispatch:
     if: >
