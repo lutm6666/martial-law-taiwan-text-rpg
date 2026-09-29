@@ -1,0 +1,37 @@
+name: Bug / regression
+description: 回報遊戲流程、存檔、UI 或 CI 回歸
+title: "[BUG] "
+labels: ["type:bug", "dispatch:ready"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Canon / Logic / State
+        - Frontend / UI
+        - Save / Migration
+        - CI / Tests
+        - Art / Assets
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: 逐步列出如何重現。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+    validations:
+      required: true
