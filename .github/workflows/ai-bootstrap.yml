@@ -1,0 +1,38 @@
+name: AI Bootstrap
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "AI_WORKFLOW.md"
+      - ".github/workflows/ai-bootstrap.yml"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create/update collaboration labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          create_label () {
+            gh label create "$1" --repo "$REPO" --color "$2" --description "$3" --force
+          }
+          create_label "dispatch:ready" "0E8A16" "Ready for automatic AI routing"
+          create_label "ai:codex" "1D76DB" "Codex is primary"
+          create_label "ai:claude" "D4A72C" "Claude is primary"
+          create_label "ai:handoff" "8250DF" "Cross-boundary or human handoff required"
+          create_label "area:logic" "0052CC" "Canon, state, engine, tests or CI"
+          create_label "area:ui" "FBCA04" "Frontend, UI, responsive or accessibility"
+          create_label "area:art" "C5DEF5" "Art and asset work"
+          create_label "type:bug" "D73A4A" "Bug or regression"
+          create_label "needs:codex-review" "BFDADC" "Codex review required"
+          create_label "needs:claude-review" "F9D0C4" "Claude review required"
+          create_label "risk:canon" "B60205" "Touches Canon or evidence boundaries"
