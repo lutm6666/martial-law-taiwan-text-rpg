@@ -1,6 +1,20 @@
 name: Case 3 validation
 
 on:
+  pull_request:
+    paths:
+      - "case3-film-canon.js"
+      - "case3-film-engine.js"
+      - "case3-film-ui.js"
+      - "case3-preview.html"
+      - "case3-art-manifest.js"
+      - "CASE3_ART_DIRECTION.md"
+      - "CASE3_DESIGN.md"
+      - "CASE3_IMPLEMENTATION.md"
+      - "tools/test-case3-engine.js"
+      - "tools/validate-case3.js"
+      - "tools/case3-browser-smoke.html"
+      - ".github/workflows/case3-ci.yml"
   push:
     branches: ["main"]
     paths:

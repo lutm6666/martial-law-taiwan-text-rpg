@@ -53,6 +53,18 @@ assets/v2/canon/
 - `CASE3_DESIGN.md`：第三案 Canon 骨架、證物鏈、影格玩法與最終推理設計。
 - `.github/workflows/pages.yml`：GitHub Pages 驗證與部署。
 
+## 雙 AI 協同開發
+
+本 repo 已加入 Claude × Codex 的 GitHub 協同模式：
+
+- Claude 主責 UI、CSS、responsive、accessibility 與互動 polish。
+- Codex / ChatGPT 主責 Canon、engine、state、tests、CI、證據鏈與防劇透邏輯。
+- Issue 透過 `.github/ISSUE_TEMPLATE/ai-task.yml` 建立後，由 `AI Dispatch` 自動分類。
+- PR 由 `AI Path Guard` 檢查檔案責任邊界，並由 `AI Cross Review` 要求另一個 agent 交叉審查。
+- `Project validation` 是合併前的共同 CI；Case 3 有變動時會自動加跑 schema、regression 與 headless Chrome smoke test。
+
+詳細角色、branch 命名、handoff 與 branch protection 建議見 `AI_WORKFLOW.md`。Agent 專用規則分別位於 `CLAUDE.md` 與 `AGENTS.md`。
+
 ## 部署方式
 
 每次 `main` 更新後，GitHub Actions 會先檢查正式 JavaScript 語法與必要圖片數量，再建立精簡的 `_site` 目錄。Pages 只發布正式入口、正式引擎與正式圖片，不再把 `tools/`、`assets-src/` 或 `archive/` 一起公開。
