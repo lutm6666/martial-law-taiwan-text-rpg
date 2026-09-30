@@ -86,7 +86,9 @@ await test('comment without native head guard fails visibly',async()=>{
 await test('workflow contract and scripts compile',()=>{
   const guard=fs.readFileSync('.github/workflows/ai-path-guard.yml','utf8');
   assert(guard.includes('pull_request_target:'));assert(guard.includes('checks: write'));assert(!guard.includes('head.sha }}'));assert(guard.includes('path: trusted'));assert(/^  guard:/m.test(guard));
-  assert(fs.readFileSync('.github/workflows/ai-cross-review.yml','utf8').includes('group: ai-cross-review-'));
+  const reviewWorkflow=fs.readFileSync('.github/workflows/ai-cross-review.yml','utf8');
+  assert(reviewWorkflow.includes('group: ai-cross-review-'));
+  assert(reviewWorkflow.includes('pull-requests: write'), 'PR label/comment writes require pull-requests: write');
   for(const file of ['ai-dispatch','ai-cross-review','ai-path-guard']){
     const yaml=fs.readFileSync('.github/workflows/'+file+'.yml','utf8');
     const scripts=[...yaml.matchAll(/          script: \|\n((?:            .*\n|\n)+)/g)];
