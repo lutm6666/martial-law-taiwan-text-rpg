@@ -171,14 +171,22 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
     summary = 'Trusted base `' + expectedBaseSha + '` checked head `' + sha + '`.\n\nAgent: ' + result.agent + '\n\n' + result.messages.join('\n');
   } catch (error) { conclusion = 'failure'; summary = error.message; }
   await github.rest.checks.update({...repo, check_run_id: check.id, status: 'completed', conclusion, completed_at: new Date().toISOString(), output: {title: 'AI ownership guard: ' + conclusion, summary: summary.slice(0, 60000)}});
-  // Native PR Actions jobs satisfy the required guard context. An issue_comment
-  // run attaches to main, so refresh the completed native PR guard on its head.
+  // Actions-created check conclusions are immutable through the Checks API.
+  // A comment run attaches to main; request a native job rerun on the PR head.
   if (context.eventName === 'issue_comment') {
     const guards = await github.paginate(github.rest.checks.listForRef, {...repo, ref: sha, check_name: 'guard', per_page: 100});
-    const native = guards.filter(c => c.name === 'guard' && c.head_sha === sha && c.app?.id === ACTIONS_APP_ID && c.status === 'completed' && c.conclusion !== 'skipped' && c.details_url?.startsWith('https://github.com/' + repo.owner + '/' + repo.repo + '/actions/runs/') && c.details_url.includes('/job/'))
+    const jobUrl = 'https://github.com/' + repo.owner + '/' + repo.repo + '/actions/runs/';
+    const native = guards.filter(c => c.name === 'guard' && c.head_sha === sha && c.app?.id === ACTIONS_APP_ID && c.conclusion !== 'skipped' && c.details_url?.startsWith(jobUrl) && /\/job\/\d+$/.test(c.details_url))
       .sort((a, b) => b.id - a.id)[0];
-    if (!native) throw new Error('No completed native PR guard to refresh; rerun the PR guard workflow.');
-    await github.rest.checks.update({...repo, check_run_id: native.id, conclusion, output: {title: 'AI ownership guard: ' + conclusion, summary: summary.slice(0, 60000)}});
+    if (!native) throw new Error('No native PR guard to rerun; trigger a PR guard event.');
+    if (native.status !== 'completed') core.info('Native guard is already pending/running; no duplicate rerun.');
+    else if (native.conclusion !== conclusion) {
+      const {data: latest} = await github.rest.pulls.get({...repo, pull_number: number});
+      if (latest.state !== 'open' || latest.head.sha !== sha) throw new Error('PR changed before native guard rerun; retry the current head.');
+      const job_id = Number(native.details_url.split('/').pop());
+      await github.request('POST /repos/{owner}/{repo}/actions/jobs/{job_id}/rerun', {...repo, job_id});
+      core.info('Native guard rerun requested. Required guard changes only after that job completes.');
+    } else core.info('Native guard already matches the current policy conclusion.');
   }
   if (conclusion === 'failure') core.setFailed(summary);
 }

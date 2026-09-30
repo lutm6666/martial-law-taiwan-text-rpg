@@ -21,7 +21,7 @@ function mock({issue, pull=pr(), comments=[], files=[], reviews=[], permission='
     createComment: async args => {record('createComment',args); const c={...comment(args.body),id:comments.length+1};comments.push(c); return {data:c};},
     updateComment: async args => {record('updateComment',args); comments.find(c=>c.id===args.comment_id).body=args.body;}
   };
-  const github = {rest: {issues, pulls:{get:async args=>{record('getPr',args);return {data:pull};},listFiles:'files',listReviews:'reviews'}, repos:{getCollaboratorPermissionLevel: async args=>{record('permission',args);if(permissionError)throw new Error('403 Forbidden');return {data:{permission}};}}, checks:{listForRef:'checks',create:async args=>{record('createCheck',args);const c={...args,id:checks.length+1,app:{id:15368}};checks.push(c);return {data:c};},update:async args=>{record('updateCheck',args);Object.assign(checks.find(c=>c.id===args.check_run_id),args);}}}, paginate:async (method)=>({comments,files,reviews,checks})[method]};
+  const github = {request: async (route,args)=>{record('rerunJob',{route,...args});return {status:201};},rest: {issues, pulls:{get:async args=>{record('getPr',args);return {data:pull};},listFiles:'files',listReviews:'reviews'}, repos:{getCollaboratorPermissionLevel: async args=>{record('permission',args);if(permissionError)throw new Error('403 Forbidden');return {data:{permission}};}}, checks:{listForRef:'checks',create:async args=>{record('createCheck',args);const c={...args,id:checks.length+1,app:{id:15368}};checks.push(c);return {data:c};},update:async args=>{record('updateCheck',args);Object.assign(checks.find(c=>c.id===args.check_run_id),args);}}}, paginate:async (method)=>({comments,files,reviews,checks})[method]};
   const context={repo:{owner,repo:'repo'},actor:'writer',runId:42,payload:{action:'opened',issue:{number:1},pull_request:{number:1}}};
   const core={info(){},setFailed(message){calls.push({name:'failed',message});}};
   return {github,context,core,calls,comments,checks,issue,pull};
@@ -64,28 +64,45 @@ await test('handoff requires owner even with no protected paths',()=>assert.thro
 await test('human control change requires owner',()=>assert.throws(()=>p.evaluateGuard({pr:pr('human',{labels:[],head:{sha,ref:'feature/x'}}),files:['tools/ai-workflow.js'],owner})));
 await test('old SHA other actor and bot cannot authorize',()=>{for(const c of [{user:human,body:'/ai approve-handoff '+'b'.repeat(40)},{user:{login:'other',type:'User'},body:approve[0].body},{user:{login:owner,type:'Bot'},body:approve[0].body}])assert(!p.ownerApproval([c],[],owner,sha));});
 await test('latest owner review on exact SHA controls approval',()=>{const a={id:1,user:human,state:'APPROVED',commit_id:sha};assert(p.ownerApproval([],[a],owner,sha));assert(!p.ownerApproval([],[a,{...a,id:2,state:'CHANGES_REQUESTED'}],owner,sha));assert(!p.ownerApproval([],[{...a,commit_id:'old'}],owner,sha));});
-await test('guard check uses exact required name and head; reuses own check',async()=>{const m=mock({files:['case1-engine.js']});await p.runGuard({...m,number:1,expectedBaseSha:'base'});await p.runGuard({...m,number:1,expectedBaseSha:'base'});assert.equal(m.checks.length,1);assert.equal(m.checks[0].name,'ai-ownership-policy');assert.equal(m.checks[0].head_sha,sha);assert.equal(m.checks[0].conclusion,'success');});
+await test('guard diagnostics use exact head and reuse their own check',async()=>{const m=mock({files:['case1-engine.js']});await p.runGuard({...m,number:1,expectedBaseSha:'base'});await p.runGuard({...m,number:1,expectedBaseSha:'base'});assert.equal(m.checks.length,1);assert.equal(m.checks[0].name,'ai-ownership-policy');assert.equal(m.checks[0].head_sha,sha);assert.equal(m.checks[0].conclusion,'success');});
 await test('guard violation creates failed head check',async()=>{const m=mock({files:['index.html']});await p.runGuard({...m,number:1,expectedBaseSha:'base'});assert.equal(m.checks[0].conclusion,'failure');assert(m.calls.some(c=>c.name==='failed'));});
 await test('stale base is a failed check',async()=>{const m=mock();await p.runGuard({...m,number:1,expectedBaseSha:'old'});assert.equal(m.checks[0].conclusion,'failure');});
 await test('checks permission failure propagates',async()=>{const m=mock({failure:'createCheck'});await assert.rejects(p.runGuard({...m,number:1,expectedBaseSha:'base'}));});
-await test('owner comment refreshes the native PR guard on exact head',async()=>{
+await test('owner comment reruns native PR guard without overwriting its result',async()=>{
  const m=mock({files:['case1-engine.js']});m.context.eventName='issue_comment';
  m.checks.push({id:100,name:'guard',head_sha:sha,app:{id:15368},status:'completed',conclusion:'failure',external_id:'5774173f-ce89-5431-8e54-8878ee05cd34',details_url:'https://github.com/owner/repo/actions/runs/123/job/456'});
  await p.runGuard({...m,number:1,expectedBaseSha:'base'});
- assert.equal(m.checks[0].conclusion,'success');
+ assert.equal(m.checks[0].conclusion,'failure');
+ assert(m.calls.some(c=>c.name==='rerunJob'&&c.args.job_id===456));
+ assert(!m.calls.some(c=>c.name==='updateCheck'&&c.args.check_run_id===100));
 });
 await test('skipped native check cannot replace enforced guard',async()=>{
  const m=mock();m.context.eventName='issue_comment';
  m.checks.push({id:100,name:'guard',head_sha:sha,app:{id:15368},status:'completed',conclusion:'skipped',details_url:'https://github.com/owner/repo/actions/runs/123/job/456'});
- await assert.rejects(p.runGuard({...m,number:1,expectedBaseSha:'base'}),/No completed native PR guard/);
+ await assert.rejects(p.runGuard({...m,number:1,expectedBaseSha:'base'}),/No native PR guard/);
 });
 await test('comment without native head guard fails visibly',async()=>{
  const m=mock();m.context.eventName='issue_comment';
- await assert.rejects(p.runGuard({...m,number:1,expectedBaseSha:'base'}),/No completed native PR guard/);
+ await assert.rejects(p.runGuard({...m,number:1,expectedBaseSha:'base'}),/No native PR guard/);
+});
+await test('matching native result does not rerun',async()=>{
+ const m=mock();m.context.eventName='issue_comment';
+ m.checks.push({id:100,name:'guard',head_sha:sha,app:{id:15368},status:'completed',conclusion:'success',details_url:'https://github.com/owner/repo/actions/runs/123/job/456'});
+ await p.runGuard({...m,number:1,expectedBaseSha:'base'});assert(!m.calls.some(c=>c.name==='rerunJob'));
+});
+await test('running native guard does not duplicate rerun',async()=>{
+ const m=mock();m.context.eventName='issue_comment';
+ m.checks.push({id:100,name:'guard',head_sha:sha,app:{id:15368},status:'in_progress',details_url:'https://github.com/owner/repo/actions/runs/123/job/456'});
+ await p.runGuard({...m,number:1,expectedBaseSha:'base'});assert(!m.calls.some(c=>c.name==='rerunJob'));
+});
+await test('rerun permission failure is visible',async()=>{
+ const m=mock({failure:'rerunJob'});m.context.eventName='issue_comment';
+ m.checks.push({id:100,name:'guard',head_sha:sha,app:{id:15368},status:'completed',conclusion:'failure',details_url:'https://github.com/owner/repo/actions/runs/123/job/456'});
+ await assert.rejects(p.runGuard({...m,number:1,expectedBaseSha:'base'}));
 });
 await test('workflow contract and scripts compile',()=>{
   const guard=fs.readFileSync('.github/workflows/ai-path-guard.yml','utf8');
-  assert(guard.includes('pull_request_target:'));assert(guard.includes('checks: write'));assert(!guard.includes('head.sha }}'));assert(guard.includes('path: trusted'));assert(/^  guard:/m.test(guard));
+  assert(guard.includes('pull_request_target:'));assert(guard.includes('checks: write'));assert(guard.includes('actions: write'));assert(!guard.includes('head.sha }}'));assert(guard.includes('path: trusted'));assert(/^  guard:/m.test(guard));
   const reviewWorkflow=fs.readFileSync('.github/workflows/ai-cross-review.yml','utf8');
   assert(reviewWorkflow.includes('group: ai-cross-review-'));
   assert(reviewWorkflow.includes('pull-requests: write'), 'PR label/comment writes require pull-requests: write');

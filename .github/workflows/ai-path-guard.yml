@@ -11,6 +11,7 @@ permissions:
   issues: read
   pull-requests: read
   checks: write
+  actions: write
 concurrency:
   group: ai-path-guard-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: false
