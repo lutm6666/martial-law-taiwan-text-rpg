@@ -70,9 +70,14 @@ await test('stale base is a failed check',async()=>{const m=mock();await p.runGu
 await test('checks permission failure propagates',async()=>{const m=mock({failure:'createCheck'});await assert.rejects(p.runGuard({...m,number:1,expectedBaseSha:'base'}));});
 await test('owner comment refreshes the native PR guard on exact head',async()=>{
  const m=mock({files:['case1-engine.js']});m.context.eventName='issue_comment';
- m.checks.push({id:100,name:'guard',head_sha:sha,app:{id:15368},status:'completed',conclusion:'failure'});
+ m.checks.push({id:100,name:'guard',head_sha:sha,app:{id:15368},status:'completed',conclusion:'failure',external_id:'5774173f-ce89-5431-8e54-8878ee05cd34',details_url:'https://github.com/owner/repo/actions/runs/123/job/456'});
  await p.runGuard({...m,number:1,expectedBaseSha:'base'});
  assert.equal(m.checks[0].conclusion,'success');
+});
+await test('skipped native check cannot replace enforced guard',async()=>{
+ const m=mock();m.context.eventName='issue_comment';
+ m.checks.push({id:100,name:'guard',head_sha:sha,app:{id:15368},status:'completed',conclusion:'skipped',details_url:'https://github.com/owner/repo/actions/runs/123/job/456'});
+ await assert.rejects(p.runGuard({...m,number:1,expectedBaseSha:'base'}),/No completed native PR guard/);
 });
 await test('comment without native head guard fails visibly',async()=>{
  const m=mock();m.context.eventName='issue_comment';
@@ -82,7 +87,7 @@ await test('workflow contract and scripts compile',()=>{
   const guard=fs.readFileSync('.github/workflows/ai-path-guard.yml','utf8');
   assert(guard.includes('pull_request_target:'));assert(guard.includes('checks: write'));assert(!guard.includes('head.sha }}'));assert(guard.includes('path: trusted'));assert(/^  guard:/m.test(guard));
   assert(fs.readFileSync('.github/workflows/ai-cross-review.yml','utf8').includes('group: ai-cross-review-'));
-  for(const file of ['ai-dispatch','ai-cross-review','ai-path-guard','ai-guard-bootstrap']){
+  for(const file of ['ai-dispatch','ai-cross-review','ai-path-guard']){
     const yaml=fs.readFileSync('.github/workflows/'+file+'.yml','utf8');
     const scripts=[...yaml.matchAll(/          script: \|\n((?:            .*\n|\n)+)/g)];
     assert(scripts.length>0,file);

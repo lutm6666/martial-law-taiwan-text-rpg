@@ -99,9 +99,9 @@ owner 可用正式 APPROVED review（最新狀態、commit id 必須等於 head 
 
 `Project validation` 會執行 `node tools/test-ai-workflow.js`。Case 3 相關檔案有變動時另跑 schema validator、engine regression 與 Chrome smoke playthrough。
 
-新 base policy 必須合併後才會成為 `pull_request_target` 的可信版本。為了讓首次修正 PR 可通過既有 `guard`，`ai-guard-bootstrap.yml` 只在 base 精確為 `b076dd3ac8c28d2e1dbbeab68b81b550caf157fd` 且 head 為同 repo 時執行：checkout 該固定 SHA 的**既有** guard，檢查 API 取得的路徑，由原生 job `guard` 回報結果。它不執行新 head 的 guard，也不宣稱已套用新 owner 規則。main 前進後此遷移流程自動失效，後續由新 base 的原生 job `guard` 回報結果；驗證完成後可移除 bootstrap。
+PR #10 已合併，首次遷移已完成。原 bootstrap 只用來安裝新 base policy，現在必須移除，避免後續 PR 的 skipped `guard` 與真正的原生 `guard` 同名。原生 check 的 `external_id` 是 GitHub 產生的 UUID，不能以「external_id 為空」判斷；owner 留言更新需匹配目前 head SHA、Actions App、完成且非 skipped 的原生 Actions job URL。
 
-不要 merge 本修正 PR 前就宣稱新流程已生效。合併後需用下列最小案例驗證實際 Actions／receiver 行為。
+用下列最小案例驗證實際 Actions／receiver 行為；成功的政策檢查仍不能代表 receiver 已接收。
 
 | 驗證案例 | 預期結果 |
 | --- | --- |

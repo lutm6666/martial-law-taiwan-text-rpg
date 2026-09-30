@@ -175,7 +175,7 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
   // run attaches to main, so refresh the completed native PR guard on its head.
   if (context.eventName === 'issue_comment') {
     const guards = await github.paginate(github.rest.checks.listForRef, {...repo, ref: sha, check_name: 'guard', per_page: 100});
-    const native = guards.filter(c => c.name === 'guard' && c.head_sha === sha && c.app?.id === ACTIONS_APP_ID && !c.external_id && c.status === 'completed')
+    const native = guards.filter(c => c.name === 'guard' && c.head_sha === sha && c.app?.id === ACTIONS_APP_ID && c.status === 'completed' && c.conclusion !== 'skipped' && c.details_url?.startsWith('https://github.com/' + repo.owner + '/' + repo.repo + '/actions/runs/') && c.details_url.includes('/job/'))
       .sort((a, b) => b.id - a.id)[0];
     if (!native) throw new Error('No completed native PR guard to refresh; rerun the PR guard workflow.');
     await github.rest.checks.update({...repo, check_run_id: native.id, conclusion, output: {title: 'AI ownership guard: ' + conclusion, summary: summary.slice(0, 60000)}});
