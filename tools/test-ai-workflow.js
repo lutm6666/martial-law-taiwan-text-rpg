@@ -64,13 +64,23 @@ await test('handoff requires owner even with no protected paths',()=>assert.thro
 await test('human control change requires owner',()=>assert.throws(()=>p.evaluateGuard({pr:pr('human',{labels:[],head:{sha,ref:'feature/x'}}),files:['tools/ai-workflow.js'],owner})));
 await test('old SHA other actor and bot cannot authorize',()=>{for(const c of [{user:human,body:'/ai approve-handoff '+'b'.repeat(40)},{user:{login:'other',type:'User'},body:approve[0].body},{user:{login:owner,type:'Bot'},body:approve[0].body}])assert(!p.ownerApproval([c],[],owner,sha));});
 await test('latest owner review on exact SHA controls approval',()=>{const a={id:1,user:human,state:'APPROVED',commit_id:sha};assert(p.ownerApproval([],[a],owner,sha));assert(!p.ownerApproval([],[a,{...a,id:2,state:'CHANGES_REQUESTED'}],owner,sha));assert(!p.ownerApproval([],[{...a,commit_id:'old'}],owner,sha));});
-await test('guard check uses exact required name and head; reuses own check',async()=>{const m=mock({files:['case1-engine.js']});await p.runGuard({...m,number:1,expectedBaseSha:'base'});await p.runGuard({...m,number:1,expectedBaseSha:'base'});assert.equal(m.checks.length,1);assert.equal(m.checks[0].name,'guard');assert.equal(m.checks[0].head_sha,sha);assert.equal(m.checks[0].conclusion,'success');});
+await test('guard check uses exact required name and head; reuses own check',async()=>{const m=mock({files:['case1-engine.js']});await p.runGuard({...m,number:1,expectedBaseSha:'base'});await p.runGuard({...m,number:1,expectedBaseSha:'base'});assert.equal(m.checks.length,1);assert.equal(m.checks[0].name,'ai-ownership-policy');assert.equal(m.checks[0].head_sha,sha);assert.equal(m.checks[0].conclusion,'success');});
 await test('guard violation creates failed head check',async()=>{const m=mock({files:['index.html']});await p.runGuard({...m,number:1,expectedBaseSha:'base'});assert.equal(m.checks[0].conclusion,'failure');assert(m.calls.some(c=>c.name==='failed'));});
 await test('stale base is a failed check',async()=>{const m=mock();await p.runGuard({...m,number:1,expectedBaseSha:'old'});assert.equal(m.checks[0].conclusion,'failure');});
 await test('checks permission failure propagates',async()=>{const m=mock({failure:'createCheck'});await assert.rejects(p.runGuard({...m,number:1,expectedBaseSha:'base'}));});
+await test('owner comment refreshes the native PR guard on exact head',async()=>{
+ const m=mock({files:['case1-engine.js']});m.context.eventName='issue_comment';
+ m.checks.push({id:100,name:'guard',head_sha:sha,app:{id:15368},status:'completed',conclusion:'failure'});
+ await p.runGuard({...m,number:1,expectedBaseSha:'base'});
+ assert.equal(m.checks[0].conclusion,'success');
+});
+await test('comment without native head guard fails visibly',async()=>{
+ const m=mock();m.context.eventName='issue_comment';
+ await assert.rejects(p.runGuard({...m,number:1,expectedBaseSha:'base'}),/No completed native PR guard/);
+});
 await test('workflow contract and scripts compile',()=>{
   const guard=fs.readFileSync('.github/workflows/ai-path-guard.yml','utf8');
-  assert(guard.includes('pull_request_target:'));assert(guard.includes('checks: write'));assert(!guard.includes('head.sha }}'));assert(guard.includes('path: trusted'));assert(!/^  guard:/m.test(guard));
+  assert(guard.includes('pull_request_target:'));assert(guard.includes('checks: write'));assert(!guard.includes('head.sha }}'));assert(guard.includes('path: trusted'));assert(/^  guard:/m.test(guard));
   assert(fs.readFileSync('.github/workflows/ai-cross-review.yml','utf8').includes('group: ai-cross-review-'));
   for(const file of ['ai-dispatch','ai-cross-review','ai-path-guard','ai-guard-bootstrap']){
     const yaml=fs.readFileSync('.github/workflows/'+file+'.yml','utf8');

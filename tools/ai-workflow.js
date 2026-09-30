@@ -156,11 +156,11 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
   const {data: pr} = await github.rest.pulls.get({...repo, pull_number: number});
   if (pr.state !== 'open') { core.info('Closed PR: no guard update.'); return; }
   const sha = pr.head.sha, externalId = 'ai-path-guard:' + number + ':' + sha;
-  const existing = await github.paginate(github.rest.checks.listForRef, {...repo, ref: sha, check_name: 'guard', per_page: 100});
+  const existing = await github.paginate(github.rest.checks.listForRef, {...repo, ref: sha, check_name: 'ai-ownership-policy', per_page: 100});
   let check = existing.find(c => c.external_id === externalId && c.app?.id === ACTIONS_APP_ID);
   const details_url = 'https://github.com/' + repo.owner + '/' + repo.repo + '/actions/runs/' + context.runId;
   if (check) await github.rest.checks.update({...repo, check_run_id: check.id, status: 'in_progress', details_url});
-  else ({data: check} = await github.rest.checks.create({...repo, name: 'guard', head_sha: sha, status: 'in_progress', external_id: externalId, details_url}));
+  else ({data: check} = await github.rest.checks.create({...repo, name: 'ai-ownership-policy', head_sha: sha, status: 'in_progress', external_id: externalId, details_url}));
   let conclusion = 'success', summary;
   try {
     if (pr.base.sha !== expectedBaseSha) throw new Error('Base changed during checkout; retry to load the current trusted policy.');
@@ -171,6 +171,15 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
     summary = 'Trusted base `' + expectedBaseSha + '` checked head `' + sha + '`.\n\nAgent: ' + result.agent + '\n\n' + result.messages.join('\n');
   } catch (error) { conclusion = 'failure'; summary = error.message; }
   await github.rest.checks.update({...repo, check_run_id: check.id, status: 'completed', conclusion, completed_at: new Date().toISOString(), output: {title: 'AI ownership guard: ' + conclusion, summary: summary.slice(0, 60000)}});
+  // Native PR Actions jobs satisfy the required guard context. An issue_comment
+  // run attaches to main, so refresh the completed native PR guard on its head.
+  if (context.eventName === 'issue_comment') {
+    const guards = await github.paginate(github.rest.checks.listForRef, {...repo, ref: sha, check_name: 'guard', per_page: 100});
+    const native = guards.filter(c => c.name === 'guard' && c.head_sha === sha && c.app?.id === ACTIONS_APP_ID && !c.external_id && c.status === 'completed')
+      .sort((a, b) => b.id - a.id)[0];
+    if (!native) throw new Error('No completed native PR guard to refresh; rerun the PR guard workflow.');
+    await github.rest.checks.update({...repo, check_run_id: native.id, conclusion, output: {title: 'AI ownership guard: ' + conclusion, summary: summary.slice(0, 60000)}});
+  }
   if (conclusion === 'failure') core.setFailed(summary);
 }
 module.exports = {ACTIONS_APP_ID, routeIssue, field, changedPaths, classifyPr, isActionsComment, ownerApproval, evaluateGuard, dispatch, crossReview, runGuard};

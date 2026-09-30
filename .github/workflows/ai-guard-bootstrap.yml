@@ -10,7 +10,7 @@ permissions:
   checks: write
 jobs:
   bootstrap:
-    name: guard-bootstrap
+    name: guard
     if: github.event.pull_request.base.sha == 'b076dd3ac8c28d2e1dbbeab68b81b550caf157fd' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
@@ -37,16 +37,4 @@ jobs:
                 AI_CHANGED_FILES: files.flatMap(f => [f.filename, f.previous_filename]).filter(Boolean).join('\n')}
             });
             const conclusion = result.status === 0 ? 'success' : 'failure';
-            const external_id = 'ai-guard-bootstrap:' + pr.number + ':' + pr.head.sha;
-            const checks = await github.paginate(github.rest.checks.listForRef, {
-              ...context.repo, ref: pr.head.sha, check_name: 'guard', per_page: 100
-            });
-            const previous = checks.find(c => c.external_id === external_id && c.app?.id === 15368);
-            const completed = {
-              status: 'completed', conclusion,
-              output: {title: 'Pinned legacy policy: ' + conclusion,
-                summary: 'Migration-only check using trusted pre-migration policy.\n\n' + (result.stdout || '') + (result.stderr || '') + (result.error?.message || '')}
-            };
-            if (previous) await github.rest.checks.update({...context.repo, check_run_id: previous.id, ...completed});
-            else await github.rest.checks.create({...context.repo, name: 'guard', head_sha: pr.head.sha, external_id, ...completed});
             if (conclusion === 'failure') core.setFailed('Pinned legacy guard failed.');

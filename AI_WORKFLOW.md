@@ -79,7 +79,7 @@
 
 ## 路徑守門與 handoff
 
-`ai-path-guard.yml` 對 PR 事件使用 `pull_request_target`，只 checkout 當前 base SHA 的 policy；不 checkout／執行 PR head。以 API 取得 head SHA、完整 changed files、comments 與 reviews，發布 GitHub Actions App 的 **`guard`** Check Run 到該 head SHA。controller job 是 `enforce`，避免另產生同名但指向 base 的 required job。owner 留言／review 更新也會重新檢查。
+`ai-path-guard.yml` 對 PR 事件使用 `pull_request_target`，只 checkout 當前 base SHA 的 policy；不 checkout／執行 PR head。以 API 取得 head SHA、完整 changed files、comments 與 reviews，以原生 GitHub Actions job **`guard`** 提供 required context，另發布 `ai-ownership-policy` 作為 head SHA 的診斷紀錄。單獨用 Checks API 建立同名成功紀錄，在本 repo 的 ruleset 實測仍顯示 expected，因此 required guard 必須保留原生 job。owner review 事件會重跑原生 guard；Issue comment 事件則檢查最新 PR 並更新該 head 上最近完成的原生 guard，找不到時明確 fail。
 
 路由 label 必須只有一個；label 與 branch ownership 衝突時 fail。唯一的 `ai:handoff` 可覆蓋原 branch 所有權。一般 human branch 不推測 agent 身分。
 
@@ -99,7 +99,7 @@ owner 可用正式 APPROVED review（最新狀態、commit id 必須等於 head 
 
 `Project validation` 會執行 `node tools/test-ai-workflow.js`。Case 3 相關檔案有變動時另跑 schema validator、engine regression 與 Chrome smoke playthrough。
 
-新 base policy 必須合併後才會成為 `pull_request_target` 的可信版本。為了讓首次修正 PR 可通過既有 `guard`，`ai-guard-bootstrap.yml` 只在 base 精確為 `b076dd3ac8c28d2e1dbbeab68b81b550caf157fd` 且 head 為同 repo 時執行：checkout 該固定 SHA 的**既有** guard，檢查 API 取得的路徑，發布 `guard` 到 head。它不執行新 head 的 guard，也不宣稱已套用新 owner 規則。main 前進後此遷移流程自動失效，後續由新 base controller 發布 `guard`；驗證完成後可移除 bootstrap。
+新 base policy 必須合併後才會成為 `pull_request_target` 的可信版本。為了讓首次修正 PR 可通過既有 `guard`，`ai-guard-bootstrap.yml` 只在 base 精確為 `b076dd3ac8c28d2e1dbbeab68b81b550caf157fd` 且 head 為同 repo 時執行：checkout 該固定 SHA 的**既有** guard，檢查 API 取得的路徑，由原生 job `guard` 回報結果。它不執行新 head 的 guard，也不宣稱已套用新 owner 規則。main 前進後此遷移流程自動失效，後續由新 base 的原生 job `guard` 回報結果；驗證完成後可移除 bootstrap。
 
 不要 merge 本修正 PR 前就宣稱新流程已生效。合併後需用下列最小案例驗證實際 Actions／receiver 行為。
 

@@ -15,7 +15,7 @@ concurrency:
   group: ai-path-guard-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: false
 jobs:
-  enforce:
+  guard:
     if: github.event_name != 'issue_comment' || github.event.issue.pull_request
     runs-on: ubuntu-latest
     steps:
