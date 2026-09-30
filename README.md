@@ -59,11 +59,13 @@ assets/v2/canon/
 
 - Claude 主責 UI、CSS、responsive、accessibility 與互動 polish。
 - Codex / ChatGPT 主責 Canon、engine、state、tests、CI、證據鏈與防劇透邏輯。
-- Issue 透過 `.github/ISSUE_TEMPLATE/ai-task.yml` 建立後，由 `AI Dispatch` 自動分類。
+- Issue 透過 `.github/ISSUE_TEMPLATE/ai-task.yml` 建立後，由 `AI Dispatch` 準備路由；實作任務需確認接收端並手動啟動。
 - PR 由 `AI Path Guard` 檢查檔案責任邊界，並由 `AI Cross Review` 要求另一個 agent 交叉審查。
 - `Project validation` 是合併前的共同 CI；Case 3 有變動時會自動加跑 schema、regression 與 headless Chrome smoke test。
 
-詳細角色、branch 命名、handoff 與 branch protection 建議見 `AI_WORKFLOW.md`。Agent 專用規則分別位於 `CLAUDE.md` 與 `AGENTS.md`。
+required checks 使用 `project-validate`、`guard`；請求留言不代表 agent 已接收或完成 review。
+
+詳細角色、branch 命名、SHA 綁定的 owner 核准與接收端限制見 `AI_WORKFLOW.md`。Agent 專用規則分別位於 `CLAUDE.md` 與 `AGENTS.md`。
 
 ## 部署方式
 

@@ -1,83 +1,23 @@
 name: AI Dispatch
-
 on:
   issues:
-    types: [opened, reopened, labeled]
-
+    types: [opened, reopened, edited, labeled]
 permissions:
   contents: read
   issues: write
-
 concurrency:
   group: ai-dispatch-${{ github.event.issue.number }}
   cancel-in-progress: false
-
-
 jobs:
   dispatch:
-    if: >
-      github.event.action != 'labeled' ||
-      github.event.label.name == 'dispatch:ready'
+    if: github.event.action != 'labeled' || github.event.label.name == 'dispatch:ready' || github.event.label.name == 'dispatch:retry'
     runs-on: ubuntu-latest
     steps:
-      - name: Route trusted issue
-        uses: actions/github-script@v7
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/github-script@v7
         with:
           script: |
-            const owner=context.repo.owner, repo=context.repo.repo;
-            const issue=context.payload.issue;
-            const marker='<!-- ai-dispatch:v1 -->';
-
-            const comments=await github.paginate(github.rest.issues.listComments,{
-              owner,repo,issue_number:issue.number,per_page:100
-            });
-            if(comments.some(c=>(c.body||'').includes(marker))){
-              core.info('Issue already dispatched.');
-              return;
-            }
-
-            let permission='none';
-            try{
-              const p=await github.rest.repos.getCollaboratorPermissionLevel({
-                owner,repo,username:context.actor
-              });
-              permission=p.data.permission;
-            }catch(e){
-              core.warning('Could not resolve actor permission: '+e.message);
-            }
-
-            const body=issue.body||'';
-            let route='handoff', area='area:logic';
-            if(/Frontend \/ UI \/ Responsive \/ Accessibility/i.test(body) ||
-               /### Area[\s\S]*Frontend \/ UI/i.test(body)){
-              route='claude'; area='area:ui';
-            }else if(/Art \/ Assets/i.test(body) ||
-                     /### Area[\s\S]*Art \/ Assets/i.test(body)){
-              route='handoff'; area='area:art';
-            }else if(/Mixed \/ Cross-boundary/i.test(body) || /Unsure/i.test(body)){
-              route='handoff'; area='area:logic';
-            }else{
-              route='codex'; area='area:logic';
-            }
-
-            if(!['admin','maintain','write'].includes(permission)){
-              route='handoff';
-            }
-
-            const current=(issue.labels||[]).map(x=>typeof x==='string'?x:x.name);
-            const labels=[...new Set([...current,area,'ai:'+route])];
-            await github.rest.issues.setLabels({owner,repo,issue_number:issue.number,labels});
-
-            let instructions='';
-            if(route==='claude'){
-              instructions='@claude Implement this issue as the primary frontend agent. Read CLAUDE.md and AI_WORKFLOW.md first. Stay within UI/frontend boundaries; if engine or Canon changes are needed, stop and request handoff.';
-            }else if(route==='codex'){
-              instructions='@codex Implement this issue as the primary logic agent. Read AGENTS.md and AI_WORKFLOW.md first. Add/update regression tests for behavior changes and avoid broad UI/CSS edits.';
-            }else{
-              instructions='This task is routed to handoff. It crosses agent boundaries, concerns art/assets, or was opened by an actor without repository write permission. Do not auto-implement until scope/ownership is confirmed.';
-            }
-
-            await github.rest.issues.createComment({
-              owner,repo,issue_number:issue.number,
-              body:marker+'\n**Automatic route:** `'+route+'`\n\n'+instructions
-            });
+            await require('./tools/ai-workflow.js').dispatch({github, context, core});

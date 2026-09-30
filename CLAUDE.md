@@ -11,7 +11,7 @@
 - 手機版體驗
 
 ## 禁止直接修改
-除非 Issue/PR 明確標記 `ai:handoff` 且有人要求跨界修改，否則不要修改：
+Claude ownership 下禁止修改以下路徑。需要跨界時先改成 sole `ai:handoff`，由 repository owner 核准目前完整 head SHA 後，交接相應工作：
 - `case*-canon.js`
 - `case*-engine.js`
 - `CASE*_DESIGN.md`
@@ -20,6 +20,7 @@
 - `tools/validate-*`
 - `.github/workflows/**`
 - `AGENTS.md`
+- `CLAUDE.md`、`AI_WORKFLOW.md`、guard／workflow 控制程式
 
 如果 UI 需求需要新的 state、predicate、evidence、ending 或 save migration，請停止並留下 handoff，不要自行在 UI 中模擬邏輯。
 
