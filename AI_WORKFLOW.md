@@ -79,7 +79,7 @@
 
 ## 路徑守門與 handoff
 
-`ai-path-guard.yml` 對 PR 事件使用 `pull_request_target`，只 checkout 當前 base SHA 的 policy；不 checkout／執行 PR head。以 API 取得 head SHA、完整 changed files、comments 與 reviews，以原生 GitHub Actions job **`guard`** 提供 required context，另發布 `ai-ownership-policy` 作為 head SHA 的診斷紀錄。單獨用 Checks API 建立同名成功紀錄，在本 repo 的 ruleset 實測仍顯示 expected，因此 required guard 必須保留原生 job。owner review 事件會重跑原生 guard；Issue comment 事件則檢查最新 PR 並更新該 head 上最近完成的原生 guard，找不到時明確 fail。
+`ai-path-guard.yml` 對 PR 事件使用 `pull_request_target`，只 checkout 當前 base SHA 的 policy；不 checkout／執行 PR head。以 API 取得 head SHA、完整 changed files、comments 與 reviews，以原生 GitHub Actions job **`guard`** 提供 required context，另發布 `ai-ownership-policy` 作為 head SHA 的診斷紀錄。單獨用 Checks API 建立同名成功紀錄，在本 repo 的 ruleset 實測仍顯示 expected，因此 required guard 必須保留原生 job。owner review 事件會重跑原生 guard；Issue comment 事件檢查最新 PR；若政策結果與原生 guard 不同，透過 Actions job rerun API 重跑目前 head 的原生 guard。需要 workflow 的 `actions: write`，不直接改寫原生 check 結果。已在執行或結果相同時不重複重跑；找不到對應原生 job、head 已改變或 API 拒絕時明確 fail。
 
 路由 label 必須只有一個；label 與 branch ownership 衝突時 fail。唯一的 `ai:handoff` 可覆蓋原 branch 所有權。一般 human branch 不推測 agent 身分。
 
@@ -99,7 +99,7 @@ owner 可用正式 APPROVED review（最新狀態、commit id 必須等於 head 
 
 `Project validation` 會執行 `node tools/test-ai-workflow.js`。Case 3 相關檔案有變動時另跑 schema validator、engine regression 與 Chrome smoke playthrough。
 
-PR #10 已合併，首次遷移已完成。原 bootstrap 只用來安裝新 base policy，現在必須移除，避免後續 PR 的 skipped `guard` 與真正的原生 `guard` 同名。原生 check 的 `external_id` 是 GitHub 產生的 UUID，不能以「external_id 為空」判斷；owner 留言更新需匹配目前 head SHA、Actions App、完成且非 skipped 的原生 Actions job URL。
+PR #10 已合併，首次遷移已完成。原 bootstrap 只用來安裝新 base policy，現在必須移除，避免後續 PR 的 skipped `guard` 與真正的原生 `guard` 同名。原生 check 的 `external_id` 是 GitHub 產生的 UUID，不能以「external_id 為空」判斷；owner 留言重跑需匹配目前 head SHA、Actions App、非 skipped 的原生 Actions job URL。GitHub 自 2025-03-31 起禁止修改 Actions 建立的 check status／conclusion，因此使用原生 job rerun，等待完成後才視為 required guard 通過。
 
 用下列最小案例驗證實際 Actions／receiver 行為；成功的政策檢查仍不能代表 receiver 已接收。
 
