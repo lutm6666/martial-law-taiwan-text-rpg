@@ -113,5 +113,32 @@ await test('workflow contract and scripts compile',()=>{
     for(const match of scripts)new vm.Script('(async function(){\n'+match[1].replace(/^            /gm,'')+'\n})');
   }
 });
+await test('Claude receiver rejects reader, fork and draft',async()=>{
+  const receiver=require('./claude-review');
+  for(const pull of [pr('codex',{draft:true}),pr('codex',{head:{sha,ref:'codex/a',repo:{full_name:'fork/repo'}}})]) {
+    const m=mock({pull});m.context.eventName='pull_request_target';m.context.payload.repository={default_branch:'main'};
+    m.core.setOutput=()=>{throw new Error('must not run');};await receiver.prepare(m);
+  }
+  const m=mock({permission:'read'});m.context.eventName='pull_request_target';
+  await assert.rejects(receiver.prepare(m),/writer/);
+});
+await test('Claude completion dedup requires trusted bot and exact SHA',async()=>{
+  const receiver=require('./claude-review');
+  for(const trusted of [false,true]){
+    const c=comment('<!-- claude-review:completed:'+sha+' -->');if(!trusted)c.user=human;
+    const m=mock({comments:[c]});m.context.eventName='pull_request_target';m.context.payload.repository={default_branch:'main'};
+    const outputs={};m.core.setOutput=(k,v)=>outputs[k]=v;await receiver.prepare(m);
+    assert.equal(outputs.run,trusted?undefined:'true');
+  }
+});
+await test('Claude output failure or stale SHA cannot publish completed',async()=>{
+  const receiver=require('./claude-review');const file='/tmp/claude-review-test.json';
+  for(const result of [{type:'result',is_error:true},{type:'result',subtype:'success',structured_output:{sha:'b'.repeat(40),summary:'review'}},{type:'result',subtype:'success',structured_output:{sha,summary:''}}]){
+    fs.writeFileSync(file,JSON.stringify([result]));const m=mock();await assert.rejects(receiver.publish({...m,number:1,sha,executionFile:file}));assert(!m.calls.some(c=>c.name==='createComment'));
+  }
+  fs.writeFileSync(file,JSON.stringify([{type:'result',subtype:'success',structured_output:{sha,summary:'checked paths and mobile UX'}}]));
+  const stale=mock({pull:pr('codex',{head:{sha:'b'.repeat(40)}})});await assert.rejects(receiver.publish({...stale,number:1,sha,executionFile:file}),/changed/);
+  const good=mock();await receiver.publish({...good,number:1,sha,executionFile:file});assert(good.comments[0].body.includes('claude-review:completed:'+sha));fs.unlinkSync(file);
+});
 console.log('\n'+count+' regression cases passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

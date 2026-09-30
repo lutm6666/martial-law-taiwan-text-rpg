@@ -62,7 +62,7 @@
 
 派送以 Issue number 串行，執行時讀取最新 body、state 與 labels。只增刪本流程管理的 `ai:*`、`area:*` 標籤，保留其他標籤。可信的 Actions 控制留言會原地更新；內容／路由 revision 相同則不重發。只信任 `github-actions[bot]`、Bot 類型及 GitHub Actions App id 15368 的 marker；舊版可信 v1 記錄會遷移。
 
-**路由準備不是已接手。** 本版不在 Issue 發送未驗證的 `@codex Implement`／`@claude Implement`：Codex Issue → 自動實作尚未驗證，repo 也沒有 Claude receiver workflow。請手動建立 agent 任務並附上 Issue、規則與驗收條件。確認接手要有接收端 run／任務連結，完成要有對應 commit／PR 與驗證結果。[Issue #7](https://github.com/lutm6666/martial-law-taiwan-text-rpg/issues/7) 的既有「設定完成」記錄不足以證明兩個接收端都可運作。
+**路由準備不是已接手。** 本版不在 Issue 發送未驗證的 `@codex Implement`／`@claude Implement`：Codex Issue → 自動實作尚未驗證，Claude Issue → 自動實作仍未啟用。請手動建立 agent 任務並附上 Issue、規則與驗收條件。確認接手要有接收端 run／任務連結，完成要有對應 commit／PR 與驗證結果。[Issue #7](https://github.com/lutm6666/martial-law-taiwan-text-rpg/issues/7) 的既有「設定完成」記錄不足以證明兩個接收端都可運作。
 
 修改 body 會重新分類；repository writer 加 `dispatch:retry` 可重新準備同一 revision。重試成功才移除該標籤，失败時保留供人工調查。修復 API／token 問題後也可重跑失敗 run。關閉或取消 `dispatch:ready` 的 Issue 不派送。concurrency 僅提供互斥，不保證每個中間事件都保留；最新狀態為準。
 
@@ -75,7 +75,7 @@
 
 依 PR number 串行，依 agent + head SHA 去重，執行前讀取最新 PR。可信舊 marker 仍可去重；人工貼相同 marker 不會阻止請求。新 SHA 重新發送；writer 加 `review:retry` 可明確重送，全部成功後才移除標籤。所有 API 錯誤都會 fail，部分成功的請求可用 marker 恢復。
 
-`needs:*` 與請求留言只表示 **request sent**，不能表示 receiver 已接收／review 完成。尤其 Actions token 產生的留言不會再觸發一般 `issue_comment` Actions workflow；外部 App 是否接收須分別驗證。Claude receiver 的 workflow、credential 與 bot actor 政策仍需另外設定；本次不修改外部設定。若已有 Codex Automatic reviews，須由 owner 決定單一請求來源，避免 Automatic reviews 與 workflow mention 兩邊都送；目前去重範圍只涵蓋本 workflow。
+`needs:*` 與請求留言只表示 **request sent**，不能表示 receiver 已接收／review 完成。尤其 Actions token 產生的留言不會再觸發一般 `issue_comment` Actions workflow；外部 App 是否接收須分別驗證。Claude PR 審查改由 `Claude Review` 的 PR 事件直接執行官方 Action，不依賴 mention 串接。若已有 Codex Automatic reviews，須由 owner 決定單一請求來源，避免 Automatic reviews 與 workflow mention 兩邊都送；目前去重範圍只涵蓋本 workflow。
 
 ## 路徑守門與 handoff
 
@@ -129,4 +129,16 @@ PR #10 已合併，首次遷移已完成。原 bootstrap 只用來安裝新 base
 
 ## Repository admin 設定
 
-目前 required contexts 維持 `project-validate` 與 `guard`。CI 失敗先讀 log；required check 名稱、token／App 權限、receiver credentials 等外部設定須由 owner 另行檢查。本修正不變更這些設定，也不安裝或啟用新的 receiver。
+目前 required contexts 維持 `project-validate` 與 `guard`。CI 失敗先讀 log；required check 名稱、token／App 權限、receiver credentials 等外部設定須由 owner 另行檢查。外部設定由 owner 管理；Claude review receiver 使用 owner 設定的 `ANTHROPIC_API_KEY`。
+
+## Claude PR 審查接收端
+
+`claude-review.yml` 對非 draft、同 repo、目標為預設分支的 Codex／handoff PR 自動審查；人工 writer 可在 PR 留言全文 `@claude review` 重試或驗證。Issue 實作派工與 Codex 接收端不因此啟用。一般 human PR 可使用人工入口。
+
+只 checkout 預設分支的可信程式與規則；PR patch 透過 API 放入唯讀審查快照，不 checkout 或執行 PR head。官方 Claude Action 固定版本，使用 repository Actions token，不必另安裝 App。token 只授予 contents read、PR／Issue 留言權限。Claude 限制為 Read／Glob／Grep，不允許 shell、修改檔案或建立 commit。最多 12 turns、15 分鐘。快照過大或 API 失敗會明確 fail。
+
+自動審查依成功留言中的完整 head SHA 去重，失敗不建立 completed marker；重新執行失敗 run 或 writer 的 `@claude review` 可重試。人工入口會重新執行，即使已有同 SHA 的成功結果。所有入口依 PR 串行；新 SHA 需要新的結果，執行途中 PR 改變則不發布 completed。`review:retry` 只重送原交叉審查請求，Claude receiver 重試請用人工入口或 rerun。
+
+只有 Claude 執行成功、輸出 SHA 正確且 summary 非空，才由控制程式發布 `Claude review completed` 和 run 連結。這是審查回饋，不是 owner 核准、合併許可或瀏覽器實測。二進位檔、缺失 patch 與超出快照內容仍須人工檢查。
+
+合併接收端後，先開不合併的 Codex 測試 PR，確認自動產生 run 與正確 SHA 回饋；同 SHA reopened 不重複審查，新 commit 再審查。另留言 `@claude review` 驗證人工入口。缺少 secret、API 認證／額度不足或輸出格式錯誤都應顯示 failed，不能當作完成。
