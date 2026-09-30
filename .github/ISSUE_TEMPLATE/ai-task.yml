@@ -1,5 +1,5 @@
 name: AI task
-description: 自動派給 Claude、Codex 或 handoff 的開發任務
+description: 準備 Claude、Codex 或 handoff 路由；確認接收端後手動啟動任務
 title: "[AI] "
 labels: ["dispatch:ready"]
 body:
@@ -12,6 +12,7 @@ body:
         - Frontend / UI / Responsive / Accessibility
         - Art / Assets
         - Mixed / Cross-boundary
+        - Repository admin / Settings
     validations:
       required: true
   - type: textarea

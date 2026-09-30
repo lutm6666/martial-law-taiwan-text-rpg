@@ -1,0 +1,52 @@
+# One-time migration: evaluate the existing trusted policy for the installation PR.
+# Inert once main advances beyond this exact pre-migration commit.
+name: AI Guard Migration
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+jobs:
+  bootstrap:
+    name: guard-bootstrap
+    if: github.event.pull_request.base.sha == 'b076dd3ac8c28d2e1dbbeab68b81b550caf157fd' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pinned legacy policy
+        uses: actions/checkout@v4
+        with:
+          ref: b076dd3ac8c28d2e1dbbeab68b81b550caf157fd
+          path: trusted
+          persist-credentials: false
+      - name: Publish legacy guard for migration
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {spawnSync} = require('node:child_process');
+            const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number: context.payload.pull_request.number});
+            if (pr.base.sha !== 'b076dd3ac8c28d2e1dbbeab68b81b550caf157fd' || pr.state !== 'open') return;
+            const labels = pr.labels.map(l => l.name), ref = pr.head.ref;
+            const agent = labels.includes('ai:claude') || /^(claude\/|ai\/claude-)/.test(ref) ? 'claude'
+              : labels.includes('ai:codex') || /^(codex\/|ai\/codex-)/.test(ref) ? 'codex'
+              : labels.includes('ai:handoff') || /^handoff\//.test(ref) ? 'handoff' : 'human';
+            const files = await github.paginate(github.rest.pulls.listFiles, {...context.repo, pull_number: pr.number, per_page: 100});
+            const result = spawnSync(process.execPath, ['trusted/tools/ai-path-guard.js'], {
+              encoding: 'utf8', env: {...process.env, AI_AGENT: agent,
+                AI_CHANGED_FILES: files.flatMap(f => [f.filename, f.previous_filename]).filter(Boolean).join('\n')}
+            });
+            const conclusion = result.status === 0 ? 'success' : 'failure';
+            const external_id = 'ai-guard-bootstrap:' + pr.number + ':' + pr.head.sha;
+            const checks = await github.paginate(github.rest.checks.listForRef, {
+              ...context.repo, ref: pr.head.sha, check_name: 'guard', per_page: 100
+            });
+            const previous = checks.find(c => c.external_id === external_id && c.app?.id === 15368);
+            const completed = {
+              status: 'completed', conclusion,
+              output: {title: 'Pinned legacy policy: ' + conclusion,
+                summary: 'Migration-only check using trusted pre-migration policy.\n\n' + (result.stdout || '') + (result.stderr || '') + (result.error?.message || '')}
+            };
+            if (previous) await github.rest.checks.update({...context.repo, check_run_id: previous.id, ...completed});
+            else await github.rest.checks.create({...context.repo, name: 'guard', head_sha: pr.head.sha, external_id, ...completed});
+            if (conclusion === 'failure') core.setFailed('Pinned legacy guard failed.');

@@ -1,43 +1,54 @@
 name: AI Path Guard
-
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
-
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled, edited]
+  issue_comment:
+    types: [created, edited, deleted]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
 permissions:
   contents: read
+  issues: read
   pull-requests: read
-
+  checks: write
+concurrency:
+  group: ai-path-guard-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false
 jobs:
-  guard:
+  enforce:
+    if: github.event_name != 'issue_comment' || github.event.issue.pull_request
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR
-        uses: actions/checkout@v4
-
-      - name: Collect PR routing and changed files
-        id: classify
+      - name: Resolve current trusted base
+        id: base
         uses: actions/github-script@v7
         with:
           script: |
-            const fs=require('fs');
-            const pr=context.payload.pull_request;
-            const labels=(pr.labels||[]).map(x=>x.name);
-            const ref=pr.head.ref||'';
-            let agent='human';
-            if(labels.includes('ai:claude') || /^claude\//.test(ref) || /^ai\/claude-/.test(ref)) agent='claude';
-            else if(labels.includes('ai:codex') || /^codex\//.test(ref) || /^ai\/codex-/.test(ref)) agent='codex';
-            else if(labels.includes('ai:handoff') || /^handoff\//.test(ref)) agent='handoff';
-
-            const files=await github.paginate(github.rest.pulls.listFiles,{
-              owner:context.repo.owner,repo:context.repo.repo,pull_number:pr.number,per_page:100
-            });
-            fs.writeFileSync('changed-files.txt',files.map(f=>f.filename).join('\n')+'\n');
-            core.setOutput('agent',agent);
-
-      - name: Enforce ownership boundary
+            const number = context.payload.pull_request?.number || context.payload.issue.number;
+            const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number: number});
+            const {data: repo} = await github.rest.repos.get(context.repo);
+            if (pr.state !== 'open' || pr.base.ref !== repo.default_branch) {
+              core.info('Only open PRs targeting the default branch are guarded.');
+              return;
+            }
+            core.setOutput('number', number);
+            core.setOutput('sha', pr.base.sha);
+      - name: Checkout trusted policy only
+        if: steps.base.outputs.sha != ''
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.base.outputs.sha }}
+          path: trusted
+          persist-credentials: false
+      - name: Publish required guard on current PR head
+        if: steps.base.outputs.sha != ''
+        uses: actions/github-script@v7
         env:
-          AI_AGENT: ${{ steps.classify.outputs.agent }}
-        run: |
-          export AI_CHANGED_FILES="$(cat changed-files.txt)"
-          node tools/ai-path-guard.js
+          PR_NUMBER: ${{ steps.base.outputs.number }}
+          TRUSTED_BASE_SHA: ${{ steps.base.outputs.sha }}
+        with:
+          script: |
+            await require('./trusted/tools/ai-workflow.js').runGuard({
+              github, context, core, number: Number(process.env.PR_NUMBER),
+              expectedBaseSha: process.env.TRUSTED_BASE_SHA
+            });

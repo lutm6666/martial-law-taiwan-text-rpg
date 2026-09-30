@@ -1,74 +1,24 @@
 name: AI Cross Review
-
 on:
   pull_request_target:
-    types: [opened, reopened, synchronize, ready_for_review, labeled]
-
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
 permissions:
   contents: read
   issues: write
-  pull-requests: write
-
+  pull-requests: read
+concurrency:
+  group: ai-cross-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
 jobs:
   route-review:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
-      - name: Request opposite-agent review
-        uses: actions/github-script@v7
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - uses: actions/github-script@v7
         with:
           script: |
-            const owner=context.repo.owner, repo=context.repo.repo;
-            const pr=context.payload.pull_request;
-            if(pr.head.repo.full_name !== owner+'/'+repo){
-              core.notice('Fork PR: no automatic agent mention.');
-              return;
-            }
-
-            const labels=(pr.labels||[]).map(x=>x.name);
-            const ref=pr.head.ref||'';
-            let primary='human';
-            if(labels.includes('ai:claude') || /^claude\//.test(ref) || /^ai\/claude-/.test(ref)) primary='claude';
-            else if(labels.includes('ai:codex') || /^codex\//.test(ref) || /^ai\/codex-/.test(ref)) primary='codex';
-            else if(labels.includes('ai:handoff') || /^handoff\//.test(ref)) primary='handoff';
-
-            if(primary==='human'){
-              const files=await github.paginate(github.rest.pulls.listFiles,{owner,repo,pull_number:pr.number,per_page:100});
-              const names=files.map(f=>f.filename);
-              const logic=names.some(f=>/^case.*-(canon|engine)\.js$/.test(f)||/^CASE.*_(DESIGN|IMPLEMENTATION)\.md$/.test(f)||/^tools\/(test-|validate-)/.test(f));
-              const ui=names.some(f=>f==='index.html'||/^case.*-ui\.js$/.test(f));
-              primary=logic&&ui?'handoff':logic?'codex':ui?'claude':'human';
-            }
-
-            const requests=[];
-            if(primary==='claude' || primary==='handoff') requests.push({
-              label:'needs:codex-review',
-              key:'codex',
-              text:'@codex review Focus on Canon/evidence boundaries, state transitions, save isolation, spoiler leaks, and regression coverage. Do not rewrite UI for style preferences.'
-            });
-            if(primary==='codex' || primary==='handoff') requests.push({
-              label:'needs:claude-review',
-              key:'claude',
-              text:'@claude Review this PR without implementing changes. Focus on mobile/responsive UX, readability, overflow/tap targets, and whether the UI leaks locked conclusions. Respect Canon and engine ownership.'
-            });
-
-            if(!requests.length){
-              core.info('No automatic cross-review required.');
-              return;
-            }
-
-            const currentLabels=(pr.labels||[]).map(x=>x.name);
-            const comments=await github.paginate(github.rest.issues.listComments,{owner,repo,issue_number:pr.number,per_page:100});
-            for(const r of requests){
-              if(!currentLabels.includes(r.label)){
-                try{await github.rest.issues.addLabels({owner,repo,issue_number:pr.number,labels:[r.label]});}
-                catch(e){core.warning('Could not add '+r.label+': '+e.message);}
-              }
-              const marker='<!-- cross-review:'+r.key+':'+pr.head.sha+' -->';
-              if(!comments.some(c=>(c.body||'').includes(marker))){
-                await github.rest.issues.createComment({
-                  owner,repo,issue_number:pr.number,
-                  body:marker+'\n'+r.text+'\n\nShared rules: `AI_WORKFLOW.md`'
-                });
-              }
-            }
+            await require('./tools/ai-workflow.js').crossReview({github, context, core});

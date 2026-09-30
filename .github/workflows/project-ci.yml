@@ -19,6 +19,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Verify AI workflow regressions
+        run: |
+          node --check tools/ai-workflow.js
+          node --check tools/ai-path-guard.js
+          node tools/test-ai-workflow.js
+
       - name: Verify runtime JavaScript
         run: |
           node --check case1-unified-engine.js
