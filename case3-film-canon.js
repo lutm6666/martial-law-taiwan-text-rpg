@@ -50,10 +50,10 @@ var C = {
     E02:{name:'A-217 現存負片',type:'底片',desc:'目前保存的負片分為 11｜12 與 14｜15 兩段。'},
     E03:{name:'A-217 底片封套',type:'工作文件',desc:'記載沈瑞芳、9 月 16 日拍攝註記、9 月 17 日收件與 9 月 22 日預定取件。'},
     E04:{name:'沖洗／工作紀錄',type:'帳目',desc:'記錄 A-217 於 9 月 17 日完成沖洗與接觸印樣。'},
-    E05:{name:'B-084 單格放大照片',type:'照片',desc:'由第 13 格追加製作的單格放大照片；袋面可見不完整的「…317」與部分店家標記。'},
+    E05:{name:'B-084 單格放大照片',type:'照片',desc:'由第 13 格追加製作的單格放大照片；影像中的紙袋表面可見不完整的「…317」與部分材料行章痕。'},
     E06:{name:'B-084 追加放大紀錄',type:'帳目',desc:'B-084／A-217／指定格 13／1 張／9 月 18 日受理／9 月 19 日完成／作業者鄭文雄／單格追加放大。'},
-    E07:{name:'材料行配送簿',type:'帳目',desc:'M-317／9 月 16 日／明光照相館／送件洪明義。'},
-    E08:{name:'明光照相館收貨紀錄',type:'帳目',desc:'M-317／9 月 16 日／後側門收件／經手陳啟明。'},
+    E07:{name:'材料行配送簿',type:'帳目',desc:'M-317／9 月 16 日／明光照相館／配送員洪明義。'},
+    E08:{name:'明光照相館收貨紀錄',type:'帳目',desc:'M-317／9 月 16 日／後側門收件／收件人陳啟明。'},
     E09:{name:'明光店務／值班紀錄',type:'帳目',desc:'例行店務紀錄顯示 9 月 21 日秀蓮在店協助接待與整理。'},
     E10:{name:'舊零片中的單格負片',verifiedName:'A-217 第 13 格原片',type:'底片',desc:'在長期未辨識的舊零片中找到的一格負片；身分必須經比對確認。'}
   },
@@ -64,9 +64,9 @@ var C = {
     C04:{text:'現有證據一致支持第 13 格屬於這組連續拍攝影像。',requires:{frame:['personMovement','movingObject','fixedBackground']}},
     C05:{text:'第 12～14 格共同支持一只紙袋由一名男子轉到另一名男子手中。',requires:{conclusions:['C04']}},
     C07:{text:'9 月 19 日製作 B-084 時，第 13 格原片仍存在且可用於單格放大。',requires:{evidence:['E05','E06']}},
-    C10:{text:'現有影像、供貨方紀錄與收貨方紀錄一致支持：9 月 16 日洪明義曾將編號 M-317 的包件交給明光照相館，陳啟明為收件經手人。',requires:{evidence:['E07','E08'],conclusions:['C05']}},
+    C10:{text:'現有影像、供貨方紀錄與收貨方紀錄一致支持：9 月 16 日洪明義曾將編號 M-317 的包件交給明光照相館，陳啟明為收件人。',requires:{evidence:['E05','E07','E08'],conclusions:['C05']}},
     C13:{text:'9 月 21 日，秀蓮屬於能接觸 A-217 的人員之一。',requires:{evidence:['E03','E04','E09']}},
-    C14:{text:'找到的單格負片可確認就是 A-217 中缺失的第 13 格。',requires:{evidence:['E10'],conclusions:['C04']}}
+    C14:{text:'找到的單格負片可確認就是 A-217 中缺失的第 13 格。',requires:{evidence:['E01','E10'],conclusions:['C04']}}
   },
 
   testimonies:{
@@ -91,7 +91,7 @@ var C = {
     canCheckDutyRecord:function(s){return !!(s.flags&&s.flags.strongerInterpretationKnown)&&hasEvidence(s,'E04')},
     canReviewLooseFilmProcedure:function(s){return hasConclusion(s,'C07')&&hasConclusion(s,'C13')},
     canSearchLooseFilms:function(s){return !!(s.flags&&s.flags.looseFilmProcedureKnown&&hasConclusion(s,'C07')&&hasConclusion(s,'C13'))},
-    canVerifyE10:function(s){return hasEvidence(s,'E10')&&!!(s.frameAnalysis&&s.frameAnalysis.continuityComplete)},
+    canVerifyE10:function(s){return hasEvidence(s,'E01')&&hasEvidence(s,'E10')&&!!(s.frameAnalysis&&s.frameAnalysis.continuityComplete)},
     canFinalAskXiulian:function(s){return !!(s.flags&&s.flags.e10Verified&&s.flags.xiulianAccessWindowKnown)},
     canStartDeduction:function(s){
       return hasConclusion(s,'C07') &&
@@ -121,7 +121,7 @@ var C = {
       label:'查找 M-317 收貨紀錄',
       hint:'用完整包件編號核對照相館的收貨帳。',
       requires:'canCheckReceivingLedger',
-      result:'明光自己的收貨簿也有 M-317：9 月 16 日、後側門收件、經手陳啟明。它和材料行的配送簿是兩套不同來源的紀錄；兩者能共同補足照片周圍的業務背景，但照片本身仍看不見紙袋內裝了什麼。',
+      result:'明光自己的收貨簿也有 M-317：9 月 16 日、後側門收件、收件人陳啟明。它和材料行的配送簿是兩套不同來源的紀錄；兩者能共同補足照片周圍的業務背景，但照片本身仍看不見紙袋內裝了什麼。',
       effects:['gain:E08','conclude:C10']
     },
     studio_duty:{
@@ -177,7 +177,7 @@ var C = {
       location:'newsstand',
       label:'查看蔡阿成收到的照片',
       hint:'確認沈瑞芳追加製作的照片現在是什麼樣子。',
-      result:'蔡阿成把照片袋推過來。裡面是一張只放大第 13 格的照片，沒有前後影格；紙袋上能辨認的標記只剩「…317」和一小部分店章。蔡說沈瑞芳覺得畫面「像電影」，才特地多洗一張給他，並不是請他保管什麼秘密證據。',
+      result:'蔡阿成把照片袋推過來。裡面是一張只放大第 13 格的照片，沒有前後影格；放大畫面中的紙袋表面能辨認的標記只剩「…317」和一小部分材料行章痕。蔡說沈瑞芳覺得畫面「像電影」，才特地多洗一張給他，並不是請他保管什麼秘密證據。',
       effects:['gain:E05','key:b084','key:packageMarkPartial','flag:b084SeenOutsideStudio']
     },
     newsstand_xiulian:{

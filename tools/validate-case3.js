@@ -159,6 +159,10 @@ for(let i=1;i<=10;i++){
 }
 expect(C.evidence.E10&&C.evidence.E10.name==='舊零片中的單格負片','E10 unverified name changed');
 expect(C.evidence.E10&&C.evidence.E10.verifiedName==='A-217 第 13 格原片','E10 verified name changed');
+expect((((C.conclusions.C10||{}).requires||{}).evidence||[]).includes('E05'),'C10 must require E05 partial package-mark evidence');
+expect((((C.conclusions.C14||{}).requires||{}).evidence||[]).includes('E01'),'C14 must require E01 contact-sheet comparison');
+expect(C.evidence.E07&&/配送員洪明義/.test(C.evidence.E07.desc),'E07 must identify Hong Mingyi as delivery-side personnel');
+expect(C.evidence.E08&&/收件人陳啟明/.test(C.evidence.E08.desc),'E08 must identify Chen Qiming as receiving-side personnel');
 
 const banned=[
   /秘密交接/,
