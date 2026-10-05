@@ -129,7 +129,7 @@ PR #10 已合併，首次遷移已完成。原 bootstrap 只用來安裝新 base
 
 ## Repository admin 設定
 
-目前 required contexts 維持 `project-validate` 與 `guard`。CI 失敗先讀 log；required check 名稱、token／App 權限、receiver credentials 等外部設定須由 owner 另行檢查。外部設定由 owner 管理；Claude review receiver 使用 owner 設定的 `ANTHROPIC_API_KEY`。
+目前 required contexts 維持 `project-validate` 與 `guard`。CI 失敗先讀 log；required check 名稱、token／App 權限、receiver credentials 等外部設定須由 owner 另行檢查。外部設定由 owner 管理；Claude review receiver 使用 owner 設定的 `CLAUDE_CODE_OAUTH_TOKEN`。
 
 ## Claude PR 審查接收端
 
