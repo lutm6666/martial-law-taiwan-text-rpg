@@ -112,8 +112,16 @@ function negativeChecks(){
  let duty=E.runAction(y,'studio_duty');
  assert(!duty.ok&&duty.reason==='requirements','duty record should remain gated before Xiulian lead');
  let loose=E.runAction(y,'studio_loose_procedure');
+
  assert(!loose.ok&&loose.reason==='requirements','loose-film procedure should remain gated before missing-window/access evidence');
  assert(!C.predicates.canSearchLooseFilms(y),'loose-film search available before narrowed missing window');
+
+ let z=opening(E.fresh('Z'));
+ z=b084(z);
+ z=go(z,'chen_home');z=act(z,'chen_first');
+ assert(!C.predicates.canCheckDutyRecord(z),'duty record should remain gated until A-217 workflow is established');
+ z=go(z,'darkroom');z=act(z,'darkroom_workflow');
+ assert(C.predicates.canCheckDutyRecord(z),'duty record should unlock after Xiulian lead + A-217 workflow');
 }
 
 function narrativeState(){
