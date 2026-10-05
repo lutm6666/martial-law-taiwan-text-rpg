@@ -216,13 +216,26 @@ keys(C.locations).forEach(id=>{
 for(let i=11;i<=15;i++){
   const id='F'+i;
   expect(exists(A.frames,id),'art manifest missing frame '+id);
-  if(exists(A.frames,id))expect(/^assets\/case3\/frames\//.test(A.frames[id].path),'frame '+id+' path outside assets/case3/frames');
+  if(exists(A.frames,id)){
+    expect(/^assets\/case3\/frames\//.test(A.frames[id].path),'frame '+id+' path outside assets/case3/frames');
+    expect(A.frames[id].status==='planned'||A.frames[id].status==='ready','frame '+id+' invalid art status');
+  }
 }
 for(let i=1;i<=10;i++){
   const id='E'+String(i).padStart(2,'0');
   expect(exists(A.evidence,id),'art manifest missing evidence '+id);
-  if(exists(A.evidence,id))expect(/^assets\/case3\/evidence\//.test(A.evidence[id].path),'evidence '+id+' path outside assets/case3/evidence');
+  if(exists(A.evidence,id)){
+    expect(/^assets\/case3\/evidence\//.test(A.evidence[id].path),'evidence '+id+' path outside assets/case3/evidence');
+    expect(A.evidence[id].status==='planned'||A.evidence[id].status==='ready','evidence '+id+' invalid art status');
+  }
 }
+[
+  ...keys(A.scenes).map(id=>['scene '+id,A.scenes[id]]),
+  ...keys(A.frames).map(id=>['frame '+id,A.frames[id]]),
+  ...keys(A.evidence).map(id=>['evidence '+id,A.evidence[id]])
+].forEach(([label,item])=>{
+  if(item&&item.status==='ready')expect(fs.existsSync(path.join(root,item.path)),label+' marked ready but asset is missing: '+item.path);
+});
 const allArtPaths=[
   ...keys(A.scenes).map(id=>A.scenes[id].path),
   ...keys(A.frames).map(id=>A.frames[id].path),
