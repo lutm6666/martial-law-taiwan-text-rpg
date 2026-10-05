@@ -1,6 +1,10 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const cp = require('node:child_process');
 const {normalizePlan, readyWaves, scopesOverlap, taskPrompt, slug} = require('./ai-orchestrator');
 
 let passed = 0;
@@ -38,6 +42,10 @@ function task(id, agent, paths, dependsOn = []) {
   };
 }
 
+function git(cwd, args) {
+  return cp.execFileSync('git', args, {cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']}).trim();
+}
+
 test('slug normalizes unsafe branch fragments', () => {
   assert.equal(slug('  Case 3 / UI Pass  '), 'case-3-ui-pass');
 });
@@ -51,6 +59,15 @@ test('normalizes plan and deterministic branch ownership', () => {
   assert.equal(plan.integrationBranch, 'handoff/orch-case3-next');
   assert.equal(plan.tasks[0].branch, 'codex/case3-next-logic');
   assert.equal(plan.tasks[1].branch, 'claude/case3-next-ui');
+});
+
+test('rejects integration branches outside the orchestration namespace', () => {
+  assert.throws(() => normalizePlan(basePlan([
+    task('logic', 'codex', ['logic/'])
+  ], {integrationBranch: 'main'})), /must differ from base/);
+  assert.throws(() => normalizePlan(basePlan([
+    task('logic', 'codex', ['logic/'])
+  ], {integrationBranch: 'feature/free-form'})), /handoff\/orch-/);
 });
 
 test('independent non-overlapping tasks share a wave', () => {
@@ -128,6 +145,35 @@ test('prompt states scope and completion contract', () => {
   assert.match(prompt, /Do not modify files outside the allowed scope/);
   assert.match(prompt, /codex\/case3-next-logic/);
   assert.match(prompt, /Report commit SHA/);
+});
+
+test('materialize and cleanup execute real git worktree operations', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-orchestrator-'));
+  const repo = path.join(root, 'repo');
+  const worktrees = path.join(root, 'worktrees');
+  const planFile = path.join(root, 'plan.json');
+  fs.mkdirSync(repo);
+  git(repo, ['init', '-b', 'main']);
+  git(repo, ['config', 'user.email', 'ci@example.invalid']);
+  git(repo, ['config', 'user.name', 'CI']);
+  fs.writeFileSync(path.join(repo, 'README.md'), 'fixture\n');
+  git(repo, ['add', 'README.md']);
+  git(repo, ['commit', '-m', 'fixture']);
+  fs.writeFileSync(planFile, JSON.stringify({
+    id: 'fixture',
+    integrationBranch: 'handoff/orch-fixture',
+    tasks: [task('logic', 'codex', ['README.md'])]
+  }));
+  const runner = path.resolve(__dirname, 'ai-orchestrator.js');
+  cp.execFileSync(process.execPath, [runner, 'materialize', planFile, '--root', worktrees], {cwd: repo, stdio: 'pipe'});
+  assert.equal(fs.existsSync(path.join(worktrees, 'logic', '.git')), true);
+  assert.equal(git(repo, ['show-ref', '--verify', '--quiet', 'refs/heads/handoff/orch-fixture']), '');
+  assert.equal(git(repo, ['show-ref', '--verify', '--quiet', 'refs/heads/codex/fixture-logic']), '');
+  const status = cp.execFileSync(process.execPath, [runner, 'status', planFile, '--root', worktrees], {cwd: repo, encoding: 'utf8'});
+  assert.match(status, /logic/);
+  cp.execFileSync(process.execPath, [runner, 'cleanup', planFile, '--root', worktrees], {cwd: repo, stdio: 'pipe'});
+  assert.equal(fs.existsSync(path.join(worktrees, 'logic')), false);
+  assert.equal(git(repo, ['show-ref', '--verify', '--quiet', 'refs/heads/codex/fixture-logic']), '');
 });
 
 console.log(`PASS ${passed} ai-orchestrator tests`);
