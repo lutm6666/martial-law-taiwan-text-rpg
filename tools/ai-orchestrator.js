@@ -204,6 +204,11 @@ function branchExists(branch, cwd) {
   catch { return false; }
 }
 
+function branchIsIntegrated(branch, integrationBranch, cwd) {
+  try { execGit(['merge-base', '--is-ancestor', branch, integrationBranch], {cwd}); return true; }
+  catch { return false; }
+}
+
 function loadPlan(file) {
   const full = path.resolve(file);
   let parsed;
@@ -230,17 +235,54 @@ function printPlan(plan) {
   waves.forEach((wave, index) => console.log(`Wave ${index + 1}: ${wave.join(', ')}`));
 }
 
-function materialize(plan, rootArg) {
+function readState(stateFile, plan, repo, root) {
+  if (!fs.existsSync(stateFile)) {
+    return {version: 1, plan: plan.id, repository: repo, root, integrationBranch: plan.integrationBranch, tasks: []};
+  }
+  let state;
+  try { state = JSON.parse(fs.readFileSync(stateFile, 'utf8')); }
+  catch (error) { fail(`Cannot read orchestration state: ${error.message}`); }
+  if (state.plan !== plan.id || state.repository !== repo || state.integrationBranch !== plan.integrationBranch) {
+    fail('Existing orchestration state does not match this plan/repository.');
+  }
+  if (!Array.isArray(state.tasks)) state.tasks = [];
+  return state;
+}
+
+function materialize(plan, rootArg, waveNumber = 1) {
   const repo = repoRoot();
   const root = defaultRoot(rootArg, plan, repo);
+  const waves = readyWaves(plan);
+  if (!Number.isInteger(waveNumber) || waveNumber < 1 || waveNumber > waves.length) {
+    fail(`wave must be an integer from 1 to ${waves.length}.`);
+  }
   execGit(['rev-parse', '--verify', `${plan.base}^{commit}`], {cwd: repo});
   if (!branchExists(plan.integrationBranch, repo)) execGit(['branch', plan.integrationBranch, plan.base], {cwd: repo});
+
+  const selectedIds = new Set(waves[waveNumber - 1]);
+  const selectedTasks = plan.tasks.filter(task => selectedIds.has(task.id));
+  if (waveNumber > 1) {
+    const byId = new Map(plan.tasks.map(task => [task.id, task]));
+    for (const task of selectedTasks) {
+      for (const dependency of task.dependsOn) {
+        const dep = byId.get(dependency);
+        if (!branchExists(dep.branch, repo)) {
+          fail(`Cannot materialize wave ${waveNumber}: dependency branch ${dep.branch} does not exist.`);
+        }
+        if (!branchIsIntegrated(dep.branch, plan.integrationBranch, repo)) {
+          fail(`Cannot materialize wave ${waveNumber}: dependency ${dependency} is not integrated into ${plan.integrationBranch}.`);
+        }
+      }
+    }
+  }
+
   fs.mkdirSync(root, {recursive: true});
   const promptRoot = path.join(root, '_prompts');
   fs.mkdirSync(promptRoot, {recursive: true});
-  const state = {version: 1, plan: plan.id, repository: repo, root, integrationBranch: plan.integrationBranch, tasks: []};
+  const stateFile = path.join(root, 'state.json');
+  const state = readState(stateFile, plan, repo, root);
 
-  for (const task of plan.tasks) {
+  for (const task of selectedTasks) {
     const worktree = path.join(root, task.id);
     const promptFile = path.join(promptRoot, `${task.id}.md`);
     fs.writeFileSync(promptFile, taskPrompt(plan, task));
@@ -248,10 +290,15 @@ function materialize(plan, rootArg) {
       if (branchExists(task.branch, repo)) execGit(['worktree', 'add', worktree, task.branch], {cwd: repo, stdio: 'inherit'});
       else execGit(['worktree', 'add', '-b', task.branch, worktree, plan.integrationBranch], {cwd: repo, stdio: 'inherit'});
     }
-    state.tasks.push({id: task.id, agent: task.agent, branch: task.branch, worktree, promptFile, dependsOn: task.dependsOn});
+    const record = {id: task.id, agent: task.agent, branch: task.branch, worktree, promptFile, dependsOn: task.dependsOn, wave: waveNumber};
+    const existing = state.tasks.findIndex(item => item.id === task.id);
+    if (existing === -1) state.tasks.push(record);
+    else state.tasks[existing] = record;
   }
-  fs.writeFileSync(path.join(root, 'state.json'), JSON.stringify(state, null, 2) + '\n');
+  state.lastMaterializedWave = waveNumber;
+  fs.writeFileSync(stateFile, JSON.stringify(state, null, 2) + '\n');
   printPlan(plan);
+  console.log(`Materialized wave ${waveNumber}: ${waves[waveNumber - 1].join(', ')}`);
   console.log(`Worktrees: ${root}`);
   return state;
 }
@@ -295,21 +342,27 @@ function parseArgs(argv) {
   const command = args.shift();
   const file = args.shift();
   let root = null;
+  let wave = 1;
   while (args.length) {
     const flag = args.shift();
-    if (flag === '--root') root = args.shift();
-    else fail('Unknown argument: ' + flag);
+    if (flag === '--root') {
+      root = args.shift();
+      if (!root) fail('--root requires a path.');
+    } else if (flag === '--wave') {
+      wave = Number(args.shift());
+      if (!Number.isInteger(wave) || wave < 1) fail('--wave requires a positive integer.');
+    } else fail('Unknown argument: ' + flag);
   }
-  if (!command || !file) fail('Usage: node tools/ai-orchestrator.js <validate|plan|materialize|status|cleanup> <plan.json> [--root PATH]');
-  return {command, file, root};
+  if (!command || !file) fail('Usage: node tools/ai-orchestrator.js <validate|plan|materialize|status|cleanup> <plan.json> [--root PATH] [--wave N]');
+  return {command, file, root, wave};
 }
 
 function main() {
-  const {command, file, root} = parseArgs(process.argv.slice(2));
+  const {command, file, root, wave} = parseArgs(process.argv.slice(2));
   const plan = loadPlan(file);
   if (command === 'validate') { console.log('VALID'); return; }
   if (command === 'plan') { printPlan(plan); return; }
-  if (command === 'materialize') { materialize(plan, root); return; }
+  if (command === 'materialize') { materialize(plan, root, wave); return; }
   if (command === 'status') { status(plan, root); return; }
   if (command === 'cleanup') { cleanup(plan, root); return; }
   fail('Unknown command: ' + command);
