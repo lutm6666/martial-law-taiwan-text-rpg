@@ -5,7 +5,7 @@ const DISPATCH_MARKER = '<!-- ai-dispatch:v2 -->';
 const OWNED_AREAS = ['area:logic', 'area:ui', 'area:art', 'area:admin'];
 const ROUTING_LABELS = ['ai:claude', 'ai:codex', 'ai:handoff'];
 const CONTROL_PATHS = [/^\.github\/workflows\//, /^\.github\/CODEOWNERS$/,
-  /^tools\/(ai-workflow|ai-path-guard|test-ai-workflow)\./, /^(AI_WORKFLOW|AGENTS|CLAUDE)\.md$/];
+  /^tools\/(ai-workflow|ai-path-guard|ai-orchestrator|test-ai-workflow|test-ai-orchestrator)\./, /^(AI_WORKFLOW|AI_ORCHESTRATION|AGENTS|CLAUDE)\.md$/];
 const LOGIC_PATHS = [/^case.*-(canon|engine)\.js$/, /^CASE.*_(DESIGN|IMPLEMENTATION)\.md$/, /^tools\/(test-|validate-)/];
 const UI_PATHS = [/^index\.html$/, /^case.*-ui\.js$/, /\.(css|scss)$/i, /^assets\/.*\.html$/];
 const AREAS = new Map([

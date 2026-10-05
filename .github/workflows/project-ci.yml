@@ -23,7 +23,11 @@ jobs:
         run: |
           node --check tools/ai-workflow.js
           node --check tools/ai-path-guard.js
+          node --check tools/ai-orchestrator.js
+          node --check tools/test-ai-orchestrator.js
           node tools/test-ai-workflow.js
+          node tools/test-ai-orchestrator.js
+          node tools/ai-orchestrator.js validate .ai/orchestration.example.json
 
       - name: Verify runtime JavaScript
         run: |
