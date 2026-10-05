@@ -72,6 +72,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+          EXPECTED_SHA: ${{ steps.prepare.outputs.sha }}
         with:
           script: |
             const fs = require('node:fs');
@@ -95,4 +96,16 @@ jobs:
             core.info('Claude result is_error: ' + Boolean(result.is_error));
             core.info('Claude structured output present: ' + Boolean(result.structured_output));
             core.info('Detected error categories: ' + (categories.join(', ') || 'unclassified'));
+            const review = result.structured_output;
+            if (review) {
+              const sha = review.sha;
+              core.info('Expected SHA: ' + process.env.EXPECTED_SHA);
+              core.info('Returned SHA: ' + (typeof sha === 'string' && /^[0-9a-f]{1,40}$/i.test(sha) ? sha : typeof sha + ' (non-hex, length ' + String(sha ?? '').length + ')'));
+              core.info('SHA matches: ' + (sha === process.env.EXPECTED_SHA));
+              core.info('Summary type/length: ' + typeof review.summary + ' / ' + String(review.summary ?? '').trim().length);
+            }
+            const target = input => input?.file_path || input?.path || input?.pattern || '';
+            const toolCalls = records.filter(r => r.type === 'assistant').flatMap(r => r.message?.content || []).filter(c => c.type === 'tool_use');
+            core.info('Tool calls: ' + (toolCalls.map(c => c.name + '(' + target(c.input) + ')').join(', ') || 'none'));
+            core.info('Permission denials: ' + ((result.permission_denials || []).map(d => d.tool_name + '(' + target(d.tool_input) + ')').join(', ') || 'none'));
             core.info('Raw model messages, prompts and credentials are intentionally omitted.');
