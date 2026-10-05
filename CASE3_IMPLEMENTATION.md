@@ -245,7 +245,8 @@ canVisitChenHome(state) =
   state.flags.xiulianSawPhoto
 
 canCheckDutyRecord(state) =
-  state.flags.strongerInterpretationKnown
+  state.flags.strongerInterpretationKnown &&
+  hasEvidence("E04")
 
 canReviewLooseFilmProcedure(state) =
   hasConclusion("C07") &&
@@ -316,10 +317,10 @@ supplier 完成後：
 相同說法可以標記為 supported by independent records，但 UI 不把她的話改寫成「她說的是真的」。
 
 ### 9/21 接觸機會
-E09 是例行店務／值班紀錄中的一行，不是為案件特製的便條。
+E09 是例行店務／值班紀錄中的一行，不是為案件特製的便條。E09 本身只記錄 9/21 秀蓮在店協助接待與整理；必須與 E03 的 9/22 預定取件及 E04 的既有處理流程合看，才建立接觸機會。
 
 只建立：
-> 9/21 晚秀蓮屬於能接觸 A-217 的人員之一。
+> 9/21 秀蓮屬於能接觸 A-217 的人員之一。
 
 不得自動建立「秀蓮剪片」假說。
 
