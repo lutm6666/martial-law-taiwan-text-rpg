@@ -49,12 +49,12 @@ var C = {
     E01:{name:'A-217 接觸印樣',type:'照片／文件',desc:'接觸印樣保留案件標示的第 11～15 格；第 13 格在印樣上可見。'},
     E02:{name:'A-217 現存負片',type:'底片',desc:'目前保存的負片分為 11｜12 與 14｜15 兩段。'},
     E03:{name:'A-217 底片封套',type:'工作文件',desc:'記載沈瑞芳、9 月 16 日拍攝註記、9 月 17 日收件與 9 月 22 日預定取件。'},
-    E04:{name:'沖洗／工作紀錄',type:'帳目',desc:'記錄 A-217 的收件、沖洗、接觸印樣與完成件流程。'},
+    E04:{name:'沖洗／工作紀錄',type:'帳目',desc:'記錄 A-217 於 9 月 17 日完成沖洗與接觸印樣。'},
     E05:{name:'B-084 單格放大照片',type:'照片',desc:'由第 13 格追加製作的單格放大照片；袋面可見不完整的「…317」與部分店家標記。'},
-    E06:{name:'B-084 追加放大紀錄',type:'帳目',desc:'B-084／原片單格放大／影格 13／9 月 19 日完成與取件／操作鄭文雄。'},
+    E06:{name:'B-084 追加放大紀錄',type:'帳目',desc:'B-084／A-217／指定格 13／1 張／9 月 18 日受理／9 月 19 日完成／作業者鄭文雄／單格追加放大。'},
     E07:{name:'材料行配送簿',type:'帳目',desc:'M-317／9 月 16 日／明光照相館／送件洪明義。'},
     E08:{name:'明光照相館收貨紀錄',type:'帳目',desc:'M-317／9 月 16 日／後側門收件／經手陳啟明。'},
-    E09:{name:'明光店務／值班紀錄',type:'帳目',desc:'例行店務紀錄顯示 9 月 21 日晚秀蓮代班、整理完成件。'},
+    E09:{name:'明光店務／值班紀錄',type:'帳目',desc:'例行店務紀錄顯示 9 月 21 日秀蓮在店協助接待與整理。'},
     E10:{name:'舊零片中的單格負片',verifiedName:'A-217 第 13 格原片',type:'底片',desc:'在長期未辨識的舊零片中找到的一格負片；身分必須經比對確認。'}
   },
 
@@ -65,7 +65,7 @@ var C = {
     C05:{text:'第 12～14 格共同支持一只紙袋由一名男子轉到另一名男子手中。',requires:{conclusions:['C04']}},
     C07:{text:'9 月 19 日製作 B-084 時，第 13 格原片仍存在且可用於單格放大。',requires:{evidence:['E05','E06']}},
     C10:{text:'現有影像、供貨方紀錄與收貨方紀錄一致支持：9 月 16 日洪明義曾將編號 M-317 的包件交給明光照相館，陳啟明為收件經手人。',requires:{evidence:['E07','E08'],conclusions:['C05']}},
-    C13:{text:'9 月 21 日晚，秀蓮屬於能接觸 A-217 的人員之一。',requires:{evidence:['E09']}},
+    C13:{text:'9 月 21 日，秀蓮屬於能接觸 A-217 的人員之一。',requires:{evidence:['E03','E04','E09']}},
     C14:{text:'找到的單格負片可確認就是 A-217 中缺失的第 13 格。',requires:{evidence:['E10'],conclusions:['C04']}}
   },
 
@@ -88,7 +88,7 @@ var C = {
     canCheckReceivingLedger:function(s){return !!(s.keys&&s.keys.m317)},
     canVisitChenHome:function(s){return !!(s.flags&&s.flags.xiulianSawPhoto)},
     canAskWhoSawB084:function(s){return !!(s.flags&&s.flags.b084SeenOutsideStudio)},
-    canCheckDutyRecord:function(s){return !!(s.flags&&s.flags.strongerInterpretationKnown)},
+    canCheckDutyRecord:function(s){return !!(s.flags&&s.flags.strongerInterpretationKnown)&&hasEvidence(s,'E04')},
     canReviewLooseFilmProcedure:function(s){return hasConclusion(s,'C07')&&hasConclusion(s,'C13')},
     canSearchLooseFilms:function(s){return !!(s.flags&&s.flags.looseFilmProcedureKnown&&hasConclusion(s,'C07')&&hasConclusion(s,'C13'))},
     canVerifyE10:function(s){return hasEvidence(s,'E10')&&!!(s.frameAnalysis&&s.frameAnalysis.continuityComplete)},
@@ -113,7 +113,7 @@ var C = {
       label:'查找 B-084',
       hint:'用照片袋上的工作號碼回查追加放大紀錄。',
       requires:'canFindB084Ledger',
-      result:'追加放大簿裡找到 B-084：原片單格放大、影格 13、9 月 19 日完成並取件，操作人記為鄭文雄。這表示第 13 格至少到 9 月 19 日仍能被拿來正常放大；缺片的時間必須再往後縮。',
+      result:'追加放大簿裡找到 B-084：來源 A-217、指定格 13、1 張，9 月 18 日受理、9 月 19 日完成，作業者記為鄭文雄。這表示第 13 格至少到 9 月 19 日仍能被拿來正常放大；缺片的時間必須再往後縮。',
       effects:['gain:E06','conclude:C07']
     },
     studio_receiving:{
@@ -129,7 +129,7 @@ var C = {
       label:'查看店務紀錄',
       hint:'核對近期代班與完成件整理紀錄。',
       requires:'canCheckDutyRecord',
-      result:'例行店務簿記著 9 月 21 日晚陳秀蓮來店內幫忙，工作項目包含整理完成件。這只把她放進「能接觸 A-217 的人」之列，還不能單靠這一行紀錄決定第 13 格是誰取下的。',
+      result:'例行店務簿記著 9 月 21 日陳秀蓮在店內協助接待與整理。再與 A-217 已完成沖洗、接觸印樣且預定 9 月 22 日取件的既有資料合看，只能把她放進「能接觸 A-217 的人」之列，還不能據此判定第 13 格是誰取下的。',
       effects:['gain:E09','conclude:C13']
     },
     studio_loose_procedure:{
@@ -161,7 +161,7 @@ var C = {
       location:'darkroom',
       label:'了解 A-217 處理流程',
       hint:'查看收件、沖洗、接觸印樣與完成件如何流轉。',
-      result:'工作紀錄顯示 A-217 在 9 月 17 日收件後依一般流程完成沖洗與接觸印樣，再放入完成件區等待後續處理。這份紀錄沒有指出第 13 格何時離開原封套，只能把「它曾正常進入沖洗流程」這件事固定下來。',
+      result:'封套與工作紀錄合看，A-217 在 9 月 17 日收件，並於當日完成沖洗與接觸印樣。工作紀錄沒有指出第 13 格何時離開原封套，只能把「它曾正常完成沖洗與接觸印樣」這件事固定下來。',
       effects:['gain:E04','conclude:C02']
     },
 
