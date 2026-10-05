@@ -147,7 +147,7 @@ test('prompt states scope and completion contract', () => {
   assert.match(prompt, /Report commit SHA/);
 });
 
-test('materialize and cleanup execute real git worktree operations', () => {
+test('materialize executes real git worktrees one dependency wave at a time', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-orchestrator-'));
   const repo = path.join(root, 'repo');
   const worktrees = path.join(root, 'worktrees');
@@ -162,18 +162,36 @@ test('materialize and cleanup execute real git worktree operations', () => {
   fs.writeFileSync(planFile, JSON.stringify({
     id: 'fixture',
     integrationBranch: 'handoff/orch-fixture',
-    tasks: [task('logic', 'codex', ['README.md'])]
+    tasks: [
+      task('logic', 'codex', ['README.md']),
+      task('ui', 'claude', ['ui.html'], ['logic'])
+    ]
   }));
   const runner = path.resolve(__dirname, 'ai-orchestrator.js');
+
   cp.execFileSync(process.execPath, [runner, 'materialize', planFile, '--root', worktrees], {cwd: repo, stdio: 'pipe'});
   assert.equal(fs.existsSync(path.join(worktrees, 'logic', '.git')), true);
+  assert.equal(fs.existsSync(path.join(worktrees, 'ui')), false);
   assert.equal(git(repo, ['show-ref', '--verify', '--quiet', 'refs/heads/handoff/orch-fixture']), '');
   assert.equal(git(repo, ['show-ref', '--verify', '--quiet', 'refs/heads/codex/fixture-logic']), '');
+
+  cp.execFileSync(process.execPath, [runner, 'materialize', planFile, '--root', worktrees, '--wave', '2'], {cwd: repo, stdio: 'pipe'});
+  assert.equal(fs.existsSync(path.join(worktrees, 'ui', '.git')), true);
+  assert.equal(git(repo, ['show-ref', '--verify', '--quiet', 'refs/heads/claude/fixture-ui']), '');
+
+  const state = JSON.parse(fs.readFileSync(path.join(worktrees, 'state.json'), 'utf8'));
+  assert.equal(state.lastMaterializedWave, 2);
+  assert.deepEqual(state.tasks.map(item => item.id).sort(), ['logic', 'ui']);
+
   const status = cp.execFileSync(process.execPath, [runner, 'status', planFile, '--root', worktrees], {cwd: repo, encoding: 'utf8'});
   assert.match(status, /logic/);
+  assert.match(status, /ui/);
+
   cp.execFileSync(process.execPath, [runner, 'cleanup', planFile, '--root', worktrees], {cwd: repo, stdio: 'pipe'});
   assert.equal(fs.existsSync(path.join(worktrees, 'logic')), false);
+  assert.equal(fs.existsSync(path.join(worktrees, 'ui')), false);
   assert.equal(git(repo, ['show-ref', '--verify', '--quiet', 'refs/heads/codex/fixture-logic']), '');
+  assert.equal(git(repo, ['show-ref', '--verify', '--quiet', 'refs/heads/claude/fixture-ui']), '');
 });
 
 console.log(`PASS ${passed} ai-orchestrator tests`);
