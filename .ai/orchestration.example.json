@@ -1,0 +1,59 @@
+{
+  "id": "case3-sample",
+  "title": "Case 3 isolated parallel sample",
+  "goal": "Demonstrate safe task isolation without bypassing repository policy.",
+  "base": "main",
+  "integrationBranch": "handoff/orch-case3-sample",
+  "maxParallel": 3,
+  "tasks": [
+    {
+      "id": "logic-audit",
+      "agent": "codex",
+      "title": "Audit Case 3 logic",
+      "goal": "Review and adjust Case 3 state/evidence behavior with regression coverage.",
+      "paths": [
+        "case3-film-canon.js",
+        "case3-film-engine.js",
+        "tools/test-case3-engine.js",
+        "tools/validate-case3.js"
+      ],
+      "acceptance": [
+        "Case 3 validator passes",
+        "Case 3 engine regression passes"
+      ],
+      "constraints": [
+        "Do not change UI files in this task",
+        "Preserve spoiler boundaries"
+      ]
+    },
+    {
+      "id": "ui-audit",
+      "agent": "claude",
+      "title": "Audit Case 3 mobile UI",
+      "goal": "Improve mobile presentation without changing Canon or engine behavior.",
+      "paths": [
+        "case3-film-ui.js",
+        "case3-preview.html"
+      ],
+      "acceptance": [
+        "No locked conclusion is exposed early",
+        "Mobile controls remain readable and usable"
+      ],
+      "constraints": [
+        "Do not modify Canon, engine, tests, validators, workflows or policy files"
+      ]
+    },
+    {
+      "id": "docs-audit",
+      "agent": "handoff",
+      "title": "Record integration notes",
+      "goal": "Document integration observations separately from runtime code.",
+      "paths": [
+        "docs/orchestration-case3/"
+      ],
+      "acceptance": [
+        "Notes identify assumptions, test evidence and unresolved risks"
+      ]
+    }
+  ]
+}
