@@ -19,7 +19,8 @@ async function prepare({github, context, core}) {
   if (files.length >= 3000) throw new Error('PR file list may be truncated; review manually.');
   const snapshot = JSON.stringify({number, sha: pr.head.sha, files: files.map(f => ({filename:f.filename, previous_filename:f.previous_filename, status:f.status, patch:f.patch || null}))});
   if (snapshot.length > 150000) throw new Error('PR exceeds review snapshot limit; split or review manually.');
-  fs.writeFileSync('/tmp/claude-review-input.json', snapshot);
+  // Claude Code only reads inside the workspace by default, so keep the snapshot there.
+  fs.writeFileSync(require('node:path').join(process.env.GITHUB_WORKSPACE, 'claude-review-input.json'), snapshot);
   core.setOutput('number', String(number)); core.setOutput('sha', pr.head.sha); core.setOutput('base', pr.base.sha); core.setOutput('run', 'true');
 }
 async function publish({github, context, core, number, sha, executionFile}) {
