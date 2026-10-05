@@ -57,6 +57,10 @@ function normalizePlan(raw) {
   const id = slug(raw.id);
   const base = String(raw.base || 'main').trim();
   const integrationBranch = String(raw.integrationBranch || `handoff/orch-${id}`).trim();
+  if (integrationBranch === base) fail('integrationBranch must differ from base.');
+  if (!/^handoff\/orch-[a-z0-9._/-]+$/.test(integrationBranch)) {
+    fail('integrationBranch must use the handoff/orch-<name> namespace.');
+  }
   const maxParallel = Number(raw.maxParallel == null ? 3 : raw.maxParallel);
   if (!Number.isInteger(maxParallel) || maxParallel < 1 || maxParallel > 8) {
     fail('maxParallel must be an integer from 1 to 8.');
@@ -72,6 +76,7 @@ function normalizePlan(raw) {
     const agent = String(task.agent || '').trim().toLowerCase();
     if (!AGENTS.has(agent)) fail(`Task ${taskId} has unsupported agent: ${agent || '(missing)'}`);
     const paths = asArray(task.paths, `Task ${taskId} paths`, {required: true}).map(normalizeScope);
+    if (paths.some(p => !p)) fail(`Task ${taskId} contains an empty path scope.`);
     const acceptance = asArray(task.acceptance, `Task ${taskId} acceptance`, {required: true});
     const dependsOn = asArray(task.dependsOn, `Task ${taskId} dependsOn`).map(slug);
     return {
@@ -148,13 +153,11 @@ function readyWaves(plan) {
       .filter(task => task.dependsOn.every(dep => completed.has(dep)))
       .sort((a, b) => a.id.localeCompare(b.id));
     if (!ready.length) fail('No schedulable tasks remain; dependency graph is invalid.');
-    for (let i = 0; i < ready.length; i += plan.maxParallel) {
-      const wave = ready.slice(i, i + plan.maxParallel);
-      waves.push(wave.map(task => task.id));
-      for (const task of wave) {
-        pending.delete(task.id);
-        completed.add(task.id);
-      }
+    const wave = ready.slice(0, plan.maxParallel);
+    waves.push(wave.map(task => task.id));
+    for (const task of wave) {
+      pending.delete(task.id);
+      completed.add(task.id);
     }
   }
   return waves;
@@ -187,7 +190,8 @@ function taskPrompt(plan, task) {
 }
 
 function execGit(args, options = {}) {
-  return cp.execFileSync('git', args, {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], ...options}).trim();
+  const output = cp.execFileSync('git', args, {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], ...options});
+  return output == null ? '' : String(output).trim();
 }
 
 function repoRoot() {
@@ -209,8 +213,12 @@ function loadPlan(file) {
 }
 
 function defaultRoot(root, plan, repo) {
-  if (root) return path.resolve(root);
-  return path.join(path.dirname(repo), `${path.basename(repo)}-worktrees`, plan.id);
+  const resolved = root ? path.resolve(root) : path.join(path.dirname(repo), `${path.basename(repo)}-worktrees`, plan.id);
+  const relative = path.relative(repo, resolved);
+  if (relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative))) {
+    fail('Worktree root must be outside the primary repository.');
+  }
+  return resolved;
 }
 
 function printPlan(plan) {
@@ -254,7 +262,7 @@ function status(plan, rootArg) {
   const rows = [];
   for (const task of plan.tasks) {
     const worktree = path.join(root, task.id);
-    let exists = fs.existsSync(worktree);
+    const exists = fs.existsSync(worktree);
     let dirty = null;
     let ahead = null;
     if (exists) {
