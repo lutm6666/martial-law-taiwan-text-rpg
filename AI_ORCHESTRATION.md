@@ -27,12 +27,13 @@ Git worktree 只解決檔案系統隔離；它不代表 Agent 已接手，也不
 2. 每個 task 有明確 agent、branch、allowed path scope、acceptance criteria 與 dependencies。
 3. 沒有依賴關係的平行 task 不得有重疊 path scope；有重疊時必須明確排序。
 4. 預設最多同時三個 active tasks；增加並行度必須是有意識的決定。
-5. task branch 不直接整合到 `main`；先回到單一 integration branch。
-6. integration branch 使用 `handoff/orch-*`，最終仍走 PR、`guard` 與 `project-validate`。
-7. worktree 清理不得刪除 dirty worktree；task branch 預設保留，讓事故可回溯。
-8. Agent 完成聲明不是完成證據；至少需要 commit SHA、changed files、tests run 與 unresolved risks。
-9. Runtime 資源（port、database、container name 等）仍需另外隔離；worktree 本身不處理這些衝突。
-10. Issue routing / PR review receiver 的驗證狀態仍以 `AI_WORKFLOW.md` 為準，不因 orchestrator 存在而自動視為可用。
+5. 有 dependencies 的 task 不提前建立 worktree；依 wave 啟動，前一波 dependency 必須先整合進 integration branch。
+6. task branch 不直接整合到 `main`；先回到單一 integration branch。
+7. integration branch 使用 `handoff/orch-*`，最終仍走 PR、`guard` 與 `project-validate`。
+8. worktree 清理不得刪除 dirty worktree；task branch 預設保留，讓事故可回溯。
+9. Agent 完成聲明不是完成證據；至少需要 commit SHA、changed files、tests run 與 unresolved risks。
+10. Runtime 資源（port、database、container name 等）仍需另外隔離；worktree 本身不處理這些衝突。
+11. Issue routing / PR review receiver 的驗證狀態仍以 `AI_WORKFLOW.md` 為準，不因 orchestrator 存在而自動視為可用。
 
 ## Plan 格式
 
@@ -83,11 +84,19 @@ node tools/ai-orchestrator.js validate path/to/plan.json
 node tools/ai-orchestrator.js plan path/to/plan.json
 ```
 
-建立 integration branch、task branches 與 worktrees：
+建立 integration branch 與**第一波** task branches / worktrees：
 
 ```bash
 node tools/ai-orchestrator.js materialize path/to/plan.json
 ```
+
+完成、驗證並將第一波 task branch 整合進 integration branch 後，才建立下一波：
+
+```bash
+node tools/ai-orchestrator.js materialize path/to/plan.json --wave 2
+```
+
+對第二波以後，orchestrator 會確認每個直接 dependency branch 已存在，而且已是 integration branch 的 ancestor；尚未整合時會拒絕建立下一波 worktree。如此可避免相依 task 從舊版 integration 狀態起跑。
 
 預設 worktree 位於 repository 同層的：
 
@@ -95,7 +104,7 @@ node tools/ai-orchestrator.js materialize path/to/plan.json
 <repo>-worktrees/<plan-id>/
 ```
 
-可使用 `--root PATH` 改位置。
+可使用 `--root PATH` 改位置，但 root 不可放在主要 repository 內。
 
 查看 task worktree 是否存在、dirty file 數量與相對 integration branch 的 ahead commit 數：
 
@@ -120,6 +129,7 @@ node tools/ai-orchestrator.js cleanup path/to/plan.json
 - 對每個 task 指定最小 path scope。
 - 只讓真正獨立的 task 同一 wave 執行。
 - 收到 task 結果後先驗證，再整合到 integration branch。
+- dependency 確認已整合後，才 materialize 下一 wave。
 - integration branch 通過完整測試後才開往 `main` 的 PR。
 - 遇到 semantic conflict 時停止自動整合，回到 contract / Canon 判定。
 
