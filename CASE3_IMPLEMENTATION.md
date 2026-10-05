@@ -1,6 +1,6 @@
 # 第三案實作規格｜第十三張底片
 
-狀態：核心資料模型與狀態引擎已建立，進入自動驗證階段。依據 CASE3_DESIGN.md Canon 候選基準，尚未接入正式案件選單，也不改動 Case 1／2 runtime。
+狀態：核心資料模型、狀態引擎與獨立 UI 已建立並通過自動驗證；核准美術已完成來源盤點，UI 現由 `case3-art-manifest.js` 控制 scene／frame／evidence 圖片接入。只有 manifest 標記 `ready` 且實體檔存在的資產才會顯示。第三案仍未接入正式案件選單，也不改動 Case 1／2 runtime。
 
 ## 1. Runtime 邊界
 
@@ -434,3 +434,12 @@ Runtime 守門原則：
 - 「查看店務紀錄」只有在玩家已取得秀蓮知情線索後才可見，避免 UI 提前把 9/21 標成關鍵日期。
 - 「詢問單格底片如何處理」只有在缺片時間窗與接觸機會已有足夠資料後才可見。
 - E10 驗證前永遠顯示為「舊零片中的單格負片」。
+
+
+## 17. 美術資產接入守門
+
+- `case3-film-ui.js` 不硬編圖片路徑；場景、F11–F15 與 E01–E10 一律由 `case3-art-manifest.js` 解析。
+- manifest 的合法狀態只有 `planned` 與 `ready`。
+- `tools/validate-case3.js` 會對所有標記 `ready` 的資產執行實體檔存在檢查；缺檔時 CI 必須失敗。
+- 在二進位 WebP 尚未提交前保持 `planned`，避免 UI 顯示 404 或把尚未進版控的圖片宣告為完成。
+- 圖片接入後仍需重跑 schema validator、state-engine regressions、browser smoke 與 project validation，再考慮接入正式案件選擇流程。
