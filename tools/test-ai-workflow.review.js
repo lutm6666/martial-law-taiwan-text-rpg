@@ -70,6 +70,15 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
   assert.equal(p.tier, 2);
   assert.deepEqual(p.reviewers, ['codex']);
 
+  p = plan('codex', ['assets/case3/evidence/e01-contact-sheet.webp']);
+  assert.equal(p.tier, 2, 'player-facing image assets should not silently stay Tier 1');
+  assert.deepEqual(p.reviewers, ['claude']);
+
+  const humanAsset = makePr('codex', {labels: [], head: {sha, ref: 'feature/art', repo: {full_name: 'owner/repo'}}});
+  p = policy.reviewPlan({pr: humanAsset, files: [file('assets/case3/evidence/e01-contact-sheet.webp')]});
+  assert.equal(p.tier, 2);
+  assert.deepEqual(p.reviewers, ['claude']);
+
   p = plan('codex', ['case3-film-canon.js']);
   assert.equal(p.tier, 3);
   assert.deepEqual(p.reviewers, ['claude']);
@@ -79,6 +88,9 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
 
   p = plan('codex', ['.github/workflows/project-ci.yml']);
   assert.equal(p.tier, 3);
+
+  p = plan('codex', ['tools/claude-review.js']);
+  assert.equal(p.tier, 3, 'legacy receiver remains a control path while it exists');
 
   p = plan('handoff', ['assets/case3/evidence/e01.webp']);
   assert.equal(p.tier, 3);
