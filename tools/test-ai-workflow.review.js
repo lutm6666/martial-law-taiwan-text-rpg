@@ -19,6 +19,12 @@ const makePr = (agent = 'codex', overrides = {}) => ({
   ...overrides
 });
 const file = filename => ({filename, status: 'modified', patch: '@@ -1 +1 @@\n-old\n+new'});
+const actionsComment = body => ({
+  id: 1,
+  body,
+  user: {login: 'github-actions[bot]', type: 'Bot'},
+  performed_via_github_app: {id: 15368}
+});
 
 function plan(agent, filenames, overrides = {}) {
   return policy.reviewPlan({pr: makePr(agent, overrides), files: filenames.map(file)});
@@ -34,8 +40,20 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
       },
       issues: {
         listComments: 'comments',
-        removeLabel: async args => calls.push({name: 'removeLabel', args}),
-        createComment: async args => { calls.push({name: 'createComment', args}); return {data: {id: 1, body: args.body}}; }
+        addLabels: async args => {
+          calls.push({name: 'addLabels', args});
+          pr.labels.push(...args.labels.filter(name => !pr.labels.some(label => label.name === name)).map(name => ({name})));
+        },
+        removeLabel: async args => {
+          calls.push({name: 'removeLabel', args});
+          pr.labels = pr.labels.filter(label => label.name !== args.name);
+        },
+        createComment: async args => {
+          calls.push({name: 'createComment', args});
+          const created = {...actionsComment(args.body), id: comments.length + 1};
+          comments.push(created);
+          return {data: created};
+        }
       },
       repos: {
         getCollaboratorPermissionLevel: async () => ({data: {permission}})
@@ -50,12 +68,13 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
     runId: 42,
     eventName: 'pull_request_target',
     payload: {
+      action: 'opened',
       pull_request: {number: 1},
       repository: {default_branch: 'main'}
     }
   };
   const core = {info(){}, setOutput(k, v){outputs[k] = v;}};
-  return {github, context, core, calls, outputs};
+  return {github, context, core, calls, outputs, comments, pr};
 }
 
 (async () => {
@@ -70,9 +89,19 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
   assert.equal(p.tier, 2);
   assert.deepEqual(p.reviewers, ['codex']);
 
+  p = plan('codex', ['ui/renderer.js']);
+  assert.equal(p.tier, 2, 'new client renderer naming should fail safe to Tier 2');
+  assert.deepEqual(p.reviewers, ['claude']);
+
+  p = plan('codex', ['credits.html']);
+  assert.equal(p.tier, 2, 'non-tools HTML should be Tier 2');
+
   p = plan('codex', ['assets/case3/evidence/e01-contact-sheet.webp']);
   assert.equal(p.tier, 2, 'player-facing image assets should not silently stay Tier 1');
   assert.deepEqual(p.reviewers, ['claude']);
+
+  p = plan('codex', ['assets/audio/ambience.ogg']);
+  assert.equal(p.tier, 2, 'all assets are presentation by default, including future audio/fonts/data');
 
   p = plan('codex', ['tools/validate-case3.js', 'assets/case3/evidence/e01-contact-sheet.webp']);
   assert.equal(p.tier, 3, 'logic plus player-facing assets should escalate to Tier 3');
@@ -82,6 +111,12 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
   p = policy.reviewPlan({pr: humanAsset, files: [file('assets/case3/evidence/e01-contact-sheet.webp')]});
   assert.equal(p.tier, 2);
   assert.deepEqual(p.reviewers, ['claude']);
+
+  const humanUi = makePr('codex', {labels: [], head: {sha, ref: 'feature/ui', repo: {full_name: 'owner/repo'}}});
+  p = policy.reviewPlan({pr: humanUi, files: [file('ui/renderer.js')]});
+  assert.equal(p.agent, 'claude');
+  assert.equal(p.tier, 2);
+  assert.deepEqual(p.reviewers, ['codex']);
 
   const humanLogicAsset = makePr('codex', {labels: [], head: {sha, ref: 'feature/art-logic', repo: {full_name: 'owner/repo'}}});
   p = policy.reviewPlan({pr: humanLogicAsset, files: [file('case3-film-engine.js'), file('assets/case3/evidence/e01-contact-sheet.webp')]});
@@ -95,6 +130,7 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
 
   p = plan('codex', ['case3-film-engine.js']);
   assert.equal(p.tier, 3);
+  assert.equal(p.flags.ui, false, 'known logic runtime must not be misclassified as generic client UI');
 
   p = plan('codex', ['.github/workflows/project-ci.yml']);
   assert.equal(p.tier, 3);
@@ -115,14 +151,39 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
   const renamed = policy.reviewPlan({pr: makePr('codex'), files: [{filename: 'archive.js', previous_filename: 'case3-film-canon.js', status: 'renamed', patch: null}]});
   assert.equal(renamed.tier, 3, 'previous filename must preserve review risk');
 
-  const lowPr = makePr('codex', {labels: [{name: 'ai:codex'}, {name: 'needs:claude-review'}]});
+  const lowPr = makePr('codex', {labels: [{name: 'ai:codex'}, {name: 'needs:claude-review'}, {name: 'review:retry'}]});
   let m = mock({pr: lowPr, files: [file('tools/case3-browser-smoke.html')]});
   const decision = await policy.prepareCrossReview(m);
   assert.equal(decision.run, false);
   assert(m.calls.some(call => call.name === 'removeLabel' && call.args.name === 'needs:claude-review'), 'Tier 1 must clear stale review labels');
+  assert(m.calls.some(call => call.name === 'removeLabel' && call.args.name === 'review:retry'), 'Tier 1 must consume meaningless retry label');
 
   m = mock({files: [file('case3-film-ui.js')]});
   assert.equal((await policy.prepareCrossReview(m)).run, true);
+
+  m = mock({files: [file('case3-film-ui.js')]});
+  let routed = await policy.runCrossReview(m);
+  assert.equal(routed.plan.tier, 2);
+  assert(m.pr.labels.some(label => label.name === 'needs:claude-review'));
+  assert(!m.pr.labels.some(label => label.name === 'needs:codex-review'));
+  assert.equal(m.calls.filter(call => call.name === 'createComment').length, 1);
+  assert(m.comments[0].body.includes('cross-review:v2:claude:' + sha), 'Codex UI must request Claude exactly from tier plan');
+
+  m = mock({pr: humanAsset, files: [file('assets/case3/evidence/e01-contact-sheet.webp')]});
+  routed = await policy.runCrossReview(m);
+  assert.deepEqual(routed.plan.reviewers, ['claude']);
+  assert(m.pr.labels.some(label => label.name === 'needs:claude-review'), 'human asset request and receiver routing must agree');
+  assert(m.comments[0].body.includes('cross-review:v2:claude:' + sha));
+
+  m = mock({pr: makePr('handoff'), files: [file('assets/case3/evidence/e01-contact-sheet.webp')]});
+  routed = await policy.runCrossReview(m);
+  assert.deepEqual(routed.plan.reviewers, ['codex', 'claude']);
+  assert.equal(m.calls.filter(call => call.name === 'createComment').length, 2, 'handoff must request both reviewers');
+
+  m = mock({files: [file('case3-film-ui.js')]});
+  await policy.runCrossReview(m);
+  await policy.runCrossReview(m);
+  assert.equal(m.calls.filter(call => call.name === 'createComment').length, 1, 'current SHA requests must deduplicate');
 
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'tier-review-'));
   const oldWorkspace = process.env.GITHUB_WORKSPACE;
