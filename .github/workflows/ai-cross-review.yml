@@ -21,4 +21,8 @@ jobs:
       - uses: actions/github-script@v7
         with:
           script: |
-            await require('./tools/ai-workflow.js').crossReview({github, context, core});
+            const decision = await require('./tools/ai-workflow.review.js').prepareCrossReview({github, context, core});
+            if (decision.run) {
+              core.info('Automatic counterpart review enabled: ' + decision.plan.name);
+              await require('./tools/ai-workflow.js').crossReview({github, context, core});
+            }
