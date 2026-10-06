@@ -22,10 +22,14 @@ jobs:
       - name: Verify AI workflow regressions
         run: |
           node --check tools/ai-workflow.js
+          node --check tools/ai-workflow.review.js
+          node --check tools/ai-workflow.claude-review.js
+          node --check tools/test-ai-workflow.review.js
           node --check tools/ai-path-guard.js
           node --check tools/ai-orchestrator.js
           node --check tools/test-ai-orchestrator.js
           node tools/test-ai-workflow.js
+          node tools/test-ai-workflow.review.js
           node tools/test-ai-orchestrator.js
           node tools/ai-orchestrator.js validate .ai/orchestration.example.json
 
