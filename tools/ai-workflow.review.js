@@ -32,8 +32,9 @@ function inferAgent(pr, paths) {
   let agent = classifyPr(pr);
   if (agent !== 'human') return agent;
   const logic = paths.some(path => matches(path, [...LOGIC_PATHS, ...CONTROL_PATHS]));
+  const presentation = paths.some(path => matches(path, [...UI_PATHS, ...ASSET_PATHS]));
   const ui = paths.some(path => matches(path, UI_PATHS));
-  return logic && ui ? 'handoff' : logic ? 'codex' : ui ? 'claude' : 'human';
+  return logic && presentation ? 'handoff' : logic ? 'codex' : ui ? 'claude' : 'human';
 }
 
 function reviewPlan({pr, files}) {
@@ -62,9 +63,9 @@ function reviewPlan({pr, files}) {
     tier = 3;
     reasons.push('Canon or runtime engine changed');
   }
-  if (flags.logic && flags.ui) {
+  if (flags.logic && (flags.ui || flags.asset)) {
     tier = 3;
-    reasons.push('logic and player-facing UI changed together');
+    reasons.push('logic and player-facing presentation changed together');
   }
   if (tier < 2 && (flags.ui || flags.asset)) {
     tier = 2;
