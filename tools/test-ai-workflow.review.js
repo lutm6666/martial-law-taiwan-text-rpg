@@ -74,10 +74,20 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
   assert.equal(p.tier, 2, 'player-facing image assets should not silently stay Tier 1');
   assert.deepEqual(p.reviewers, ['claude']);
 
+  p = plan('codex', ['tools/validate-case3.js', 'assets/case3/evidence/e01-contact-sheet.webp']);
+  assert.equal(p.tier, 3, 'logic plus player-facing assets should escalate to Tier 3');
+  assert.deepEqual(p.reviewers, ['claude']);
+
   const humanAsset = makePr('codex', {labels: [], head: {sha, ref: 'feature/art', repo: {full_name: 'owner/repo'}}});
   p = policy.reviewPlan({pr: humanAsset, files: [file('assets/case3/evidence/e01-contact-sheet.webp')]});
   assert.equal(p.tier, 2);
   assert.deepEqual(p.reviewers, ['claude']);
+
+  const humanLogicAsset = makePr('codex', {labels: [], head: {sha, ref: 'feature/art-logic', repo: {full_name: 'owner/repo'}}});
+  p = policy.reviewPlan({pr: humanLogicAsset, files: [file('case3-film-engine.js'), file('assets/case3/evidence/e01-contact-sheet.webp')]});
+  assert.equal(p.agent, 'handoff');
+  assert.equal(p.tier, 3);
+  assert.deepEqual(p.reviewers, ['codex', 'claude']);
 
   p = plan('codex', ['case3-film-canon.js']);
   assert.equal(p.tier, 3);
