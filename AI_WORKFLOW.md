@@ -29,7 +29,7 @@ GitHub Issue、PR、CI、路徑守門與 review 記錄是共同協作介面；�
 - `case*-ui.js`
 - CSS、responsive、accessibility、tap targets
 - 可讀性、overflow、手機 UX
-- 玩家看到的文案是否提前暴露線索或破壞證據邊界
+- 玩家看到的文案與圖片是否提前暴露線索或破壞證據邊界
 
 Claude review 預設是唯讀審查，不執行 PR 程式、不修改檔案、不建立 commit、不 approve、不 merge。
 
@@ -48,15 +48,16 @@ Claude review 預設是唯讀審查，不執行 PR 程式、不修改檔案、�
 | 等級 | 典型變更 | 自動第二 AI |
 | --- | --- | --- |
 | Tier 1 / local validation | tests、validators、smoke harness、implementation notes、其他不影響玩家畫面或核心邏輯的局部變更 | 不自動啟動；只跑既有 CI／回歸 |
-| Tier 2 / counterpart review | `index.html`、`case*-ui.js`、CSS／SCSS、responsive、accessibility、玩家呈現層 | 自動要求對側 AI review |
+| Tier 2 / counterpart review | `index.html`、`case*-ui.js`、CSS／SCSS、responsive、accessibility、`assets/**` 玩家可見圖片 | 自動要求對側 AI review |
 | Tier 3 / full-risk review | Canon、engine、`CASE*_DESIGN.md`、workflow／policy／control、logic+UI 混合、handoff | 自動要求對側 review；handoff 要兩邊 review；既有 owner guard 照常執行 |
 
 具體效果：
 - Codex Tier 1 PR：不再為了純測試／純 validator 修改自動消耗 Claude review。
 - Codex Tier 2／3 PR：自動要求 Claude review。
 - Claude Tier 2 PR：自動要求 Codex review。
+- 玩家可見圖片資產即使沒有 UI 程式變更，也至少是 Tier 2；但二進位 patch 若無法供 reviewer 讀取，review 必須明確標示限制，不能宣稱已檢查圖片內容。
 - Handoff Tier 3 PR：Codex + Claude 都要 review。
-- Human branch 會依 changed paths 推斷 review 需求，但不推斷作者身分。
+- Human branch 會依 changed paths 推斷 review 需求，但不推斷作者身分；human 的純玩家可見圖片變更會要求 Claude review。
 - Tier 1 若先前殘留 `needs:codex-review`／`needs:claude-review`，workflow 會清除 stale label。
 
 Tier 1 仍可由 repository writer 在 PR 留言全文：
@@ -135,11 +136,14 @@ Draft、closed、fork PR 不自動送 review。新 head SHA 重新判斷 tier �
 - PR patch 由 API 建立唯讀 `claude-review-input.json`。
 - snapshot 包含 exact head SHA、review tier、reasons 與 file patches。
 - Claude tools 僅 Read／Glob／Grep；禁用 Bash／Edit／Write／Agent／Task。
-- Tier 2 主要檢查 UX、a11y、readability、overflow、tap target、spoiler。
+- Tier 2 主要檢查 UX、a11y、readability、overflow、tap target、spoiler 與可取得 patch 的玩家呈現資產。
 - Tier 3 另外檢查靜態 patch 可見的 Canon／evidence boundary、state-facing risk、workflow/control safety。
 - Claude 不得把靜態閱讀描述成 runtime verification。
+- 二進位圖片沒有文字 patch 時，只能確認路徑、風險層級與周邊程式，不能把它當作完成圖片內容審查。
 
 只有 Claude 執行成功、回傳 SHA 與 requested head 完全相同且 summary 非空，控制程式才發布 `Claude review completed`。
+
+目前 workflow 使用 `tools/ai-workflow.claude-review.js`。既有 `tools/claude-review.js` 暫留作相容／舊回歸基準，但同樣列入 Tier 3 control path，避免日後修改時被當成普通檔案。
 
 ## 路徑守門與 owner approval
 
@@ -179,7 +183,8 @@ Required contexts 維持：
 - smoke／validator-only Codex PR → Tier 1，無自動 Claude。
 - UI Codex PR → Tier 2，Claude review。
 - UI Claude PR → Tier 2，Codex review。
-- Canon／engine／workflow → Tier 3。
+- 玩家可見圖片 asset → 至少 Tier 2；Codex／human asset 會要求 Claude review。
+- Canon／engine／workflow／legacy receiver → Tier 3。
 - handoff → Tier 3 + 雙邊 review。
 - logic+UI human PR → Tier 3 handoff review。
 - rename Canon → 仍為 Tier 3。
