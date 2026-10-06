@@ -4,8 +4,6 @@ on:
     types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled, edited]
   issue_comment:
     types: [created, edited, deleted]
-  pull_request_review:
-    types: [submitted, edited, dismissed]
 permissions:
   contents: read
   issues: read
@@ -49,7 +47,7 @@ jobs:
           TRUSTED_BASE_SHA: ${{ steps.base.outputs.sha }}
         with:
           script: |
-            await require('./trusted/tools/ai-workflow.js').runGuard({
+            await require('./trusted/tools/ai-path-guard.runtime.js').runGuard({
               github, context, core, number: Number(process.env.PR_NUMBER),
               expectedBaseSha: process.env.TRUSTED_BASE_SHA
             });
