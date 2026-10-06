@@ -59,12 +59,11 @@ function isPresentation(path) {
 }
 
 function inferAgent(pr, paths) {
-  let agent = classifyPr(pr);
+  const agent = classifyPr(pr);
   if (agent !== 'human') return agent;
   const logic = paths.some(isLogicOrControl);
   const presentation = paths.some(isPresentation);
-  const ui = paths.some(isUi);
-  return logic && presentation ? 'handoff' : logic ? 'codex' : ui ? 'claude' : 'human';
+  return logic && presentation ? 'handoff' : 'human';
 }
 
 function reviewPlan({pr, files}) {
@@ -111,10 +110,13 @@ function reviewPlan({pr, files}) {
     if (agent === 'codex') reviewers.push('claude');
     else if (agent === 'claude') reviewers.push('codex');
     else if (agent === 'handoff') reviewers.push('codex', 'claude');
-    else if (agent === 'human' && flags.presentation) reviewers.push('claude');
+    else if (agent === 'human') {
+      if (flags.logic || flags.control || flags.canon || flags.engine) reviewers.push('codex');
+      if (flags.presentation) reviewers.push('claude');
+    }
   }
 
-  return {tier, name: TIER_NAMES[tier], agent, reviewers, reasons, paths, flags};
+  return {tier, name: TIER_NAMES[tier], agent, reviewers: [...new Set(reviewers)], reasons, paths, flags};
 }
 
 function labelNames(labels) {
