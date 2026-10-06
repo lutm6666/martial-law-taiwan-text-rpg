@@ -158,20 +158,28 @@ Draft、closed、fork PR 不自動送 review。新 head SHA 重新判斷 tier �
 
 ## 路徑守門與 owner approval
 
-`ai-path-guard.yml` 使用 `pull_request_target`，只執行 trusted base policy，不 checkout PR head。
+`ai-path-guard.yml` 使用 `pull_request_target`，只執行 trusted base policy，不 checkout PR head。production guard 固定載入 trusted base 的 `tools/ai-path-guard.runtime.js`；CI 會檢查不得指回舊的弱版 `tools/ai-workflow.js#runGuard`。
 
 既有 ownership 邊界維持：
 - Claude 不得修改 Canon、engine、核心設計、tests、validators、workflow、policy、guard/control。
 - Claude 若需要跨界，先改成 sole `ai:handoff`。
 - Codex 修改既有受 guard 規範的 UI／CSS、任何 handoff、任何 guard/control 修改，都需要 owner 對 **目前完整 head SHA** 的核准。
 
-owner 可用 GitHub APPROVED review，或親自留言全文：
+owner approval 只接受 owner 親自建立的 PR issue comment，不再接受 GitHub APPROVED review。留言必須在目前 head 已經至少產生一個 workflow run 之後建立，全文必須完全等於：
 
 ```text
 /ai approve-handoff <完整 40 字元 head SHA>
 ```
 
-AI 不得代替 owner 留下這個核准。新 commit 會使舊 SHA 核准失效。owner approval 與 Claude/Codex review 是兩種不同證據，互不替代。
+核准留言的 raw REST payload 必須同時滿足：
+- `user.login` 是 repository owner，`user.type === "User"`。
+- `author_association === "OWNER"`。
+- `performed_via_github_app` 欄位存在且嚴格等於 `null`；GitHub App／ChatGPT Codex Connector 代發不算人工核准。
+- `created_at === updated_at`，任何已記錄編輯都使核准失效。
+- `created_at` 不早於 GitHub 對該 exact head SHA 記錄到的最早 workflow run。
+- body 不做 trim；前後空白、換行、短 SHA、舊 SHA 或額外文字都不接受。
+
+`performed_via_github_app === null` 只代表 GitHub 沒有把留言歸因於 GitHub App，不是「實體鍵盤輸入」的一般性證明。因此 control-path 核准仍綁 exact SHA、freshness 與 required checks。AI 不得代替 owner 留下這個核准。新 commit 會使舊 SHA 核准失效。owner approval 與 Claude/Codex review 是兩種不同證據，互不替代。
 
 Required contexts 維持：
 - `project-validate`
@@ -184,6 +192,8 @@ Required contexts 維持：
 `Project validation` 必須驗證：
 - `tools/ai-workflow.js`
 - tier policy 與 tier-aware Claude receiver 語法
+- hardened owner approval helper、production guard runtime 與 workflow contract
+- owner approval provenance／freshness／exact-command 回歸測試
 - 原有 AI workflow regression tests
 - `tools/test-ai-workflow.review.js` 的分級與 exact-routing 回歸
 - orchestration regressions
