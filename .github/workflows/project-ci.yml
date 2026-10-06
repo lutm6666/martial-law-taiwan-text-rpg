@@ -64,7 +64,7 @@ jobs:
             BASE="$(git rev-parse HEAD^)"
           fi
           git diff --name-only "$BASE" "$GITHUB_SHA" > /tmp/changed.txt
-          if grep -Eq '^(case3-|CASE3_|tools/(test-case3|validate-case3|case3-browser-smoke)|\.github/workflows/case3-ci\.yml)' /tmp/changed.txt; then
+          if grep -Eq '^(case3-|CASE3_|assets/case3/|tools/(test-case3|validate-case3|case3-browser-smoke)|\.github/workflows/case3-ci\.yml)' /tmp/changed.txt; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
