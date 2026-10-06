@@ -1,144 +1,199 @@
 # 雙 AI 協同工作模式
 
-本專案採用「Claude 主責前端／體驗、Codex 主責 Canon／邏輯／測試」的分工模式。GitHub Issue、PR、CI 與路徑守門規則是共同協作介面。
+本專案採用「Codex / ChatGPT 主責 Canon、邏輯、測試與整合；Claude 主責前端／體驗的第二視角審查」的協作方式。目標不是讓兩個 AI 重複做同一件事，而是用不同專長降低單一模型盲點。
+
+GitHub Issue、PR、CI、路徑守門與 review 記錄是共同協作介面；任何 agent 的文字回覆都不能取代實際 CI、browser smoke、commit 或 PR 證據。
 
 ## 角色
 
 ### Codex / ChatGPT
+
 主責：
 - `case*-canon.js`
 - `case*-engine.js`
 - `CASE*_DESIGN.md`
 - `CASE*_IMPLEMENTATION.md`
-- `tools/test-*`
-- `tools/validate-*`
-- GitHub Actions、回歸測試、存檔相容性、證據鏈與防劇透邏輯
+- tests、validators、browser smoke
+- GitHub Actions、回歸測試、存檔相容性
+- 證據鏈、推理條件、防劇透邊界與最終整合
 
 原則：
-- 不主動大改 UI／CSS；跨界須由 owner 核准目前 head SHA，並要求 Claude review。
-- Canon、證據邊界、推理條件變更必須附測試。
-- 不得用 UI 文案替代資料層判定。
+- Canon、engine、證據邊界或推理條件變更必須有相對應測試。
+- 不用 UI 文案替代資料層判定。
+- Codex 若修改 UI／CSS，仍視為跨界，必須通過既有 owner handoff guard。
 
 ### Claude
-主責：
+
+主責第二視角：
 - `index.html`
 - `case*-ui.js`
-- CSS、動畫、responsive、accessibility
-- 視覺層、互動層、手機體驗
+- CSS、responsive、accessibility、tap targets
+- 可讀性、overflow、手機 UX
+- 玩家看到的文案是否提前暴露線索或破壞證據邊界
 
-原則：
-- 不得自行修改 Canon、engine、tests、validators、CI 或案件核心規格。
-- 如 UI 需求必須改動邏輯，停止實作並建立 handoff，交由 Codex 處理。
-- 必須遵守 Canon 的防劇透與證據邊界。
+Claude review 預設是唯讀審查，不執行 PR 程式、不修改檔案、不建立 commit、不 approve、不 merge。
 
-### 人工 / Handoff
+### Handoff / 人工
+
 適用：
-- 美術資產生成與最終取捨
-- 同時跨 Canon 與 UI 的大型重構
-- 高風險劇情變更
-- 需要改 branch protection、required checks、secrets 等 repository admin 設定
+- 同時跨 Canon 與 UI 的大型改動
+- 美術資產的最終取捨
+- workflow／policy／guard 等協作控制層修改
+- repository admin、secrets、required checks、branch rules 等外部設定
+
+## 三級 review policy
+
+第二個 AI 不再對每一個 PR 都自動啟動。`tools/ai-workflow.review.js` 會依 **實際 changed files** 判斷風險；rename 同時檢查 `previous_filename`，避免把受保護檔案改名後降級。
+
+| 等級 | 典型變更 | 自動第二 AI |
+| --- | --- | --- |
+| Tier 1 / local validation | tests、validators、smoke harness、implementation notes、其他不影響玩家畫面或核心邏輯的局部變更 | 不自動啟動；只跑既有 CI／回歸 |
+| Tier 2 / counterpart review | `index.html`、`case*-ui.js`、CSS／SCSS、responsive、accessibility、玩家呈現層 | 自動要求對側 AI review |
+| Tier 3 / full-risk review | Canon、engine、`CASE*_DESIGN.md`、workflow／policy／control、logic+UI 混合、handoff | 自動要求對側 review；handoff 要兩邊 review；既有 owner guard 照常執行 |
+
+具體效果：
+- Codex Tier 1 PR：不再為了純測試／純 validator 修改自動消耗 Claude review。
+- Codex Tier 2／3 PR：自動要求 Claude review。
+- Claude Tier 2 PR：自動要求 Codex review。
+- Handoff Tier 3 PR：Codex + Claude 都要 review。
+- Human branch 會依 changed paths 推斷 review 需求，但不推斷作者身分。
+- Tier 1 若先前殘留 `needs:codex-review`／`needs:claude-review`，workflow 會清除 stale label。
+
+Tier 1 仍可由 repository writer 在 PR 留言全文：
+
+```text
+@claude review
+```
+
+手動要求 Claude review。這是 opt-in escalation，不會改變 guard 或 owner approval 規則。
+
+`review:retry` 只重送本來就需要的自動交叉審查；它不把 Tier 1 強制升級。Tier 1 若要第二 AI，使用人工 review 入口。
+
+## 為什麼分級
+
+雙 AI 的價值是獨立視角，不是增加 agent 數量。標準順序是：
+
+```text
+實作者
+  ↓
+自動測試 / browser smoke
+  ↓
+需要時才啟動第二 AI 靜態審查
+  ↓
+修正
+  ↓
+最終 CI / guard
+```
+
+Claude 的靜態 review 不能宣稱已做瀏覽器實測；CI 通過也不能宣稱 Claude 已 review。兩種證據分開記錄。
 
 ## 分支命名
 
 - Claude：`claude/<topic>` 或 `ai/claude-<issue>-<topic>`
 - Codex：`codex/<topic>` 或 `ai/codex-<issue>-<topic>`
-- 協作／人工：`handoff/<topic>`
+- Handoff：`handoff/<topic>`
 
-禁止 AI 直接 push `main`。所有功能修改一律走 PR。
+禁止 AI 直接 push `main`。功能與協作控制修改一律走 PR。
 
-## Issue 派工與接收證據
+## Issue 派工
 
-使用「AI task」模板並保留 `dispatch:ready`。只解析精確的 Workstream／Area 欄位；Goal 或 Constraints 中的關鍵字不影響路由。
+使用 AI task template 與 `dispatch:ready`。只解析精確的 Workstream／Area；Goal 或 Constraints 中的關鍵字不參與 routing。
 
-| 分類欄位 | 路由 | 區域 |
-| --- | --- | --- |
-| Canon / Logic / State / Tests；Canon / Logic / State；Save / Migration；CI / Tests | `ai:codex` | `area:logic` |
-| Frontend / UI / Responsive / Accessibility；Frontend / UI | `ai:claude` | `area:ui` |
-| Art / Assets | `ai:handoff` | `area:art` |
-| Mixed / Cross-boundary；Unsure；未知或缺少分類 | `ai:handoff` | `area:logic` |
-| Repository admin / Settings | `ai:handoff` | `area:admin` |
+| 分類 | 路由 |
+| --- | --- |
+| Canon / Logic / State / Tests；Save / Migration；CI / Tests | `ai:codex` + `area:logic` |
+| Frontend / UI / Responsive / Accessibility | `ai:claude` + `area:ui` |
+| Art / Assets | `ai:handoff` + `area:art` |
+| Mixed / Cross-boundary；Unsure；未知分類 | `ai:handoff` |
+| Repository admin / Settings | `ai:handoff` + `area:admin` |
 
-非 repository writer 的一般事件進入 handoff；權限 API 的 403／5xx 則讓 workflow fail，不能當作無權限而默默派給 handoff。重複分類欄位會明確 fail，互相矛盾的分類會要求 owner 確認。
+Routing label 只表示「路由已準備」，不代表接收端已接手。真正接手要有 receiver run／task 證據；完成要有 commit／PR 與驗證結果。
 
-派送以 Issue number 串行，執行時讀取最新 body、state 與 labels。只增刪本流程管理的 `ai:*`、`area:*` 標籤，保留其他標籤。可信的 Actions 控制留言會原地更新；內容／路由 revision 相同則不重發。只信任 `github-actions[bot]`、Bot 類型及 GitHub Actions App id 15368 的 marker；舊版可信 v1 記錄會遷移。
-
-**路由準備不是已接手。** 本版不在 Issue 發送未驗證的 `@codex Implement`／`@claude Implement`：Codex Issue → 自動實作尚未驗證，Claude Issue → 自動實作仍未啟用。請手動建立 agent 任務並附上 Issue、規則與驗收條件。確認接手要有接收端 run／任務連結，完成要有對應 commit／PR 與驗證結果。[Issue #7](https://github.com/lutm6666/martial-law-taiwan-text-rpg/issues/7) 的既有「設定完成」記錄不足以證明兩個接收端都可運作。
-
-修改 body 會重新分類；repository writer 加 `dispatch:retry` 可重新準備同一 revision。重試成功才移除該標籤，失败時保留供人工調查。修復 API／token 問題後也可重跑失敗 run。關閉或取消 `dispatch:ready` 的 Issue 不派送。concurrency 僅提供互斥，不保證每個中間事件都保留；最新狀態為準。
+只有 GitHub Actions bot + Actions App id 15368 的控制 marker 被視為可信；人工偽造 marker 不能阻止派工或 review。
 
 ## PR 交叉審查
 
-- Claude PR → `needs:codex-review`，發送 `@codex review`。
-- Codex PR → `needs:claude-review`，發送 `@claude` review 請求。
-- Handoff PR → 兩邊都要 review。
-- Draft、關閉與 fork PR 不自動送 agent 請求。
+`AI Cross Review` 先從可信 base checkout 執行 review-tier policy，再決定是否呼叫既有 cross-review router。
 
-依 PR number 串行，依 agent + head SHA 去重，執行前讀取最新 PR。可信舊 marker 仍可去重；人工貼相同 marker 不會阻止請求。新 SHA 重新發送；writer 加 `review:retry` 可明確重送，全部成功後才移除標籤。所有 API 錯誤都會 fail，部分成功的請求可用 marker 恢復。
+Tier 2／3 的 request 仍沿用：
+- Claude PR → `needs:codex-review`
+- Codex PR → `needs:claude-review`
+- Handoff PR → 兩者
 
-`needs:*` 與請求留言只表示 **request sent**，不能表示 receiver 已接收／review 完成。尤其 Actions token 產生的留言不會再觸發一般 `issue_comment` Actions workflow；外部 App 是否接收須分別驗證。Claude PR 審查改由 `Claude Review` 的 PR 事件直接執行官方 Action，不依賴 mention 串接。若已有 Codex Automatic reviews，須由 owner 決定單一請求來源，避免 Automatic reviews 與 workflow mention 兩邊都送；目前去重範圍只涵蓋本 workflow。
+Draft、closed、fork PR 不自動送 review。新 head SHA 重新判斷 tier 並重新去重；不能沿用舊 SHA 的 completed marker。
 
-## 路徑守門與 handoff
+`needs:*` 或 request comment 只表示 **request sent**，不等於 receiver 完成。只有明確的 completed marker、run link 與相同完整 head SHA 才能視為該次 review 完成。
 
-`ai-path-guard.yml` 對 PR 事件使用 `pull_request_target`，只 checkout 當前 base SHA 的 policy；不 checkout／執行 PR head。以 API 取得 head SHA、完整 changed files、comments 與 reviews，以原生 GitHub Actions job **`guard`** 提供 required context，另發布 `ai-ownership-policy` 作為 head SHA 的診斷紀錄。單獨用 Checks API 建立同名成功紀錄，在本 repo 的 ruleset 實測仍顯示 expected，因此 required guard 必須保留原生 job。owner review 事件會重跑原生 guard；Issue comment 事件檢查最新 PR；若政策結果與原生 guard 不同，透過 Actions job rerun API 重跑目前 head 的原生 guard。需要 workflow 的 `actions: write`，不直接改寫原生 check 結果。已在執行或結果相同時不重複重跑；找不到對應原生 job、head 已改變或 API 拒絕時明確 fail。
+## Claude review receiver
 
-路由 label 必須只有一個；label 與 branch ownership 衝突時 fail。唯一的 `ai:handoff` 可覆蓋原 branch 所有權。一般 human branch 不推測 agent 身分。
+`claude-review.yml` 對自動 Tier 2／3 的 Codex／handoff PR 啟動 Claude；Tier 1 的自動事件會在 prepare 階段直接停止，不呼叫模型。
 
-Claude 不得改動 Canon、engine、核心設計、tests、validators、workflow、policy 文件與 guard 程式；即使有 owner 核准仍必須先改成 sole `ai:handoff`。rename 同時檢查原路徑與目的路徑。Codex 改 UI／CSS、任何 handoff、任何 guard／協作控制檔修改，都必須先由 repository owner 核准 **目前完整 head SHA**。
+人工 writer 的 `@claude review` 仍可在任何 tier 執行。
 
-owner 可用正式 APPROVED review（最新狀態、commit id 必須等於 head SHA），或親自留言：
+安全邊界：
+- checkout 可信 default branch 控制程式，不 checkout／執行 PR head。
+- PR patch 由 API 建立唯讀 `claude-review-input.json`。
+- snapshot 包含 exact head SHA、review tier、reasons 與 file patches。
+- Claude tools 僅 Read／Glob／Grep；禁用 Bash／Edit／Write／Agent／Task。
+- Tier 2 主要檢查 UX、a11y、readability、overflow、tap target、spoiler。
+- Tier 3 另外檢查靜態 patch 可見的 Canon／evidence boundary、state-facing risk、workflow/control safety。
+- Claude 不得把靜態閱讀描述成 runtime verification。
+
+只有 Claude 執行成功、回傳 SHA 與 requested head 完全相同且 summary 非空，控制程式才發布 `Claude review completed`。
+
+## 路徑守門與 owner approval
+
+`ai-path-guard.yml` 使用 `pull_request_target`，只執行 trusted base policy，不 checkout PR head。
+
+既有 ownership 邊界維持：
+- Claude 不得修改 Canon、engine、核心設計、tests、validators、workflow、policy、guard/control。
+- Claude 若需要跨界，先改成 sole `ai:handoff`。
+- Codex 修改 UI／CSS、任何 handoff、任何 guard/control 修改，都需要 owner 對 **目前完整 head SHA** 的核准。
+
+owner 可用 GitHub APPROVED review，或親自留言全文：
 
 ```text
 /ai approve-handoff <完整 40 字元 head SHA>
 ```
 
-留言須為 owner 本人、User 類型、全文精確符合指令。owner 自己開 PR 時可使用留言；AI 不得代寫 owner 核准。新 commit 使舊核准失效。owner 核准不代表 AI review 已完成。此規則是協作責任邊界；有 repository write 權限者本身可修改其他 Actions workflow，因此不把它宣稱為對任意 writer 的完整隔離。
+AI 不得代替 owner 留下這個核准。新 commit 會使舊 SHA 核准失效。owner approval 與 Claude/Codex review 是兩種不同證據，互不替代。
 
-## CI 與首次遷移
+Required contexts 維持：
+- `project-validate`
+- `guard`
 
-目前 ruleset 的 required check context 是 **`project-validate`**、**`guard`**，來源是 GitHub Actions App；workflow 顯示名稱不是 context。保持名稱不變，本次不修改 ruleset／branch protection。
+不可 force push、刪除測試、停用 guard 或偽造 check 來讓 PR 通過。
 
-`Project validation` 會執行 `node tools/test-ai-workflow.js`。Case 3 相關檔案有變動時另跑 schema validator、engine regression 與 Chrome smoke playthrough。
+## CI
 
-PR #10 已合併，首次遷移已完成。原 bootstrap 只用來安裝新 base policy，現在必須移除，避免後續 PR 的 skipped `guard` 與真正的原生 `guard` 同名。原生 check 的 `external_id` 是 GitHub 產生的 UUID，不能以「external_id 為空」判斷；owner 留言重跑需匹配目前 head SHA、Actions App、非 skipped 的原生 Actions job URL。GitHub 自 2025-03-31 起禁止修改 Actions 建立的 check status／conclusion，因此使用原生 job rerun，等待完成後才視為 required guard 通過。
+`Project validation` 必須驗證：
+- `tools/ai-workflow.js`
+- tier policy 與 tier-aware Claude receiver 語法
+- 原有 AI workflow regression tests
+- `tools/test-ai-workflow.review.js` 的分級回歸
+- orchestration regressions
+- runtime JavaScript 與 canonical assets
+- Case 3 有關變更時另跑 schema、engine regression、desktop/mobile browser smoke
 
-用下列最小案例驗證實際 Actions／receiver 行為；成功的政策檢查仍不能代表 receiver 已接收。
-
-| 驗證案例 | 預期結果 |
-| --- | --- |
-| writer 開 logic Issue，Goal 包含 UI 字樣 | sole `ai:codex` + `area:logic`；一則 route-prepared 控制留言 |
-| 同 Issue 重跑 opened／labeled；保留其他 label | 不新增留言；其他 label 保留 |
-| 人工貼 dispatch／review marker | 不抑制可信請求 |
-| 改分類成 UI，或 writer 加 retry | 舊 owned label 清除；同控制留言更新；retry 成功後移除 |
-| actor 權限 API 403／5xx | run fail，不能誤落 handoff |
-| 同 SHA 重複 PR 事件；再推新 SHA | 每 agent／SHA 一次；新 SHA 再請求一次 |
-| Claude rename engine 到普通檔名 | `guard` failure，原路徑仍被保護 |
-| Codex UI／handoff／policy 修改沒有核准 | `guard` failure；加目前 SHA 的 owner 指令後 success |
-| 已核准後再推 commit；多個 ai label | `guard` failure，須重新核准／消除衝突 |
-| Checks API 權限不足 | workflow fail／required `guard` 未通過；不偽造成功 |
-| PR 修改自己的 guard 為 always-pass | 仍執行 base policy，變更不影響本 PR 的守門結果 |
-| Claude review 請求只有留言而無 receiver run | 保持 request sent；人工接手，不能宣稱 review 完成 |
-
-本機回歸使用 API mock，不證明 App／credential／token 的真實環境權限。接收端與首次 base 切換必須以 Actions logs、head Check Run 與 agent 任務／review 記錄驗證。
+分級 policy 的最低回歸案例包括：
+- smoke／validator-only Codex PR → Tier 1，無自動 Claude。
+- UI Codex PR → Tier 2，Claude review。
+- UI Claude PR → Tier 2，Codex review。
+- Canon／engine／workflow → Tier 3。
+- handoff → Tier 3 + 雙邊 review。
+- logic+UI human PR → Tier 3 handoff review。
+- rename Canon → 仍為 Tier 3。
+- Tier 1 新 head 會清理 stale `needs:*` label。
+- Tier 1 仍可人工 `@claude review`。
 
 ## 失敗處理
 
-- CI fail：先讀 log，不得繞過測試。
-- merge conflict：以 Canon 與現有 regression test 為基準，不用舊 UI 蓋回新邏輯。
-- agent 無法啟動：保留派工標籤與 handoff 訊息，改由人工或另一 agent 接手。
-- 不可用 force push、刪除測試、停用 guard 來讓 PR 通過。
+- CI fail：先讀 log，不繞過測試。
+- reviewer receiver fail：保留失敗證據，可 rerun；不能標記 completed。
+- merge conflict：以 Canon 與現有 regression test 為基準。
+- agent 無法啟動：改人工或另一 agent，不偽造 acknowledgement。
+- binary／缺 patch：review 必須明確標示限制。
 
-## Repository admin 設定
+## Repository admin
 
-目前 required contexts 維持 `project-validate` 與 `guard`。CI 失敗先讀 log；required check 名稱、token／App 權限、receiver credentials 等外部設定須由 owner 另行檢查。外部設定由 owner 管理；Claude review receiver 使用 owner 設定的 `CLAUDE_CODE_OAUTH_TOKEN`。
-
-## Claude PR 審查接收端
-
-`claude-review.yml` 對非 draft、同 repo、目標為預設分支的 Codex／handoff PR 自動審查；人工 writer 可在 PR 留言全文 `@claude review` 重試或驗證。Issue 實作派工與 Codex 接收端不因此啟用。一般 human PR 可使用人工入口。
-
-只 checkout 預設分支的可信程式與規則；PR patch 透過 API 放入唯讀審查快照，不 checkout 或執行 PR head。官方 Claude Action 固定版本，使用 repository Actions token，不必另安裝 App。token 只授予 contents read、PR／Issue 留言權限。Claude 限制為 Read／Glob／Grep，不允許 shell、修改檔案或建立 commit。最多 12 turns、15 分鐘。快照過大或 API 失敗會明確 fail。
-
-自動審查依成功留言中的完整 head SHA 去重，失敗不建立 completed marker；重新執行失敗 run 或 writer 的 `@claude review` 可重試。人工入口會重新執行，即使已有同 SHA 的成功結果。所有入口依 PR 串行；新 SHA 需要新的結果，執行途中 PR 改變則不發布 completed。`review:retry` 只重送原交叉審查請求，Claude receiver 重試請用人工入口或 rerun。
-
-只有 Claude 執行成功、輸出 SHA 正確且 summary 非空，才由控制程式發布 `Claude review completed` 和 run 連結。這是審查回饋，不是 owner 核准、合併許可或瀏覽器實測。二進位檔、缺失 patch 與超出快照內容仍須人工檢查。
-
-合併接收端後，先開不合併的 Codex 測試 PR，確認自動產生 run 與正確 SHA 回饋；同 SHA reopened 不重複審查，新 commit 再審查。另留言 `@claude review` 驗證人工入口。缺少 secret、API 認證／額度不足或輸出格式錯誤都應顯示 failed，不能當作完成。
+Secrets、App credentials、branch rules、required checks 等外部設定由 owner 管理。Claude receiver 使用 `CLAUDE_CODE_OAUTH_TOKEN`；secret 缺失、認證失敗、額度或 rate limit 錯誤都必須顯示 failed，不能當成 review 完成。
