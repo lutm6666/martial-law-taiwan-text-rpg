@@ -1,6 +1,6 @@
 # 雙 AI 協同工作模式
 
-本專案採用「Codex / ChatGPT 主責 Canon、邏輯、測試與整合；Claude 主責前端／體驗的第二視角審查」的協作方式。目標不是讓兩個 AI 重複做同一件事，而是用不同專長降低單一模型盲點。
+本專案採用「Codex / ChatGPT 主責 Canon、邏輯、測試與整合；Claude 主責前端實作，並在 Codex 主導的玩家呈現變更上提供第二視角審查」的協作方式。目標不是讓兩個 AI 重複做同一件事，而是用不同專長降低單一模型盲點。
 
 GitHub Issue、PR、CI、路徑守門與 review 記錄是共同協作介面；任何 agent 的文字回覆都不能取代實際 CI、browser smoke、commit 或 PR 證據。
 
@@ -20,23 +20,26 @@ GitHub Issue、PR、CI、路徑守門與 review 記錄是共同協作介面；�
 原則：
 - Canon、engine、證據邊界或推理條件變更必須有相對應測試。
 - 不用 UI 文案替代資料層判定。
-- Codex 若修改 UI／CSS，仍視為跨界，必須通過既有 owner handoff guard。
+- Codex 若修改玩家呈現層，仍依既有 ownership／owner guard 規則處理。
 
 ### Claude
 
-主責第二視角：
-- `index.html`
-- `case*-ui.js`
-- CSS、responsive、accessibility、tap targets
+直接派給 Claude 的實作任務主責：
+- UI renderer
+- HTML / CSS
+- responsive、accessibility、tap targets
+- interaction polish、手機版體驗
+
+在 Codex / ChatGPT 主導的 PR 中，Claude 預設改為唯讀第二視角，檢查：
 - 可讀性、overflow、手機 UX
 - 玩家看到的文案與圖片是否提前暴露線索或破壞證據邊界
 
-Claude review 預設是唯讀審查，不執行 PR 程式、不修改檔案、不建立 commit、不 approve、不 merge。
+Claude review 不執行 PR 程式、不修改檔案、不建立 commit、不 approve、不 merge；具體禁止修改範圍以 `CLAUDE.md` 與 guard 為準。
 
 ### Handoff / 人工
 
 適用：
-- 同時跨 Canon 與 UI 的大型改動
+- 同時跨 Canon／logic 與 UI／asset 的大型改動
 - 美術資產的最終取捨
 - workflow／policy／guard 等協作控制層修改
 - repository admin、secrets、required checks、branch rules 等外部設定
@@ -47,18 +50,19 @@ Claude review 預設是唯讀審查，不執行 PR 程式、不修改檔案、�
 
 | 等級 | 典型變更 | 自動第二 AI |
 | --- | --- | --- |
-| Tier 1 / local validation | tests、validators、smoke harness、implementation notes、其他不影響玩家畫面或核心邏輯的局部變更 | 不自動啟動；只跑既有 CI／回歸 |
-| Tier 2 / counterpart review | `index.html`、`case*-ui.js`、CSS／SCSS、responsive、accessibility、`assets/**` 玩家可見圖片 | 自動要求對側 AI review |
-| Tier 3 / full-risk review | Canon、engine、`CASE*_DESIGN.md`、workflow／policy／control、logic+UI 混合、handoff | 自動要求對側 review；handoff 要兩邊 review；既有 owner guard 照常執行 |
+| Tier 1 / local validation | tests、validators、smoke harness、implementation notes、其他明確不影響玩家畫面或核心邏輯的局部變更 | 不自動啟動；只跑既有 CI／回歸 |
+| Tier 2 / counterpart review | UI、非 `tools/`／`.github/` 的 client HTML/JS、CSS／SCSS、responsive、accessibility、`assets/**` 玩家呈現資產 | 自動要求對側 AI review |
+| Tier 3 / full-risk review | Canon、engine、`CASE*_DESIGN.md`、workflow／policy／control、logic+presentation 混合、handoff | 自動要求對側 review；handoff 要兩邊 review；既有 owner guard 照常執行 |
 
 具體效果：
 - Codex Tier 1 PR：不再為了純測試／純 validator 修改自動消耗 Claude review。
 - Codex Tier 2／3 PR：自動要求 Claude review。
 - Claude Tier 2 PR：自動要求 Codex review。
-- 玩家可見圖片資產即使沒有 UI 程式變更，也至少是 Tier 2；但二進位 patch 若無法供 reviewer 讀取，review 必須明確標示限制，不能宣稱已檢查圖片內容。
+- 新增的 client renderer 即使未採 `case*-ui.js` 命名，只要位於 `tools/`、`.github/` 之外的 HTML/JS，也預設至少 Tier 2；已知 Canon／engine／control 先按其高風險規則分類，不會因 `.js` 副檔名誤判成純 UI。
+- `assets/**` 預設視為玩家呈現資產，因此圖片、音訊、字型或未來的呈現資料至少 Tier 2；二進位 patch 若無法供 reviewer 讀取，review 必須明確標示限制，不能宣稱已檢查內容。
 - Handoff Tier 3 PR：Codex + Claude 都要 review。
-- Human branch 會依 changed paths 推斷 review 需求，但不推斷作者身分；human 的純玩家可見圖片變更會要求 Claude review。
-- Tier 1 若先前殘留 `needs:codex-review`／`needs:claude-review`，workflow 會清除 stale label。
+- Human branch 會依 changed paths 推斷 review 需求，但不推斷作者身分；純 UI 會按 Claude ownership 路由，純 asset 仍保留 human ownership但要求 Claude review，logic+presentation 則升為 handoff。
+- Tier 1 若先前殘留 `needs:codex-review`／`needs:claude-review` 或無意義的 `review:retry`，workflow 會清除。
 
 Tier 1 仍可由 repository writer 在 PR 留言全文：
 
@@ -114,12 +118,19 @@ Routing label 只表示「路由已準備」，不代表接收端已接手。真
 
 ## PR 交叉審查
 
-`AI Cross Review` 先從可信 base checkout 執行 review-tier policy，再決定是否呼叫既有 cross-review router。
+`AI Cross Review` 從可信 base checkout 執行 `tools/ai-workflow.review.js`。同一份 tier policy 同時決定：
+- risk tier
+- inferred ownership（只用於 review routing，不宣稱作者身分）
+- exact reviewer set
+- `needs:*` labels
+- review request comments
 
-Tier 2／3 的 request 仍沿用：
-- Claude PR → `needs:codex-review`
-- Codex PR → `needs:claude-review`
-- Handoff PR → 兩者
+因此不再先算一套 `plan.reviewers`、再交給另一套分類器重新決定 reviewer；避免 human UI／asset 或未來新路徑出現「receiver 已跑但 request label/comment 不一致」。
+
+Tier 2／3 的 request：
+- reviewer 含 Codex → `needs:codex-review`
+- reviewer 含 Claude → `needs:claude-review`
+- Handoff → 兩者
 
 Draft、closed、fork PR 不自動送 review。新 head SHA 重新判斷 tier 並重新去重；不能沿用舊 SHA 的 completed marker。
 
@@ -127,7 +138,7 @@ Draft、closed、fork PR 不自動送 review。新 head SHA 重新判斷 tier �
 
 ## Claude review receiver
 
-`claude-review.yml` 對自動 Tier 2／3 的 Codex／handoff PR 啟動 Claude；Tier 1 的自動事件會在 prepare 階段直接停止，不呼叫模型。
+`claude-review.yml` 對自動 Tier 2／3、且 reviewer set 含 Claude 的 PR 啟動 Claude；Tier 1 的自動事件會在 prepare 階段直接停止，不呼叫模型。
 
 人工 writer 的 `@claude review` 仍可在任何 tier 執行。
 
@@ -139,7 +150,7 @@ Draft、closed、fork PR 不自動送 review。新 head SHA 重新判斷 tier �
 - Tier 2 主要檢查 UX、a11y、readability、overflow、tap target、spoiler 與可取得 patch 的玩家呈現資產。
 - Tier 3 另外檢查靜態 patch 可見的 Canon／evidence boundary、state-facing risk、workflow/control safety。
 - Claude 不得把靜態閱讀描述成 runtime verification。
-- 二進位圖片沒有文字 patch 時，只能確認路徑、風險層級與周邊程式，不能把它當作完成圖片內容審查。
+- 二進位資產沒有文字 patch 時，只能確認路徑、風險層級與周邊程式，不能把它當作完成內容審查。
 
 只有 Claude 執行成功、回傳 SHA 與 requested head 完全相同且 summary 非空，控制程式才發布 `Claude review completed`。
 
@@ -152,7 +163,7 @@ Draft、closed、fork PR 不自動送 review。新 head SHA 重新判斷 tier �
 既有 ownership 邊界維持：
 - Claude 不得修改 Canon、engine、核心設計、tests、validators、workflow、policy、guard/control。
 - Claude 若需要跨界，先改成 sole `ai:handoff`。
-- Codex 修改 UI／CSS、任何 handoff、任何 guard/control 修改，都需要 owner 對 **目前完整 head SHA** 的核准。
+- Codex 修改既有受 guard 規範的 UI／CSS、任何 handoff、任何 guard/control 修改，都需要 owner 對 **目前完整 head SHA** 的核准。
 
 owner 可用 GitHub APPROVED review，或親自留言全文：
 
@@ -174,7 +185,7 @@ Required contexts 維持：
 - `tools/ai-workflow.js`
 - tier policy 與 tier-aware Claude receiver 語法
 - 原有 AI workflow regression tests
-- `tools/test-ai-workflow.review.js` 的分級回歸
+- `tools/test-ai-workflow.review.js` 的分級與 exact-routing 回歸
 - orchestration regressions
 - runtime JavaScript 與 canonical assets
 - Case 3 有關變更時另跑 schema、engine regression、desktop/mobile browser smoke
@@ -183,12 +194,15 @@ Required contexts 維持：
 - smoke／validator-only Codex PR → Tier 1，無自動 Claude。
 - UI Codex PR → Tier 2，Claude review。
 - UI Claude PR → Tier 2，Codex review。
-- 玩家可見圖片 asset → 至少 Tier 2；Codex／human asset 會要求 Claude review。
+- 新命名 client renderer／HTML → 至少 Tier 2。
+- `assets/**` → 至少 Tier 2；Codex／human asset 會要求 Claude review。
 - Canon／engine／workflow／legacy receiver → Tier 3。
+- logic+asset 或 logic+UI → Tier 3。
 - handoff → Tier 3 + 雙邊 review。
-- logic+UI human PR → Tier 3 handoff review。
+- logic+presentation human PR → Tier 3 handoff review。
 - rename Canon → 仍為 Tier 3。
-- Tier 1 新 head 會清理 stale `needs:*` label。
+- Tier 1 新 head 會清理 stale `needs:*`／`review:retry`。
+- tier policy 的 `reviewers` 必須與實際建立的 label/comment 完全一致。
 - Tier 1 仍可人工 `@claude review`。
 
 ## 失敗處理
