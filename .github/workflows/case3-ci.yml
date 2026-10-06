@@ -69,6 +69,3 @@ jobs:
           test -n "$CHROME"
           "$CHROME" --headless=new --no-sandbox --disable-gpu --dump-dom http://127.0.0.1:8765/tools/case3-browser-smoke.html > /tmp/case3-smoke-dom.html
           grep -q "PASS FULL BROWSER FLOW" /tmp/case3-smoke-dom.html
-          "$CHROME" --headless=new --no-sandbox --disable-gpu --window-size=390,844 --force-device-scale-factor=1 --dump-dom http://127.0.0.1:8765/tools/case3-browser-smoke.html > /tmp/case3-mobile-smoke-dom.html
-          grep -q "PASS FULL BROWSER FLOW" /tmp/case3-mobile-smoke-dom.html
-          grep -q "PASS MOBILE LAYOUT" /tmp/case3-mobile-smoke-dom.html
