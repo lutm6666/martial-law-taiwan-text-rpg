@@ -71,14 +71,13 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
 }
 
 (async () => {
-  // Provenance and routing are separate concepts.
   let pr = makePr('codex');
   assert.equal(identity.provenance(pr).kind, 'unknown', 'User PR provenance must remain unknown');
-  assert.equal(identity.provenance(pr).verified, false);
+  assert.equal(identity.provenance(pr).observed, false);
   assert.equal(identity.routingHint(pr).hint, 'codex');
 
   pr = makePr(null, {user: {login: 'some-app[bot]', type: 'Bot'}});
-  assert.deepEqual(identity.provenance(pr), {kind: 'bot', verified: true, actor: 'some-app[bot]'});
+  assert.deepEqual(identity.provenance(pr), {kind: 'bot', observed: true, actor: 'some-app[bot]'});
 
   pr = makePr(null, {
     labels: [{name: 'ai:codex'}, {name: 'ai:claude'}],
