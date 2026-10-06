@@ -20,3 +20,7 @@ for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
 }
 if (!count) throw new Error('No scripts found in index.html');
 console.log(`All ${count} page scripts passed syntax checks.`);
+
+// Production routing is part of the page runtime contract. Keep this check here so
+// Project validation covers Case 1 → Case 2 → Case 3 without weakening CI policy.
+require('./test-case-routing.js');
