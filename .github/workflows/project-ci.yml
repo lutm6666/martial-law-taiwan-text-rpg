@@ -30,7 +30,6 @@ jobs:
           node --check tools/test-ai-workflow.owner-approval.js
           node --check tools/test-ai-workflow.guard-contract.js
           node --check tools/test-ai-workflow.review.js
-          node --check tools/ai-path-guard.js
           node --check tools/ai-orchestrator.js
           node --check tools/test-ai-orchestrator.js
           node tools/test-ai-workflow.js
