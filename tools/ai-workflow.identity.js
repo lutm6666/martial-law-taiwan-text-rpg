@@ -58,17 +58,17 @@ function routingHint(pr) {
 /**
  * Provenance is deliberately conservative. A normal User-authored PR is
  * "unknown" because GitHub may show the owner account even when an external
- * agent acted through that account. Bot identity can be observed, but is not
- * mapped to Codex/Claude without a separately verified App boundary.
+ * agent acted through that account. Bot account type can be observed, but this
+ * does not identify the underlying GitHub App or map it to Codex/Claude.
  */
 function provenance(pr) {
   const user = pr?.user || {};
   if (user.type === 'Bot' && typeof user.login === 'string' && user.login) {
-    return {kind: 'bot', verified: true, actor: user.login};
+    return {kind: 'bot', observed: true, actor: user.login};
   }
   return {
     kind: 'unknown',
-    verified: false,
+    observed: false,
     actor: typeof user.login === 'string' && user.login ? user.login : null,
   };
 }
