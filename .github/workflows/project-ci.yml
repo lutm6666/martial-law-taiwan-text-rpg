@@ -22,6 +22,7 @@ jobs:
       - name: Verify AI workflow regressions
         run: |
           node --check tools/ai-workflow.js
+          node --check tools/ai-workflow.identity.js
           node --check tools/ai-workflow.review.js
           node --check tools/ai-workflow.claude-review.js
           node --check tools/ai-path-guard.approval.js

@@ -1,8 +1,41 @@
 'use strict';
 
-const policy = require('./ai-workflow.js');
+const basePolicy = require('./ai-workflow.js');
+const reviewPolicy = require('./ai-workflow.review.js');
+const identity = require('./ai-workflow.identity.js');
 const approval = require('./ai-path-guard.approval.js');
-const ACTIONS_APP_ID = policy.ACTIONS_APP_ID;
+const ACTIONS_APP_ID = basePolicy.ACTIONS_APP_ID;
+
+function matches(file, rules) {
+  return rules.some(rule => rule.test(file));
+}
+
+function evaluateGuardPolicy({pr, files, comments = [], owner, headSeenAt}) {
+  const paths = basePolicy.changedPaths(files || []);
+  const controlPaths = paths.filter(path => matches(path, reviewPolicy.CONTROL_PATHS));
+  const routingHint = identity.routingHint(pr);
+  const provenance = identity.provenance(pr);
+  const messages = [];
+
+  if (!paths.length) messages.push('No changed files; ownership check has no paths to evaluate.');
+
+  // Security decisions are path-based. Mutable labels / branch names are only
+  // routing hints and cannot prove authorship or relax the guard.
+  const needsOwner = controlPaths.length > 0;
+  if (needsOwner && !approval.ownerApproval(comments, [], owner, pr.head.sha, {headSeenAt})) {
+    throw new Error('Owner confirmation is required for guard/control changes at this head. After reviewing, comment exactly: /ai approve-handoff ' + pr.head.sha);
+  }
+
+  if (provenance.kind === 'unknown') {
+    messages.push('PR provenance is unknown; routing labels and branch names are not treated as author identity.');
+  } else {
+    messages.push('Observed provenance: ' + provenance.kind + ' (' + provenance.actor + ').');
+  }
+  messages.push('Routing hint: ' + routingHint.hint + ' (' + routingHint.source + '); routing metadata cannot weaken guard policy.');
+  if (needsOwner) messages.push('Owner confirmed the current SHA for control-path changes; AI review completion is tracked separately.');
+
+  return {paths, controlPaths, routingHint, provenance, needsOwner, messages};
+}
 
 async function commentsFor(github, repo, number) {
   return github.paginate(github.rest.issues.listComments, {...repo, issue_number: number, per_page: 100});
@@ -44,24 +77,15 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
       core.info('Head-seen lookup failed; owner approval will fail closed: ' + error.message);
     }
 
-    const vettedComments = rawComments.filter(c => approval.checkApprovalComment(c, {
-      owner: repo.owner,
-      sha,
-      headSeenAt: seenAt,
-    }).ok);
-
-    // Owner PR reviews are intentionally not an approval path. The legacy
-    // evaluator receives only comments that passed the hardened gate and an
-    // empty review list.
-    const result = policy.evaluateGuard({
+    const result = evaluateGuardPolicy({
       pr,
       files,
-      comments: vettedComments,
-      reviews: [],
+      comments: rawComments,
       owner: repo.owner,
+      headSeenAt: seenAt,
     });
 
-    summary = 'Trusted base `' + expectedBaseSha + '` checked head `' + sha + '`.\n\nAgent: ' + result.agent + '\n\n' + result.messages.join('\n');
+    summary = 'Trusted base `' + expectedBaseSha + '` checked head `' + sha + '`.\n\nProvenance: ' + result.provenance.kind + '\nRouting hint: ' + result.routingHint.hint + '\n\n' + result.messages.join('\n');
   } catch (error) {
     conclusion = 'failure';
     summary = error.message;
@@ -112,4 +136,4 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
   if (conclusion === 'failure') core.setFailed(summary);
 }
 
-module.exports = {runGuard};
+module.exports = {evaluateGuardPolicy, runGuard};

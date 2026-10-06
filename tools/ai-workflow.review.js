@@ -1,6 +1,7 @@
 'use strict';
 
-const {classifyPr, changedPaths, isActionsComment} = require('./ai-workflow');
+const {changedPaths, isActionsComment} = require('./ai-workflow');
+const identity = require('./ai-workflow.identity');
 
 const CONTROL_PATHS = [
   /^\.github\/workflows\//,
@@ -24,7 +25,7 @@ const GENERIC_CLIENT_PATHS = [
 const ASSET_PATHS = [/^assets\//];
 const TIER_NAMES = {
   1: 'Tier 1 / local validation',
-  2: 'Tier 2 / counterpart review',
+  2: 'Tier 2 / specialist review',
   3: 'Tier 3 / full-risk review'
 };
 const REVIEW_REQUESTS = {
@@ -41,34 +42,23 @@ const REVIEW_REQUESTS = {
 function matches(file, rules) {
   return rules.some(rule => rule.test(file));
 }
-
 function isLogicOrControl(path) {
   return matches(path, [...LOGIC_PATHS, ...CONTROL_PATHS]);
 }
-
 function isUi(path) {
   return matches(path, UI_PATHS) || (matches(path, GENERIC_CLIENT_PATHS) && !isLogicOrControl(path));
 }
-
 function isAsset(path) {
   return matches(path, ASSET_PATHS);
 }
-
 function isPresentation(path) {
   return isUi(path) || isAsset(path);
 }
 
-function inferAgent(pr, paths) {
-  const agent = classifyPr(pr);
-  if (agent !== 'human') return agent;
-  const logic = paths.some(isLogicOrControl);
-  const presentation = paths.some(isPresentation);
-  return logic && presentation ? 'handoff' : 'human';
-}
-
 function reviewPlan({pr, files}) {
   const paths = changedPaths(files || []);
-  const agent = inferAgent(pr, paths);
+  const routingHint = identity.routingHint(pr);
+  const provenance = identity.provenance(pr);
   const flags = {
     control: paths.some(path => matches(path, CONTROL_PATHS)),
     canon: paths.some(path => matches(path, CANON_PATHS)),
@@ -81,9 +71,9 @@ function reviewPlan({pr, files}) {
 
   let tier = 1;
   const reasons = [];
-  if (agent === 'handoff') {
+  if (routingHint.hint === 'handoff') {
     tier = 3;
-    reasons.push('handoff ownership requires independent review on both sides');
+    reasons.push('routing hint requests handoff; routing metadata may only increase review');
   }
   if (flags.control) {
     tier = 3;
@@ -105,24 +95,30 @@ function reviewPlan({pr, files}) {
   }
   if (!reasons.length) reasons.push('tests, validators, smoke harnesses, implementation notes, or other non-player-facing changes only');
 
-  const reviewers = [];
+  const required = new Set();
   if (tier >= 2) {
-    if (agent === 'codex') reviewers.push('claude');
-    else if (agent === 'claude') reviewers.push('codex');
-    else if (agent === 'handoff') reviewers.push('codex', 'claude');
-    else if (agent === 'human') {
-      if (flags.logic || flags.control || flags.canon || flags.engine) reviewers.push('codex');
-      if (flags.presentation) reviewers.push('claude');
+    if (flags.logic || flags.control || flags.canon || flags.engine) required.add('codex');
+    if (flags.presentation) required.add('claude');
+
+    // Routing hints are never trusted identity. They may only add an
+    // independent counterpart review, never remove the path specialist.
+    if (routingHint.hint === 'handoff') {
+      required.add('codex');
+      required.add('claude');
+    } else if (routingHint.hint === 'codex' && required.has('codex')) {
+      required.add('claude');
+    } else if (routingHint.hint === 'claude' && required.has('claude')) {
+      required.add('codex');
     }
   }
 
-  return {tier, name: TIER_NAMES[tier], agent, reviewers: [...new Set(reviewers)], reasons, paths, flags};
+  const reviewers = ['codex', 'claude'].filter(name => required.has(name));
+  return {tier, name: TIER_NAMES[tier], reviewers, reasons, paths, flags, routingHint, provenance};
 }
 
 function labelNames(labels) {
   return (labels || []).map(label => typeof label === 'string' ? label : label.name);
 }
-
 async function removeLabel(github, repo, number, name) {
   try {
     await github.rest.issues.removeLabel({...repo, issue_number: number, name});
@@ -130,7 +126,6 @@ async function removeLabel(github, repo, number, name) {
     if (error.status !== 404) throw error;
   }
 }
-
 async function syncReviewLabels(github, repo, number, current, reviewers) {
   const wanted = reviewers.map(reviewer => REVIEW_REQUESTS[reviewer].label);
   for (const label of ['needs:codex-review', 'needs:claude-review']) {
@@ -139,12 +134,10 @@ async function syncReviewLabels(github, repo, number, current, reviewers) {
   const missing = wanted.filter(label => !labelNames(current).includes(label));
   if (missing.length) await github.rest.issues.addLabels({...repo, issue_number: number, labels: missing});
 }
-
 async function writerPermission(github, repo, actor) {
   const {data} = await github.rest.repos.getCollaboratorPermissionLevel({...repo, username: actor});
   return ['admin', 'maintain', 'write'].includes(data.permission);
 }
-
 async function loadPlan({github, context, core}) {
   const repo = context.repo;
   const number = context.payload.pull_request.number;
@@ -156,10 +149,9 @@ async function loadPlan({github, context, core}) {
   const files = await github.paginate(github.rest.pulls.listFiles, {...repo, pull_number: number, per_page: 100});
   if (files.length >= 3000) throw new Error('PR file list may be truncated; review manually.');
   const plan = reviewPlan({pr, files});
-  core.info(plan.name + ': ' + plan.reasons.join('; '));
+  core.info(plan.name + ': ' + plan.reasons.join('; ') + '; provenance=' + plan.provenance.kind + '; routing=' + plan.routingHint.hint);
   return {repo, number, pr, files, plan};
 }
-
 async function prepareCrossReview({github, context, core}) {
   const loaded = await loadPlan({github, context, core});
   if (!loaded.plan) return {run: false, plan: null};
@@ -171,7 +163,6 @@ async function prepareCrossReview({github, context, core}) {
   }
   return {run: true, plan: loaded.plan};
 }
-
 async function runCrossReview({github, context, core}) {
   const {repo, number, pr, plan} = await loadPlan({github, context, core});
   if (!plan) return {run: false, plan: null};
@@ -221,7 +212,6 @@ module.exports = {
   isUi,
   isAsset,
   isPresentation,
-  inferAgent,
   reviewPlan,
   prepareCrossReview,
   runCrossReview

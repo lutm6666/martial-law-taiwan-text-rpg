@@ -37,7 +37,13 @@ async function prepare({github, context, core}) {
   const snapshot = JSON.stringify({
     number,
     sha: pr.head.sha,
-    review: {tier: plan.tier, name: plan.name, reasons: plan.reasons, agent: plan.agent},
+    review: {
+      tier: plan.tier,
+      name: plan.name,
+      reasons: plan.reasons,
+      routing_hint: plan.routingHint,
+      provenance: plan.provenance,
+    },
     files: files.map(f => ({filename: f.filename, previous_filename: f.previous_filename, status: f.status, patch: f.patch || null}))
   });
   if (snapshot.length > 150000) throw new Error('PR exceeds review snapshot limit; split or review manually.');
