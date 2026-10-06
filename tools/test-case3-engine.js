@@ -223,8 +223,20 @@ function saveIsolation(){
  assert(storage[C.saveKey],'Case 3 save missing');
 }
 
+function unknownActionDoesNotMutateState(){
+ let s=opening(E.fresh('unknown-action'));
+ let before=JSON.stringify(s);
+ let r=E.runAction(s,'not-a-real-action');
+ assert.strictEqual(r.ok,false,'unknown action should be rejected');
+ assert.strictEqual(r.reason,'unknown_action','unknown action should report its reason');
+ assert.strictEqual(r.state,s,'unknown action should return the original state');
+ assert.strictEqual(JSON.stringify(s),before,'unknown action should not mutate state');
+}
+
+
+
 const results=[];
-[['route A',routeA],['route B',routeB],['route C',routeC],['negative gates',negativeChecks],['narrative state',narrativeState],['deduction correct',deductionCorrect],['deduction error endings',deductionErrorEndings],['deduction tie break',deductionTieBreak],['deduction ignores withdrawn hypothesis',deductionIgnoresWithdrawnHypothesis],['deduction rejects unknown option',deductionRejectsUnknownOption],['deduction save repair',deductionSaveRepair],['save isolation',saveIsolation]].forEach(([name,fn])=>{
+[['route A',routeA],['route B',routeB],['route C',routeC],['negative gates',negativeChecks],['unknown action is rejected without state changes',unknownActionDoesNotMutateState],['narrative state',narrativeState],['deduction correct',deductionCorrect],['deduction error endings',deductionErrorEndings],['deduction tie break',deductionTieBreak],['deduction ignores withdrawn hypothesis',deductionIgnoresWithdrawnHypothesis],['deduction rejects unknown option',deductionRejectsUnknownOption],['deduction save repair',deductionSaveRepair],['save isolation',saveIsolation]].forEach(([name,fn])=>{
  fn();results.push('PASS '+name);
 });
 console.log(results.join('\n'));
