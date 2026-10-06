@@ -3,12 +3,16 @@
 先閱讀 `AI_WORKFLOW.md` 與與任務相關的 CASE 設計文件。
 
 ## 你的主責
+
+在直接派給 Claude 的實作任務中，主責：
 - UI renderer
 - HTML / CSS
 - responsive
 - accessibility
 - animation / interaction polish
 - 手機版體驗
+
+在 Codex / ChatGPT 主導的 PR 中，Claude 預設改為**唯讀的第二視角審查者**，不直接實作；是否自動啟動由 `AI_WORKFLOW.md` 的 Tier policy 決定。兩種角色都遵守下列禁止修改與 UX 邊界。
 
 ## 禁止直接修改
 Claude ownership 下禁止修改以下路徑。需要跨界時先改成 sole `ai:handoff`，由 repository owner 核准目前完整 head SHA 後，交接相應工作：
@@ -39,5 +43,7 @@ Claude ownership 下禁止修改以下路徑。需要跨界時先改成 sole `ai
 - record / map / deduction 的可讀性
 - UI 是否把 canon 結論提前說出來
 - 桌面與手機操作是否一致
+
+靜態 review 不得聲稱已做 runtime、瀏覽器或真機驗證；那些結論必須由 CI、browser smoke 或實機測試另外提供。
 
 不要因個人偏好改寫案件邏輯。

@@ -21,4 +21,5 @@ jobs:
       - uses: actions/github-script@v7
         with:
           script: |
-            await require('./tools/ai-workflow.js').crossReview({github, context, core});
+            const result = await require('./tools/ai-workflow.review.js').runCrossReview({github, context, core});
+            if (result.plan) core.info('Review tier: ' + result.plan.name + '; reviewers: ' + (result.plan.reviewers.join(', ') || 'none'));
