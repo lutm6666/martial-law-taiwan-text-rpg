@@ -47,7 +47,7 @@ jobs:
           TRUSTED_BASE_SHA: ${{ steps.base.outputs.sha }}
         with:
           script: |
-            await require('./trusted/tools/ai-path-guard-runtime.js').runGuard({
+            await require('./trusted/tools/ai-path-guard.runtime.js').runGuard({
               github, context, core, number: Number(process.env.PR_NUMBER),
               expectedBaseSha: process.env.TRUSTED_BASE_SHA
             });
