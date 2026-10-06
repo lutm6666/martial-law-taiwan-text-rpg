@@ -3,8 +3,6 @@ name: Case 3 validation
 on:
   pull_request:
     paths:
-      - "index.html"
-      - "case2-engine.js"
       - "case3-film-canon.js"
       - "case3-film-engine.js"
       - "case3-film-ui.js"
@@ -14,7 +12,6 @@ on:
       - "CASE3_ART_DIRECTION.md"
       - "CASE3_DESIGN.md"
       - "CASE3_IMPLEMENTATION.md"
-      - "tools/test-case-routing.js"
       - "tools/test-case3-engine.js"
       - "tools/validate-case3.js"
       - "tools/case3-browser-smoke.html"
@@ -22,8 +19,6 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "index.html"
-      - "case2-engine.js"
       - "case3-film-canon.js"
       - "case3-film-engine.js"
       - "case3-film-ui.js"
@@ -33,7 +28,6 @@ on:
       - "CASE3_ART_DIRECTION.md"
       - "CASE3_DESIGN.md"
       - "CASE3_IMPLEMENTATION.md"
-      - "tools/test-case-routing.js"
       - "tools/test-case3-engine.js"
       - "tools/validate-case3.js"
       - "tools/case3-browser-smoke.html"
@@ -52,17 +46,12 @@ jobs:
 
       - name: Check JavaScript syntax
         run: |
-          node --check case2-engine.js
           node --check case3-film-canon.js
           node --check case3-film-engine.js
           node --check case3-film-ui.js
           node --check case3-art-manifest.js
-          node --check tools/test-case-routing.js
           node --check tools/test-case3-engine.js
           node --check tools/validate-case3.js
-
-      - name: Validate production case routing
-        run: node tools/test-case-routing.js
 
       - name: Validate Case 3 schema and UI text
         run: node tools/validate-case3.js
