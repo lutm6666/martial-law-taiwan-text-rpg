@@ -109,13 +109,20 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
 
   const humanAsset = makePr('codex', {labels: [], head: {sha, ref: 'feature/art', repo: {full_name: 'owner/repo'}}});
   p = policy.reviewPlan({pr: humanAsset, files: [file('assets/case3/evidence/e01-contact-sheet.webp')]});
+  assert.equal(p.agent, 'human');
   assert.equal(p.tier, 2);
   assert.deepEqual(p.reviewers, ['claude']);
 
   const humanUi = makePr('codex', {labels: [], head: {sha, ref: 'feature/ui', repo: {full_name: 'owner/repo'}}});
   p = policy.reviewPlan({pr: humanUi, files: [file('ui/renderer.js')]});
-  assert.equal(p.agent, 'claude');
+  assert.equal(p.agent, 'human');
   assert.equal(p.tier, 2);
+  assert.deepEqual(p.reviewers, ['claude']);
+
+  const humanLogic = makePr('codex', {labels: [], head: {sha, ref: 'feature/logic', repo: {full_name: 'owner/repo'}}});
+  p = policy.reviewPlan({pr: humanLogic, files: [file('case3-film-engine.js')]});
+  assert.equal(p.agent, 'human');
+  assert.equal(p.tier, 3);
   assert.deepEqual(p.reviewers, ['codex']);
 
   const humanLogicAsset = makePr('codex', {labels: [], head: {sha, ref: 'feature/art-logic', repo: {full_name: 'owner/repo'}}});
@@ -175,6 +182,12 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
   assert(m.pr.labels.some(label => label.name === 'needs:claude-review'), 'human asset request and receiver routing must agree');
   assert(m.comments[0].body.includes('cross-review:v2:claude:' + sha));
 
+  m = mock({pr: humanUi, files: [file('ui/renderer.js')]});
+  routed = await policy.runCrossReview(m);
+  assert.deepEqual(routed.plan.reviewers, ['claude']);
+  assert(m.pr.labels.some(label => label.name === 'needs:claude-review'), 'human UI should receive the UI specialist review');
+  assert(m.comments[0].body.includes('cross-review:v2:claude:' + sha));
+
   m = mock({pr: makePr('handoff'), files: [file('assets/case3/evidence/e01-contact-sheet.webp')]});
   routed = await policy.runCrossReview(m);
   assert.deepEqual(routed.plan.reviewers, ['codex', 'claude']);
@@ -199,6 +212,10 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
     assert.equal(m.outputs.tier, '2');
     const snapshot = JSON.parse(fs.readFileSync(path.join(temp, 'claude-review-input.json'), 'utf8'));
     assert.equal(snapshot.review.tier, 2);
+
+    m = mock({pr: humanUi, files: [file('ui/renderer.js')]});
+    await receiver.prepare(m);
+    assert.equal(m.outputs.run, 'true', 'human UI should invoke Claude specialist review');
 
     m = mock({files: [file('tools/case3-browser-smoke.html')]});
     m.context.eventName = 'issue_comment';
