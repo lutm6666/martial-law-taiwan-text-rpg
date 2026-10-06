@@ -30,12 +30,14 @@ jobs:
           node --check tools/test-ai-workflow.owner-approval.js
           node --check tools/test-ai-workflow.guard-contract.js
           node --check tools/test-ai-workflow.review.js
+          node --check tools/test-ai-workflow.workflow-contract.js
           node --check tools/ai-orchestrator.js
           node --check tools/test-ai-orchestrator.js
           node tools/test-ai-workflow.js
           node --test tools/test-ai-workflow.owner-approval.js
           node tools/test-ai-workflow.guard-contract.js
           node tools/test-ai-workflow.review.js
+          node tools/test-ai-workflow.workflow-contract.js
           node tools/test-ai-orchestrator.js
           node tools/ai-orchestrator.js validate .ai/orchestration.example.json
 
