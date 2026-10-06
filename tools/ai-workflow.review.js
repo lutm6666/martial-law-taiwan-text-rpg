@@ -5,7 +5,7 @@ const {classifyPr, changedPaths} = require('./ai-workflow');
 const CONTROL_PATHS = [
   /^\.github\/workflows\//,
   /^\.github\/CODEOWNERS$/,
-  /^tools\/(ai-workflow|ai-path-guard|ai-orchestrator|test-ai-workflow|test-ai-orchestrator)\./,
+  /^tools\/(ai-workflow|claude-review|ai-path-guard|ai-orchestrator|test-ai-workflow|test-ai-orchestrator)\./,
   /^(AI_WORKFLOW|AI_ORCHESTRATION|AGENTS|CLAUDE)\.md$/
 ];
 const CANON_PATHS = [/^case.*-canon\.js$/, /^CASE.*_DESIGN\.md$/];
@@ -17,6 +17,7 @@ const LOGIC_PATHS = [
   /^tools\/(test-|validate-)/
 ];
 const UI_PATHS = [/^index\.html$/, /^case.*-ui\.js$/, /\.(css|scss)$/i, /^assets\/.*\.html$/];
+const ASSET_PATHS = [/^assets\/.*\.(png|jpe?g|webp|gif|svg|avif)$/i];
 const TIER_NAMES = {
   1: 'Tier 1 / local validation',
   2: 'Tier 2 / counterpart review',
@@ -43,7 +44,8 @@ function reviewPlan({pr, files}) {
     canon: paths.some(path => matches(path, CANON_PATHS)),
     engine: paths.some(path => matches(path, ENGINE_PATHS)),
     logic: paths.some(path => matches(path, LOGIC_PATHS)),
-    ui: paths.some(path => matches(path, UI_PATHS))
+    ui: paths.some(path => matches(path, UI_PATHS)),
+    asset: paths.some(path => matches(path, ASSET_PATHS))
   };
 
   let tier = 1;
@@ -64,9 +66,11 @@ function reviewPlan({pr, files}) {
     tier = 3;
     reasons.push('logic and player-facing UI changed together');
   }
-  if (tier < 2 && flags.ui) {
+  if (tier < 2 && (flags.ui || flags.asset)) {
     tier = 2;
-    reasons.push('player-facing UI, responsive, accessibility, or presentation changed');
+    reasons.push(flags.asset && !flags.ui
+      ? 'player-facing visual assets changed'
+      : 'player-facing UI, responsive, accessibility, or presentation changed');
   }
   if (!reasons.length) reasons.push('tests, validators, smoke harnesses, implementation notes, or other non-player-facing changes only');
 
@@ -75,6 +79,7 @@ function reviewPlan({pr, files}) {
     if (agent === 'codex') reviewers.push('claude');
     else if (agent === 'claude') reviewers.push('codex');
     else if (agent === 'handoff') reviewers.push('codex', 'claude');
+    else if (agent === 'human' && (flags.ui || flags.asset)) reviewers.push('claude');
   }
 
   return {tier, name: TIER_NAMES[tier], agent, reviewers, reasons, paths, flags};
@@ -110,4 +115,4 @@ async function prepareCrossReview({github, context, core}) {
   return {run: true, plan};
 }
 
-module.exports = {CONTROL_PATHS, CANON_PATHS, ENGINE_PATHS, LOGIC_PATHS, UI_PATHS, TIER_NAMES, inferAgent, reviewPlan, prepareCrossReview};
+module.exports = {CONTROL_PATHS, CANON_PATHS, ENGINE_PATHS, LOGIC_PATHS, UI_PATHS, ASSET_PATHS, TIER_NAMES, inferAgent, reviewPlan, prepareCrossReview};
