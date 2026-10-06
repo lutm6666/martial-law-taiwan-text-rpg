@@ -59,6 +59,7 @@ for (const filename of [
   'tools/ai-workflow.identity.js',
   'tools/ai-path-guard.approval.js',
   'tools/ai-path-guard.runtime.js',
+  'tools/test-ai-workflow.owner-approval.js',
   'tools/test-ai-workflow.review.js',
   'tools/test-ai-workflow.guard-contract.js',
 ]) {
