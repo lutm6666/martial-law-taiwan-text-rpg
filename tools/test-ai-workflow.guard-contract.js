@@ -1,12 +1,25 @@
 'use strict';
 
 const fs = require('node:fs');
+const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const runtime = require('./ai-path-guard.runtime.js');
 
 const workflow = fs.readFileSync('.github/workflows/ai-path-guard.yml', 'utf8');
 const runtimeSource = fs.readFileSync('tools/ai-path-guard.runtime.js', 'utf8');
 
+assert.match(workflow, /pull_request_target:/,
+  'production guard must remain pull_request_target based on trusted base policy');
+assert.match(workflow, /checks: write/,
+  'production guard needs checks: write for the enforced head check');
+assert.match(workflow, /actions: write/,
+  'production guard needs actions: write for native guard reruns after owner approval');
+assert.match(workflow, /path: trusted/,
+  'production guard must checkout the trusted base into the trusted path');
+assert.doesNotMatch(workflow, /head\.sha\s*}}/,
+  'production guard must not checkout the untrusted PR head');
+assert.match(workflow, /^  guard:/m,
+  'required native guard job name must remain stable');
 assert.match(workflow, /trusted\/tools\/ai-path-guard\.runtime\.js/,
   'production guard workflow must load the hardened trusted-base runtime');
 assert.doesNotMatch(workflow, /trusted\/tools\/ai-workflow\.js'\)\.runGuard/,
@@ -19,6 +32,12 @@ assert.match(runtimeSource, /ai-workflow\.identity\.js/,
   'production runtime must report provenance and routing separately');
 assert.match(runtimeSource, /ai-path-guard\.approval\.js/,
   'production runtime must keep the hardened owner approval helper');
+
+const scripts = [...workflow.matchAll(/          script: \|\n((?:            .*\n|\n)+)/g)];
+assert(scripts.length > 0, 'guard workflow must contain github-script code to validate');
+for (const match of scripts) {
+  new vm.Script('(async function(){\n' + match[1].replace(/^            /gm, '') + '\n})');
+}
 
 const sha = 'a'.repeat(40);
 const headSeenAt = '2026-10-06T01:00:00Z';
@@ -39,8 +58,6 @@ const approvalComment = {
   body: '/ai approve-handoff ' + sha,
 };
 
-// Ordinary code/UI/handoff routing no longer asks the owner merely because a
-// mutable label claims a particular agent. Security policy is path based.
 for (const scenario of [
   {pr: makePr({label: 'ai:codex'}), files: [file('case3-film-ui.js')]},
   {pr: makePr({label: 'ai:claude', ref: 'claude/test'}), files: [file('case3-film-engine.js')]},
@@ -87,4 +104,4 @@ for (const filename of [
   assert.equal(result.routingHint.hint, 'claude');
 }
 
-console.log('PASS production guard uses path security with separate provenance/routing');
+console.log('PASS production guard uses trusted-base path security with separate provenance/routing');
