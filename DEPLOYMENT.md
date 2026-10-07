@@ -26,10 +26,11 @@ index.html + 正式 JavaScript + 正式圖片
 2. 設定 GitHub Pages。
 3. 用 Node.js 語法檢查正式 JavaScript。
 4. 執行 `tools/verify-javascript.js`，確認 `index.html` 直接載入的腳本可解析。
-5. 確認第一案與第二案正式圖片數量。
+5. 確認第一案與第二案正式圖片數量，並檢查第三案 manifest 的資產路徑。
 6. 建立乾淨的 `_site`。
-7. 只複製正式入口、正式引擎與正式圖片。
-8. 將 `_site` 上傳為 Pages artifact 並部署。
+7. 只複製正式入口、三案正式引擎與正式圖片。
+8. 驗證 `_site` 包含案件選擇所需的腳本與第三案所有 ready 資產。
+9. 將 `_site` 上傳為 Pages artifact 並部署。
 
 ## 目前會發布的檔案
 
@@ -41,9 +42,13 @@ _site/
 ├─ case2-engine.js
 ├─ case2-rain-canon.js
 ├─ case2-rain-canon-engine.js
-├─ start-screen-hotfix.js
+├─ case3-film-canon.js
+├─ case3-art-manifest.js
+├─ case3-film-engine.js
+├─ case3-film-ui.js
 └─ assets/
    ├─ case1/
+   ├─ case3/
    └─ v2/
       └─ canon/
 ```

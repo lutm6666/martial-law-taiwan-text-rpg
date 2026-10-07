@@ -10,6 +10,8 @@ function assert(ok,msg){if(!ok)throw new Error(msg)}
 
 const index=read('index.html');
 const router=read('case2-engine.js');
+const pages=read('.github/workflows/pages.yml');
+const site=process.argv.includes('--site')?path.join(root,'_site'):root;
 
 assert(index.includes('<script src="case1-unified-engine.js?v=12"></script>'),'index must still load Case 1 runtime');
 assert(index.includes('<script src="case2-engine.js?v=38"></script>'),'index must still load production case router');
@@ -33,6 +35,15 @@ for(const asset of ordered){
  last=pos;
 }
 
+for(const file of ['index.html','case1-unified-engine.js','case2-engine.js','case2-rain-canon.js','case2-rain-canon-engine.js',
+                    'case3-film-canon.js','case3-art-manifest.js','case3-film-engine.js','case3-film-ui.js']){
+ assert(fs.existsSync(path.join(site,file)),'missing production runtime: '+file);
+}
+for(const file of ['case3-film-canon.js','case3-art-manifest.js','case3-film-engine.js','case3-film-ui.js']){
+ assert(pages.includes('cp '+file+' _site/'),'Pages workflow must publish '+file);
+}
+assert(pages.includes('cp -R assets/case3 _site/assets/case3'),'Pages workflow must publish Case 3 artwork');
+
 const sandbox={window:{}};
 vm.createContext(sandbox);
 vm.runInContext(read('case3-art-manifest.js'),sandbox,{filename:'case3-art-manifest.js'});
@@ -41,7 +52,7 @@ assert(manifest,'Case 3 art manifest must initialize');
 for(const group of ['scenes','frames','evidence']){
  for(const [id,item] of Object.entries(manifest[group]||{})){
   assert(item.status==='ready',group+' '+id+' must be ready before production routing');
-  assert(item.path&&fs.existsSync(path.join(root,item.path)),group+' '+id+' missing production asset: '+item.path);
+  assert(item.path&&fs.existsSync(path.join(site,item.path)),group+' '+id+' missing production asset: '+item.path);
  }
 }
 

@@ -53,6 +53,7 @@ jobs:
           node --check case2-rain-canon.js
           node --check case2-rain-canon-engine.js
           node tools/verify-javascript.js
+          node tools/test-case-routing.js
 
       - name: Verify canonical assets
         run: |

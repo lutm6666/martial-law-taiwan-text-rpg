@@ -8,7 +8,7 @@
 
 - 第一案〈失落的三頁〉：追查三頁訪談筆記如何從茶行、印刷行、市場一路流到舊書攤。
 - 第二案〈雨夜敲門〉：調查 201 號房的雨夜敲門、前租客許月琴的紀錄，以及許秋蘭尋找姐姐遺物的過程。
-- 第三案〈第十三張底片〉：Canon 骨架已建立，將以底片、接觸印樣、取景位置與影格順序作為核心推理；目前尚未接入正式遊戲。
+- 第三案〈第十三張底片〉：已接入案件選擇與第二案正確結局後的入口，以底片、接觸印樣、取景位置與影格順序作為核心推理。
 - 第二案最終推理共 6 題，依序檢驗人物辨認、時間線、現場痕跡、物品保管鏈、未拆封信件與失蹤原因的證據邊界。
 - 以物證、證詞、時間線與可驗證的現場資訊進行推理。
 - 第一案 7 張正式證物圖；第二案 12 張正式證物圖與 7 張正式場景圖。
@@ -27,7 +27,11 @@ index.html
 ├─ case1-unified-engine.js
 ├─ case2-engine.js
 │  ├─ case2-rain-canon.js        （案件二需要時載入）
-│  └─ case2-rain-canon-engine.js （案件二需要時載入）
+│  ├─ case2-rain-canon-engine.js （案件二需要時載入）
+│  ├─ case3-film-canon.js        （案件三需要時載入）
+│  ├─ case3-art-manifest.js      （案件三需要時載入）
+│  ├─ case3-film-engine.js       （案件三需要時載入）
+│  └─ case3-film-ui.js           （案件三需要時載入）
 ```
 
 正式圖片資源：
@@ -35,6 +39,7 @@ index.html
 ```text
 assets/case1/
 assets/v2/canon/
+assets/case3/
 ```
 
 其中第一案證物使用 `assets/case1/evidence01.png` ～ `evidence07.png`；第二案 Canon 圖片集中在 `assets/v2/canon/`。
