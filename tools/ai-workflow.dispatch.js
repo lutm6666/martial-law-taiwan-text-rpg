@@ -235,16 +235,16 @@ async function dispatch({github, context, core}) {
   if (!Number.isSafeInteger(number) || number < 1) throw new Error('Issue event is missing a valid number.');
   const action = context.payload.action;
   const retry = action === 'labeled' && context.payload.label?.name === 'dispatch:retry';
-  if (!['opened', 'reopened', 'edited', 'closed'].includes(action) && !retry) return {run: false};
+  if (!['opened', 'reopened', 'edited', 'closed', 'labeled'].includes(action)) return {run: false};
 
   const {data: issue} = await github.rest.issues.get({...repo, issue_number: number});
-  if (action === 'closed') {
-    if (issue.state !== 'closed' || issue.pull_request) return {run: false};
+  if (issue.state === 'closed' && !issue.pull_request) {
     const workPr = await openPrForIssue(github, repo, number);
     if (workPr) await github.rest.pulls.update({...repo, pull_number: workPr.number, state: 'closed'});
     core.info(`Source Issue #${number} closed; its managed work PR is no longer ready for merge.`);
     return {run: false};
   }
+  if (action === 'closed' || (action === 'labeled' && !retry)) return {run: false};
   if (issue.state !== 'open' || issue.pull_request) return {run: false};
   const {data: repository} = await github.rest.repos.get(repo);
   if (repository.default_branch !== 'main') throw new Error('The dispatch contract requires main as the default branch.');

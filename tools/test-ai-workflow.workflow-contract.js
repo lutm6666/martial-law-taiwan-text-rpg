@@ -53,8 +53,8 @@ const publisherJob = job('publish');
 
 assert.match(dispatch, /types: \[opened, reopened, edited, closed, labeled\]/,
   'opening or reopening an Issue must start automatic planning');
-assert.match(dispatchJob, /github\.event\.label\.name == 'dispatch:retry'/,
-  'only the explicit retry label may wake dispatch through labeled events');
+assert.doesNotMatch(dispatchJob, /if: github\.event\.action != 'labeled'/,
+  'all subscribed Issue events must reconcile closed sources despite pending-run replacement');
 assert.match(dispatchJob, /ref: \$\{\{ github\.sha \}\}[\s\S]*?persist-credentials: false/,
   'Issue dispatch must execute only the trusted default-branch code');
 assert.match(dispatchJob, /ai-workflow\.dispatch\.js'\)\.dispatch/,
@@ -69,6 +69,10 @@ assert.match(dispatchJob, /vars\.AI_DISPATCH_APP_CLIENT_ID/);
 assert.match(dispatchJob, /secrets\.AI_DISPATCH_APP_PRIVATE_KEY/);
 assert.match(dispatchJob, /actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/,
   'dispatch must use the pinned GitHub App token action');
+assert.match(dispatchJob, /client-id: \$\{\{ vars\.AI_DISPATCH_APP_CLIENT_ID \}\}/,
+  'the pinned v3 App token action accepts the App client ID');
+assert.doesNotMatch(dispatch, /\bapp-id:/,
+  'the pinned v3 action deprecates its numeric app-id input');
 for (const permission of ['contents', 'pull-requests', 'issues']) {
   assert.match(dispatchJob, new RegExp('permission-' + permission + ': write'),
     'the dispatch App token needs scoped ' + permission + ' write access');
