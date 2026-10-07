@@ -14,11 +14,16 @@ async function prepare({github, context, core}) {
   const number = manual ? context.payload.issue.number : context.payload.pull_request.number;
   if (manual && (!context.payload.issue.pull_request || context.payload.comment.user.type !== 'User' || !/^@claude review\s*$/.test(context.payload.comment.body.trim()))) return;
 
-  const {data: permission} = await github.rest.repos.getCollaboratorPermissionLevel({...context.repo, username: context.actor});
-  if (!['admin', 'maintain', 'write'].includes(permission.permission)) throw new Error('Claude review requires a repository writer.');
+  // Manual review requests remain writer-only. Automatic pull_request_target
+  // reviews are safe for fork PRs because this workflow checks out only the
+  // trusted default branch and reads the untrusted PR solely through API data.
+  if (manual) {
+    const {data: permission} = await github.rest.repos.getCollaboratorPermissionLevel({...context.repo, username: context.actor});
+    if (!['admin', 'maintain', 'write'].includes(permission.permission)) throw new Error('Manual Claude review requires a repository writer.');
+  }
 
   const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number: number});
-  if (pr.state !== 'open' || pr.draft || pr.head.repo?.full_name !== repoName(context)) return;
+  if (pr.state !== 'open' || pr.draft) return;
   if (pr.base.ref !== context.payload.repository.default_branch) throw new Error('Claude receiver only reviews PRs targeting the default branch.');
 
   const files = await github.paginate(github.rest.pulls.listFiles, {...context.repo, pull_number: number, per_page: 100});

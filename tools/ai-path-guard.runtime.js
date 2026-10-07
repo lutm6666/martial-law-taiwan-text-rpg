@@ -12,6 +12,8 @@ function matches(file, rules) {
 }
 
 function evaluateGuardPolicy({pr, files, comments = [], reviews = [], owner, headSeenAt}) {
+  if ((files || []).length >= 3000) throw new Error('PR file list may be truncated at GitHub\'s 3000-file API limit; split the PR or review manually.');
+
   const paths = basePolicy.changedPaths(files || []);
   const controlPaths = paths.filter(path => matches(path, reviewPolicy.CONTROL_PATHS));
   const routingHint = identity.routingHint(pr);
@@ -87,6 +89,7 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
     if (pr.base.sha !== expectedBaseSha) throw new Error('Base changed during checkout; retry to load the current trusted policy.');
 
     const files = await github.paginate(github.rest.pulls.listFiles, {...repo, pull_number: number, per_page: 100});
+    if (files.length >= 3000) throw new Error('PR file list may be truncated at GitHub\'s 3000-file API limit; split the PR or review manually.');
     rawComments = await commentsFor(github, repo, number);
     rawReviews = await reviewsFor(github, repo, number);
 

@@ -84,6 +84,19 @@ const codexCompletion = {
   commit_id: sha,
 };
 
+assert.throws(
+  () => runtime.evaluateGuardPolicy({
+    pr: makePr(),
+    files: Array.from({length: 3000}, (_, i) => file('bulk/file-' + i + '.txt')),
+    comments: [],
+    reviews: [],
+    owner,
+    headSeenAt,
+  }),
+  /3000-file API limit/,
+  'a potentially truncated GitHub file list must fail closed before tier classification'
+);
+
 for (const scenario of [
   {pr: makePr({label: 'ai:codex'}), files: [file('case3-film-ui.js')]},
   {pr: makePr({label: 'ai:claude', ref: 'claude/test'}), files: [file('case3-film-engine.js')]},
@@ -120,6 +133,7 @@ for (const filename of [
   'tools/test-ai-workflow.owner-approval.js',
   'tools/test-ai-workflow.review.js',
   'tools/test-ai-workflow.review-completion.js',
+  'tools/test-ai-workflow.claude-review.js',
   'tools/test-ai-workflow.guard-contract.js',
 ]) {
   assert.throws(
@@ -149,4 +163,4 @@ for (const filename of [
   assert.equal(result.routingHint.hint, 'claude');
 }
 
-console.log('PASS production guard enforces trusted-base path security, exact-head AI completion, and separate owner approval');
+console.log('PASS production guard enforces trusted-base path security, exact-head AI completion, file-list fail-closed, and separate owner approval');
