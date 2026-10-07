@@ -65,10 +65,12 @@ assert.match(dispatchJob, /vars\.AI_DISPATCH_APP_CLIENT_ID/);
 assert.match(dispatchJob, /secrets\.AI_DISPATCH_APP_PRIVATE_KEY/);
 assert.match(dispatchJob, /actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/,
   'dispatch must use the pinned GitHub App token action');
-for (const permission of ['contents', 'pull-requests', 'issues', 'workflows']) {
+for (const permission of ['contents', 'pull-requests', 'issues']) {
   assert.match(dispatchJob, new RegExp('permission-' + permission + ': write'),
     'the dispatch App token needs scoped ' + permission + ' write access');
 }
+assert.doesNotMatch(dispatch, /permission-workflows: write/,
+  'untrusted model patches must not be publishable into executable Actions workflows');
 assert.match(dispatchJob, /github-token: \$\{\{ steps\.app-token\.outputs\.token \}\}/,
   'branch and PR mutations must use the App token so downstream PR events run');
 
@@ -118,6 +120,15 @@ assert.match(publisherJob, /ai-workflow\.publish\.js'\)\.publish/,
   'publication must go through the trusted patch validator');
 assert.match(publisherJob, /github-token: \$\{\{ steps\.app-token\.outputs\.token \}\}/,
   'publisher mutations must use the GitHub App token');
+assert.match(publisherJob, /EXPECTED_DIGEST: \$\{\{ needs\.dispatch\.outputs\.digest \}\}/,
+  'publisher must receive the Issue digest from the trusted dispatch job');
+assert.match(publisherJob, /expectedDigest: process\.env\.EXPECTED_DIGEST/,
+  'publisher must recheck the source Issue before publication');
+const publisherRuntime = fs.readFileSync('tools/ai-workflow.publish.js', 'utf8');
+assert.match(publisherRuntime, /assertFreshSource\(github, repo, issueNumber, branch, agent, expectedDigest\)/,
+  'publisher must recheck the live Issue and routing plan');
+assert.match(publisherRuntime, /\^\\\.github\\\/\(\?:workflows\|actions\)\\\//,
+  'publisher must refuse model-generated executable Actions files');
 assert.doesNotMatch(dispatch, /git push (?:origin )?main|\/ai approve-handoff [0-9a-f]{40}/,
   'Issue automation may neither push main nor impersonate owner approval');
 

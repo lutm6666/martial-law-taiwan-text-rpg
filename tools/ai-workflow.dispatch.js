@@ -143,6 +143,16 @@ async function maybeFile(github, repo, path, branch) {
   }
 }
 
+function planDigestFrom(file) {
+  if (!file?.content) return null;
+  try {
+    const plan = JSON.parse(Buffer.from(file.content.replace(/\s/g, ''), 'base64').toString('utf8'));
+    return /^[0-9a-f]{64}$/.test(plan.title_body_sha256) ? plan.title_body_sha256 : null;
+  } catch {
+    return null;
+  }
+}
+
 async function ensurePlanFile(github, repo, branch, issue, route) {
   const path = `.ai/dispatch/issue-${issue.number}.json`;
   const wanted = planFile(issue, route, branch);
@@ -247,6 +257,23 @@ async function dispatch({github, context, core}) {
   let reopen = null;
   if (pr) {
     branch = pr.head.ref;
+    if (!pr.draft) {
+      const currentPlan = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, branch);
+      if (planDigestFrom(currentPlan) !== issueDigest(issue)) {
+        if (!pr.node_id) throw new Error('Ready PR is missing its GitHub node ID.');
+        const result = await github.graphql(`
+          mutation($pullRequestId: ID!) {
+            convertPullRequestToDraft(input: {pullRequestId: $pullRequestId}) {
+              pullRequest { isDraft }
+            }
+          }
+        `, {pullRequestId: pr.node_id});
+        if (result?.convertPullRequestToDraft?.pullRequest?.isDraft !== true) {
+          throw new Error('Could not return stale work PR to draft.');
+        }
+        pr.draft = true;
+      }
+    }
   } else {
     const choice = await chooseBranch(github, repo, number, context.runId);
     branch = choice.branch;

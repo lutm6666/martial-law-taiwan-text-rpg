@@ -2,9 +2,10 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const {issueDigest} = require('./ai-workflow.dispatch');
 const {
   createPublisher, issueFromBranch, assertPrIdentity,
-  safeGitPath, diffHeaderPaths, validatePatch, parseStagedChanges,
+  safeGitPath, assertAutoPublishPath, diffHeaderPaths, validatePatch, parseStagedChanges,
 } = require('./ai-workflow.publish');
 
 const S = letter => letter.repeat(40);
@@ -22,7 +23,9 @@ function fixture({patch = PATCH, mutate} = {}) {
   const state = {
     main: S('a'), branch: S('b'), fetched: null, checkedOut: null,
     ready: false, calls: [], mergeCount: 0, getMainCount: 0,
+    issue: {number: 42, state: 'open', title: 'Implement this issue', body: 'Current scope'},
   };
+  state.planDigest = issueDigest(state.issue);
   const record = (kind, value) => { state.calls.push({kind, value}); mutate?.(kind, value, state); };
   const pull = () => ({
     number: PR, state: 'open', draft: true,
@@ -33,6 +36,13 @@ function fixture({patch = PATCH, mutate} = {}) {
   const github = {rest: {
     repos: {
       get: async () => ({data: {default_branch: 'main'}}),
+      getContent: async args => {
+        record('planGet', args);
+        assert.equal(args.path, '.ai/dispatch/issue-42.json');
+        assert.equal(args.ref, BRANCH);
+        const plan = {source_issue: 42, title_body_sha256: state.planDigest, routing: {primary: 'codex'}};
+        return {data: {type: 'file', content: Buffer.from(JSON.stringify(plan)).toString('base64')}};
+      },
       merge: async args => {
         assert.equal(args.base, BRANCH);
         assert.equal(args.head, state.main);
@@ -43,6 +53,13 @@ function fixture({patch = PATCH, mutate} = {}) {
       compareCommits: async args => {
         record('compare', args);
         return {data: {status: 'ahead'}};
+      },
+    },
+    issues: {
+      get: async args => {
+        record('issueGet', args);
+        assert.equal(args.issue_number, 42);
+        return {data: {...state.issue}};
       },
     },
     pulls: {
@@ -111,7 +128,8 @@ function fixture({patch = PATCH, mutate} = {}) {
   const publisher = createPublisher({git, files, pause: async () => {}});
   const args = {
     github, context: {repo: REPO}, core: {info: () => {}},
-    branch: BRANCH, pr: PR, agent: 'codex', patchPath: '/tmp/issue-implementation.patch',
+    branch: BRANCH, pr: PR, agent: 'codex', expectedDigest: state.planDigest,
+    patchPath: '/tmp/issue-implementation.patch',
   };
   return {state, github, git, publisher, args};
 }
@@ -144,6 +162,10 @@ test('patch paths fail closed on empty, traversal, or .git writes', () => {
   assert.throws(() => safeGitPath('C:\\secret'));
   assert.throws(() => parseStagedChanges(Buffer.alloc(0)));
   assert.throws(() => parseStagedChanges(Buffer.from('M\0.ai/dispatch/issue-42.json\0')));
+  assert.throws(() => assertAutoPublishPath('.github/workflows/project-ci.yml'), /owner-controlled publication/);
+  assert.throws(() => assertAutoPublishPath('.github/actions/local/action.yml'), /owner-controlled publication/);
+  assert.throws(() => validatePatch(Buffer.from('diff --git a/.github/workflows/new.yml b/.github/workflows/new.yml\n')));
+  assert.throws(() => parseStagedChanges(Buffer.from('A\0.github/workflows/new.yml\0')));
   assert.equal(validatePatch(PATCH), 1);
 });
 
@@ -177,8 +199,34 @@ test('publisher merges main, commits binary-safe staged content on work branch, 
   assert.ok(order.indexOf('merge') < order.indexOf('createCommit'));
   assert.ok(order.lastIndexOf('merge') > order.indexOf('updateRef'));
   assert.ok(order.indexOf('ready') > order.lastIndexOf('merge'));
+  assert.equal(order.filter(kind => kind === 'issueGet').length, 3);
   const apply = state.calls.find(call => call.kind === 'git' && call.value[0] === 'apply');
   assert.deepEqual(apply.value.slice(0, 3), ['apply', '--3way', '--index']);
+});
+
+test('Issue edit during model patch application cannot publish the commit', async () => {
+  const {publisher, args, state} = fixture({mutate: (kind, value, s) => {
+    if (kind === 'git' && value[0] === 'apply') s.issue.body = 'Changed scope';
+  }});
+  await assert.rejects(publisher(args), /Source Issue changed/i);
+  assert.equal(state.calls.some(call => call.kind === 'updateRef'), false);
+  assert.equal(state.ready, false);
+});
+
+test('Issue closure after commit publication keeps the PR draft', async () => {
+  const {publisher, args, state} = fixture({mutate: (kind, _value, s) => {
+    if (kind === 'updateRef') s.issue.state = 'closed';
+  }});
+  await assert.rejects(publisher(args), /Source Issue changed or closed/i);
+  assert.equal(state.calls.some(call => call.kind === 'updateRef'), true);
+  assert.equal(state.ready, false);
+});
+
+test('changed routing plan cannot publish stale model output', async () => {
+  const {publisher, args, state} = fixture();
+  state.planDigest = S('9');
+  await assert.rejects(publisher(args), /Routing plan changed/i);
+  assert.equal(state.calls.some(call => call.kind === 'merge'), false);
 });
 
 test('stale PR head fails before applying patch', async () => {

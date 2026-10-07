@@ -66,7 +66,7 @@ assets/v2/canon/
 
 required checks 使用 `project-validate`、`guard`；請求留言不代表 agent 已接收或完成 review。
 
-自動實作需先由 owner 設定 dispatch GitHub App 的 `AI_DISPATCH_APP_CLIENT_ID`（variable）與 `AI_DISPATCH_APP_PRIVATE_KEY`（secret），授予 App Contents、Pull requests、Issues、Workflows 的 write 權限，並依主責模型設定 `OPENAI_API_KEY` 或 `CLAUDE_CODE_OAUTH_TOKEN`。缺少憑證會停止對應階段；owner exact-SHA approval 仍只用於 control／governance 變更。
+自動實作需先由 owner 設定 dispatch GitHub App 的 `AI_DISPATCH_APP_CLIENT_ID`（variable）與 `AI_DISPATCH_APP_PRIVATE_KEY`（secret），授予 App Contents、Pull requests、Issues 的 write 權限，並依主責模型設定 `OPENAI_API_KEY` 或 `CLAUDE_CODE_OAUTH_TOKEN`。App 不授予 Workflows write；模型產生的 Actions workflow／local action 變更會停在 draft PR 與 patch artifact，待 owner 受控處理。缺少憑證會停止對應階段；owner exact-SHA approval 仍只用於 control／governance 變更。
 
 詳細角色、branch 命名、SHA 綁定的 owner 核准與接收端限制見 `AI_WORKFLOW.md`。Agent 專用規則分別位於 `CLAUDE.md` 與 `AGENTS.md`。
 

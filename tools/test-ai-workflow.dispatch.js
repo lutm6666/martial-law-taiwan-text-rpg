@@ -136,6 +136,7 @@ function harness(options = {}) {
           if (state.failPrCreate) throw apiError(503, 'PR creation unavailable');
           const pr = {
             number: 100 + prs.length,
+            node_id: `PR_${100 + prs.length}`,
             title: args.title,
             body: args.body,
             state: 'open',
@@ -156,6 +157,13 @@ function harness(options = {}) {
           return {data: pr};
         },
       },
+    },
+    graphql: async (_query, args) => {
+      record('graphql.convertToDraft', args);
+      const pr = prs.find(item => item.node_id === args.pullRequestId);
+      if (!pr) throw apiError(404, 'PR node missing');
+      pr.draft = true;
+      return {convertPullRequestToDraft: {pullRequest: {isDraft: true}}};
     },
     paginate: async (method, args) => {
       assert.equal(method, pullsList, 'dispatch may paginate only the mocked PR list');
@@ -313,6 +321,20 @@ test('existing PR and plan update when Issue text changes', async () => {
   assert.equal(callsNamed(mock, 'pulls.update').length, 1);
   assert.equal(callsNamed(mock, 'repos.createOrUpdateFileContents').length, 2);
   assert.match(mock.prs[0].body, /Improve responsive UI/);
+});
+
+test('editing the source Issue returns an already-ready work PR to draft before changing its plan', async () => {
+  const mock = harness();
+  await mock.run();
+  mock.prs[0].draft = false;
+  mock.issue.body = 'The engine task now also needs a save migration.';
+  mock.context.payload.action = 'edited';
+  const result = await mock.run();
+  assert.equal(result.run, false);
+  assert.equal(mock.prs[0].draft, true);
+  const order = mock.calls.map(call => call.name);
+  assert(order.indexOf('graphql.convertToDraft') < order.lastIndexOf('repos.createOrUpdateFileContents'));
+  assert.equal(callsNamed(mock, 'graphql.convertToDraft').length, 1);
 });
 
 test('reopened Issue after merged plan PR starts a fresh retry branch from current main', async () => {

@@ -5,6 +5,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const cp = require('node:child_process');
+const {issueDigest} = require('./ai-workflow.dispatch');
 
 const SHA = /^[0-9a-f]{40}$/;
 const BRANCH = /^ai\/issue-([1-9]\d*)(?:-r\d+)?$/;
@@ -54,6 +55,14 @@ function safeGitPath(name) {
     || name.split('/').some(part => part === '' || part === '.' || part === '..' || part.toLowerCase() === '.git')
     || /^[A-Za-z]:/.test(name)) fail(`Unsafe patch path: ${name}`);
   return name;
+}
+
+function assertAutoPublishPath(name) {
+  const safe = safeGitPath(name);
+  if (/^\.github\/(?:workflows|actions)\//i.test(safe)) {
+    fail(`Executable Actions path requires owner-controlled publication: ${safe}`);
+  }
+  return safe;
 }
 
 function diffHeaderPaths(line) {
@@ -111,7 +120,7 @@ function validatePatch(buffer) {
   const headers = lines.filter(line => line.startsWith('diff --git '));
   if (!headers.length) fail('Patch has no Git diff headers.');
   for (const raw of headers) {
-    diffHeaderPaths(raw.replace(/\r$/, ''));
+    for (const name of diffHeaderPaths(raw.replace(/\r$/, ''))) assertAutoPublishPath(name);
   }
   return headers.length;
 }
@@ -125,7 +134,7 @@ function parseStagedChanges(output) {
   const result = [];
   for (let i = 0; i < parts.length; i += 2) {
     const status = parts[i];
-    const file = safeGitPath(parts[i + 1]);
+    const file = assertAutoPublishPath(parts[i + 1]);
     if (!['A', 'M', 'D', 'T'].includes(status)) fail(`Unsupported staged status: ${status}`);
     if (file.startsWith('.ai/dispatch/')) fail('Model patch may not modify the managed routing plan.');
     result.push({status, path: file});
@@ -211,11 +220,28 @@ function createPublisher({git = defaultGit, files = fs, pause = ms => new Promis
     return assertSha(tree?.sha, 'new tree');
   }
 
-  async function publish({github, context, core, branch, pr, agent, patchPath}) {
+  async function assertFreshSource(github, repo, issueNumber, branch, agent, expectedDigest) {
+    const {data: issue} = await github.rest.issues.get({...repo, issue_number: issueNumber});
+    if (issue.state !== 'open' || issue.pull_request || issueDigest(issue) !== expectedDigest) {
+      fail('Source Issue changed or closed during implementation; keep the PR draft and rerun dispatch.');
+    }
+    const {data: planFile} = await github.rest.repos.getContent({
+      ...repo, path: `.ai/dispatch/issue-${issueNumber}.json`, ref: branch,
+    });
+    if (planFile.type !== 'file' || !planFile.content) fail('Routing plan is missing.');
+    const plan = JSON.parse(Buffer.from(planFile.content.replace(/\s/g, ''), 'base64').toString('utf8'));
+    if (plan.source_issue !== issueNumber || plan.title_body_sha256 !== expectedDigest
+      || plan.routing?.primary !== agent) {
+      fail('Routing plan changed during implementation; keep the PR draft and rerun dispatch.');
+    }
+  }
+
+  async function publish({github, context, core, branch, pr, agent, expectedDigest, patchPath}) {
     const issueNumber = issueFromBranch(branch);
     const number = Number(pr);
     if (!Number.isSafeInteger(number) || number < 1) fail('Invalid PR number.');
     if (!['codex', 'claude'].includes(agent)) fail('Invalid implementation agent.');
+    if (!/^[0-9a-f]{64}$/.test(String(expectedDigest || ''))) fail('Invalid source Issue digest.');
     if (!context?.repo?.owner || !context?.repo?.repo) fail('Repository context is missing.');
     const repo = context.repo;
     const {data: repository} = await github.rest.repos.get(repo);
@@ -224,6 +250,7 @@ function createPublisher({git = defaultGit, files = fs, pause = ms => new Promis
 
     const patch = files.readFileSync(patchPath);
     validatePatch(patch);
+    await assertFreshSource(github, repo, issueNumber, branch, agent, expectedDigest);
     const first = await syncMain(github, repo, number, branch, issueNumber);
 
     // Fetch is read-only. No GitHub write token is passed to git or a shell.
@@ -253,6 +280,7 @@ function createPublisher({git = defaultGit, files = fs, pause = ms => new Promis
       tree: treeSha, parents: [beforeCommit],
     });
     const commitSha = assertSha(commit?.sha, 'implementation commit');
+    await assertFreshSource(github, repo, issueNumber, branch, agent, expectedDigest);
     if (await refSha(github, repo, branch) !== beforeCommit) fail('Work branch advanced before commit publication.');
     await github.rest.git.updateRef({...repo, ref: `heads/${branch}`, sha: commitSha, force: false});
     if (await refSha(github, repo, branch) !== commitSha) fail('Work branch did not reach the implementation commit.');
@@ -264,6 +292,7 @@ function createPublisher({git = defaultGit, files = fs, pause = ms => new Promis
       fail('Branch or main changed before making the PR ready.');
     }
     await prAtHead(github, repo, number, branch, issueNumber, final.branchSha);
+    await assertFreshSource(github, repo, issueNumber, branch, agent, expectedDigest);
     await github.rest.pulls.readyForReview({...repo, pull_number: number});
     core?.info?.(`Published ${commitSha} on ${branch}; PR #${number} is ready at ${final.branchSha}.`);
     return {issueNumber, branch, pr: number, commitSha, headSha: final.branchSha, mainSha: final.mainSha};
@@ -275,5 +304,5 @@ function createPublisher({git = defaultGit, files = fs, pause = ms => new Promis
 const publish = createPublisher();
 module.exports = {
   publish, createPublisher, issueFromBranch, assertPrIdentity,
-  safeGitPath, diffHeaderPaths, validatePatch, parseStagedChanges,
+  safeGitPath, assertAutoPublishPath, diffHeaderPaths, validatePatch, parseStagedChanges,
 };
