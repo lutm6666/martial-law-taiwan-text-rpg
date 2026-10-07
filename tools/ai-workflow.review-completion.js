@@ -12,6 +12,10 @@ function validSha(sha) {
   return typeof sha === 'string' && SHA_RE.test(sha);
 }
 
+function validTime(value) {
+  return typeof value === 'string' && Number.isFinite(Date.parse(value));
+}
+
 function isTrustedActionsComment(comment) {
   return comment?.user?.login === 'github-actions[bot]'
     && comment?.user?.type === 'Bot'
@@ -63,18 +67,38 @@ function isTrustedCodexSummary(comment) {
     && comment.performed_via_github_app?.id === CODEX_APP_ID
     && comment.performed_via_github_app?.slug === 'chatgpt-codex-connector'
     && firstLine(comment.body) === CODEX_SUMMARY_MARKER
-    && typeof comment.created_at === 'string'
-    && typeof comment.updated_at === 'string';
+    && validTime(comment.created_at)
+    && validTime(comment.updated_at);
 }
 
-function codexSummaryCompleted(comments, sha) {
-  if (!validSha(sha)) return false;
-  return (comments || []).some(comment => {
+function completedSummaryEvidence(comments, sha) {
+  if (!validSha(sha)) return [];
+  return (comments || []).filter(comment => {
     if (!isTrustedCodexSummary(comment)) return false;
     const body = comment.body || '';
     const rows = [...body.matchAll(/\|\s*📝\s*\*\*Code Review\*\*\s*\|\s*✅\s*\*\*Completed\*\*[\s\S]*?\|\s*`([0-9a-f]{7,40})`\s*\|/g)];
     return rows.some(match => sha.startsWith(match[1]));
   });
+}
+
+function codexSummaryCompleted(comments, sha) {
+  return completedSummaryEvidence(comments, sha).length > 0;
+}
+
+function isTrustedCodexRequest(comment, sha) {
+  if (!validSha(sha) || !isTrustedActionsComment(comment) || !validTime(comment.created_at)) return false;
+  const line = firstLine(comment.body);
+  if (typeof line !== 'string' || !line.startsWith('<!-- cross-review:v2:codex:' + sha + ':') || !line.endsWith(' -->')) return false;
+  return (comment.body || '').includes('**Requested commit:** `' + sha + '`');
+}
+
+function codexCleanPassCompleted(comments, sha) {
+  if (!validSha(sha)) return false;
+  const requests = (comments || []).filter(comment => isTrustedCodexRequest(comment, sha));
+  const summaries = completedSummaryEvidence(comments, sha);
+  return requests.some(request => summaries.some(summary =>
+    Date.parse(summary.updated_at) >= Date.parse(request.created_at)
+  ));
 }
 
 function codexCompleted(reviews, comments, sha) {
@@ -84,7 +108,13 @@ function codexCompleted(reviews, comments, sha) {
     && review.commit_id === sha
     && review.body.includes('**Reviewed commit:** `' + sha.slice(0, 10) + '`')
   );
-  return exactReview && codexSummaryCompleted(comments, sha);
+  if (exactReview && codexSummaryCompleted(comments, sha)) return true;
+
+  // Some managed clean-pass runs complete without creating a PR review object.
+  // The fallback stays exact-head by requiring a trusted Actions request that
+  // names the full SHA, followed by the managed Codex summary transitioning to
+  // Completed for that head prefix after the request was created.
+  return codexCleanPassCompleted(comments, sha);
 }
 
 function completionStatus({reviewers = [], comments = [], reviews = [], sha}) {
@@ -111,6 +141,7 @@ module.exports = {
   CODEX_SUMMARY_MARKER,
   SHA_RE,
   validSha,
+  validTime,
   isTrustedActionsComment,
   firstLine,
   hasTrustedFirstLine,
@@ -118,7 +149,10 @@ module.exports = {
   isCodexBot,
   isTrustedCodexReview,
   isTrustedCodexSummary,
+  completedSummaryEvidence,
   codexSummaryCompleted,
+  isTrustedCodexRequest,
+  codexCleanPassCompleted,
   codexCompleted,
   completionStatus,
 };

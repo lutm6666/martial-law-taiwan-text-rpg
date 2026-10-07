@@ -10,11 +10,18 @@ function actionsComment(body, overrides = {}) {
   return {
     user: {login: 'github-actions[bot]', type: 'Bot'},
     performed_via_github_app: {id: 15368, slug: 'github-actions'},
-    created_at: '2026-10-06T16:00:00Z',
-    updated_at: '2026-10-06T16:00:00Z',
+    created_at: '2026-10-07T06:00:00Z',
+    updated_at: '2026-10-07T06:00:00Z',
     body,
     ...overrides,
   };
+}
+
+function codexRequest(sha = SHA, overrides = {}) {
+  return actionsComment(
+    '<!-- cross-review:v2:codex:' + sha + ':initial -->\n@codex review\n\n**Requested commit:** `' + sha + '`\n**Status:** request sent; receiver acknowledgement and completion are not implied.',
+    overrides
+  );
 }
 
 function codexUser(overrides = {}) {
@@ -38,14 +45,14 @@ function codexReview(commitId = SHA, overrides = {}) {
   };
 }
 
-function codexSummary({sha = SHA, status = 'Completed', appId = 1144995, slug = 'chatgpt-codex-connector', user = codexUser()} = {}) {
+function codexSummary({sha = SHA, status = 'Completed', appId = 1144995, slug = 'chatgpt-codex-connector', user = codexUser(), updatedAt = '2026-10-07T06:22:47Z'} = {}) {
   const icon = status === 'Completed' ? '✅' : '🔄';
   const statusText = status === 'Completed' ? '**Completed**' : '**Running**';
   return {
     user,
     performed_via_github_app: {id: appId, slug},
     created_at: '2026-10-07T05:59:06Z',
-    updated_at: '2026-10-07T06:22:47Z',
+    updated_at: updatedAt,
     body: '<!-- codex-pull-request-review-summary -->\n\n## Codex Review Summary\n\n| Review | Status | Commit | Review trigger |\n| --- | --- | --- | --- |\n| 📝 **Code Review** | ' + icon + ' ' + statusText + ' | `' + sha.slice(0, 7) + '` | New commits |',
   };
 }
@@ -68,7 +75,7 @@ assert.equal(review.claudeCompleted([
 ], SHA), false, 'non-Actions app provenance must not count');
 
 assert.equal(review.claudeCompleted([
-  actionsComment(marker, {updated_at: '2026-10-06T16:00:01Z'}),
+  actionsComment(marker, {updated_at: '2026-10-07T06:00:01Z'}),
 ], SHA), false, 'edited completion comments must not count');
 
 assert.equal(review.claudeCompleted([
@@ -104,6 +111,27 @@ assert.equal(review.codexCompleted([codexReview(SHA, {user: codexUser({type: 'Us
 assert.equal(review.codexCompleted([codexReview('abc')], [completedSummary], 'abc'), false,
   'malformed commit ids and requested shas must fail closed');
 
+assert.equal(review.codexCompleted([], [codexRequest(), completedSummary], SHA), true,
+  'clean-pass fallback may use trusted full-SHA request plus a later managed Completed summary');
+assert.equal(review.codexCompleted([], [completedSummary], SHA), false,
+  'managed summary alone is not exact-head evidence');
+assert.equal(review.codexCompleted([], [codexRequest(), codexSummary({status: 'Running'})], SHA), false,
+  'clean-pass fallback must not accept an in-flight summary');
+assert.equal(review.codexCompleted([], [codexRequest(OLD_SHA), completedSummary], SHA), false,
+  'old-head request cannot bind current-head clean completion');
+assert.equal(review.codexCompleted([], [
+  codexRequest(SHA, {performed_via_github_app: {id: 1144995, slug: 'chatgpt-codex-connector'}}),
+  completedSummary,
+], SHA), false, 'clean-pass request must come from trusted GitHub Actions provenance');
+assert.equal(review.codexCompleted([], [
+  codexRequest(SHA, {body: '<!-- cross-review:v2:codex:' + SHA + ':initial -->\n@codex review'}),
+  completedSummary,
+], SHA), false, 'clean-pass request must carry the exact requested commit in the trusted body');
+assert.equal(review.codexCompleted([], [
+  codexRequest(SHA, {created_at: '2026-10-07T07:00:00Z', updated_at: '2026-10-07T07:00:00Z'}),
+  codexSummary({updatedAt: '2026-10-07T06:22:47Z'}),
+], SHA), false, 'a stale Completed summary from before the exact-head request must not count');
+
 assert.deepEqual(review.completionStatus({reviewers: ['claude'], comments: [actionsComment(marker)], sha: SHA}), {
   required: ['claude'], completed: ['claude'], missing: [], complete: true,
 });
@@ -117,6 +145,14 @@ assert.deepEqual(review.completionStatus({
 });
 assert.deepEqual(review.completionStatus({
   reviewers: ['codex', 'claude'],
+  comments: [actionsComment(marker), codexRequest(), completedSummary],
+  reviews: [],
+  sha: SHA,
+}), {
+  required: ['codex', 'claude'], completed: ['codex', 'claude'], missing: [], complete: true,
+});
+assert.deepEqual(review.completionStatus({
+  reviewers: ['codex', 'claude'],
   comments: [actionsComment(marker), completedSummary],
   reviews: [codexReview(OLD_SHA)],
   sha: SHA,
@@ -124,4 +160,4 @@ assert.deepEqual(review.completionStatus({
   required: ['codex', 'claude'], completed: ['claude'], missing: ['codex'], complete: false,
 });
 
-console.log('PASS exact-head review completion requires trusted Claude marker and full managed Codex lifecycle evidence');
+console.log('PASS exact-head review completion requires trusted Claude marker and managed Codex lifecycle evidence, with a full-SHA request-bound clean-pass fallback');
