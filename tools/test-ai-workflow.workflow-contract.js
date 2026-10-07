@@ -32,16 +32,32 @@ assert.match(guard, /types: \[created, edited, deleted\]/,
 assert.match(guardRuntime, /waitForNativeGuard/,
   'guard wakeups must wait out an in-flight native guard before rerunning it');
 
+assert.match(claude, /persist-credentials: false/,
+  'trusted-base Claude checkout must not persist repository credentials');
 assert.match(claude, /actions: write/,
   'Claude receiver needs actions: write to rerun the native guard after completion');
 assert.match(claude, /checks: read/,
   'Claude receiver needs checks: read to locate the native guard for the exact head');
 assert.match(claude, /Publish verified result and re-evaluate guard/,
   'Claude completion publication must explicitly re-evaluate the guard');
-assert.match(claude, /chunked=true/,
-  'Claude workflow must instruct the reviewer to read chunked oversized snapshots');
-assert.match(claudeRuntime, /writeReviewSnapshot/,
-  'Claude receiver must split large snapshots instead of creating an unmergeable size dead-end');
+assert.match(claude, /steps\.prepare\.outputs\.snapshot_parts/,
+  'Claude review must receive the exact count of required snapshot inputs');
+assert.match(claude, /parts_read/,
+  'Claude structured output must attest that every required snapshot input was read');
+assert.match(claude, /--max-turns 100/,
+  'Claude turn budget must accommodate the bounded multi-part review input');
+assert.match(claudeRuntime, /SNAPSHOT_PART_LIMIT = 30000/,
+  'Claude review parts must stay below the observed Read truncation range');
+assert.match(claudeRuntime, /MAX_SNAPSHOT_PARTS = 80/,
+  'Claude review parts must remain bounded below the model turn budget');
+assert.match(claudeRuntime, /patch_fragment/,
+  'single oversized file patches must be fragmented instead of producing oversized part files');
+assert.match(claudeRuntime, /review\.parts_read !== requiredParts/,
+  'completion publication must fail closed when Claude did not attest to every input');
+assert.match(claudeRuntime, /deleteComment/,
+  'a completion marker must be rolled back if its required guard wakeup fails');
+assert.match(claudeRuntime, /already completed for this SHA; retrying the exact-head guard wakeup/,
+  'an existing completion marker must retry guard wakeup rather than silently skip');
 assert.match(claudeRuntime, /rerunGuardAfterCompletion/,
   'Claude receiver runtime must directly rerun the guard after its trusted marker');
 assert.match(claudeRuntime, /POST \/repos\/\{owner\}\/\{repo\}\/actions\/jobs\/\{job_id\}\/rerun/,
@@ -61,4 +77,4 @@ for (const filename of [
   }
 }
 
-console.log('PASS AI workflow YAML contracts, trusted exact-head completion wakeups, chunked Claude review input, and embedded scripts compile');
+console.log('PASS AI workflow YAML contracts, trusted exact-head completion wakeups, read-safe Claude inputs, completion attestation, and embedded scripts compile');

@@ -38,19 +38,23 @@ Tier 1 仍可由 repository writer 留言全文 `@claude review` 手動要求 Cl
 
 Codex completion 只接受 managed `chatgpt-codex-connector[bot]` 的 GitHub PR review，而且 REST payload 的完整 `commit_id` 必須等於目前 40 字元 head SHA。短 SHA 顯示、mention、request comment 或 summary 文案本身都不算 completion。
 
-Claude completion 只接受 trusted GitHub Actions bot 發出的未編輯 marker，首行必須精確綁定目前完整 head SHA。
+Claude completion 只接受 trusted GitHub Actions bot 發出的未編輯 marker，首行必須精確綁定目前完整 head SHA。Claude structured output 還必須回報它實際讀取的 snapshot input 數量，且要和 receiver 預期數完全一致，否則不發布 completion marker。
 
 Completion gate 只證明「指定 reviewer 已對 exact head 完成 review」，不是把 AI 意見轉成 GitHub APPROVE。具體 findings 仍需處理；thread-resolution 與 required checks 仍可阻止未解決問題被合併。
 
 ## Fork PR 與 Claude receiver
 
-Draft 或 closed PR 不做自動 receiver review。Cross-review router 不對 fork 建立需要寫入 PR 的 routing comment；但 Claude receiver 可在 `pull_request_target` 下只 checkout trusted default branch，再用 GitHub API 唯讀取得 fork patch。它不 checkout、不執行 fork code。
+Draft 或 closed PR 不做自動 receiver review。Cross-review router 不對 fork 建立需要寫入 PR 的 routing comment；但 Claude receiver 可在 `pull_request_target` 下只 checkout trusted default branch，再用 GitHub API 唯讀取得 fork patch。它不 checkout、不執行 fork code，且 checkout 使用 `persist-credentials: false`。
 
 Claude tools 僅 Read / Glob / Grep；禁用 Bash、Edit、Write、Agent、Task。所有 PR patch 都視為不可信資料，不視為指令。
 
-`claude-review-input.json` 記錄 requested SHA、tier、routing hint、provenance 與 patch。若 snapshot 超過 inline limit，會拆成 `claude-review-parts/*.json`，manifest 要求 reviewer 讀完所有 parts；不再因固定 150k 大小永久失去 completion 路徑。若 GitHub file list 達 3000 筆，因 API 可能截斷而 fail closed，應拆 PR。
+`claude-review-input.json` 記錄 requested SHA、tier、routing hint、provenance 與 patch。小型輸入必須維持在約 32k 字元內；大型 snapshot 會拆成最多 80 個 `claude-review-parts/*.json`，每個 serialized part 上限 30k 字元。單一巨大 file patch 也會再拆成有序 `patch_fragment`，避免任何單一 part 超過 Read 安全範圍。若需要超過 80 parts，或 GitHub file list 達 3000 筆而可能截斷，receiver fail closed 並要求拆 PR。
 
-只有 Claude 執行成功、回傳 SHA 與 requested head 完全相同且 summary 非空，才發布 `Claude review completed`。完成後 receiver 直接 rerun exact-head native `guard`；不依賴 workflow 自己建立的 comment 再觸發 workflow。
+Claude workflow 的 turn budget 高於最大 part 數；prompt 要求實際讀完所有 parts，structured output 的 `parts_read` 必須精確等於 receiver 預期值。這不是額外身分證明，但可防止 receiver 在明知輸入未讀完時仍把結果發布成 completed。
+
+只有 Claude 執行成功、回傳 SHA 與 requested head 完全相同、`parts_read` 完整且 summary 非空，才發布 `Claude review completed`。完成後 receiver 直接 rerun exact-head native `guard`；不依賴 workflow 自己建立的 comment 再觸發 workflow。
+
+若 marker 已發布但 guard wakeup 失敗，receiver 會嘗試刪除剛建立的 marker並 fail closed；若清理本身失敗，之後 receiver 再看到同 SHA 的既有 marker時也必須重試 guard wakeup，而不是靜默跳過。
 
 ## Trusted guard wakeup
 
@@ -103,7 +107,9 @@ Project validation 必須覆蓋：
 - guard 不使用 `pull_request_review` 執行 PR-controlled workflow。
 - Codex managed review 與 Claude marker 都必須 exact-head。
 - completion wakeup 遇到 in-flight native guard 時可等待並修復 stale failure。
-- Claude 大型 snapshot 可 chunk；3000-file API cap 則 fail closed。
+- Claude snapshot part 必須在 Read-safe 大小內；oversized single-file patch 要 fragment；`parts_read` 不完整不得發布 marker。
+- Claude marker 已發布但 guard wakeup 失敗時必須 rollback 或在後續 receiver run 重試 wakeup。
+- 3000-file API cap 與超過 80 個 Claude parts 都 fail closed，要求拆 PR。
 - 非 control path 不因 mutable routing metadata 觸發 owner gate。
 - control path 無論 routing hint 為何都需要 hardened exact-SHA owner gate。
 - owner approval provenance / freshness / exact-command regressions。
@@ -115,4 +121,4 @@ Project validation 必須覆蓋：
 - reviewer receiver fail：保持 fail closed；不能偽造 completed。
 - merge conflict：以 Canon 與 regression tests 為基準。
 - binary / 缺 patch：review 必須明示限制。
-- PR 達 GitHub 3000-file list 上限：拆 PR，不用截斷資料推定低風險。
+- PR 達 GitHub 3000-file list 上限、或 Claude snapshot 超過 bounded part budget：拆 PR，不用截斷資料推定低風險。

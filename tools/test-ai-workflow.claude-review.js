@@ -63,7 +63,7 @@ test('stale Claude completion cannot rerun another head guard', async () => {
   assert.equal(h.requests.length, 0);
 });
 
-test('oversized Claude snapshot is chunked instead of creating a permanent review dead-end', () => {
+test('oversized Claude snapshot is fragmented into read-safe parts and reconstructs every patch', () => {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-review-chunks-'));
   try {
     const metadata = {number: 41, sha: SHA, review: {tier: 3, name: 'Tier 3'}};
@@ -75,6 +75,7 @@ test('oversized Claude snapshot is chunked instead of creating a permanent revie
     const result = claude.writeReviewSnapshot(workspace, metadata, files);
     assert.equal(result.chunked, true);
     assert(result.parts >= 2);
+    assert(result.parts <= claude.MAX_SNAPSHOT_PARTS);
 
     const manifest = JSON.parse(fs.readFileSync(path.join(workspace, 'claude-review-input.json'), 'utf8'));
     assert.equal(manifest.sha, SHA);
@@ -82,13 +83,31 @@ test('oversized Claude snapshot is chunked instead of creating a permanent revie
     assert.equal(manifest.total_files, files.length);
     assert.equal(manifest.parts.length, result.parts);
 
-    const reconstructed = manifest.parts.flatMap(relative => {
-      const part = JSON.parse(fs.readFileSync(path.join(workspace, relative), 'utf8'));
+    const records = manifest.parts.flatMap(relative => {
+      const absolute = path.join(workspace, relative);
+      const raw = fs.readFileSync(absolute, 'utf8');
+      assert(raw.length <= claude.SNAPSHOT_PART_LIMIT, relative + ' must stay below the safe Read size');
+      const part = JSON.parse(raw);
       assert.equal(part.sha, SHA);
       assert.equal(part.total_parts, result.parts);
       return part.files;
     });
-    assert.deepEqual(reconstructed.map(file => file.filename), files.map(file => file.filename));
+
+    for (const original of files) {
+      const fragments = records.filter(record => record.filename === original.filename);
+      assert(fragments.length >= 1);
+      const patch = fragments
+        .sort((a, b) => (a.patch_fragment?.index || 1) - (b.patch_fragment?.index || 1))
+        .map(record => record.patch || '')
+        .join('');
+      assert.equal(patch, original.patch, original.filename + ' patch must reconstruct byte-for-byte');
+      for (const fragment of fragments) {
+        if (fragments.length > 1) {
+          assert.equal(fragment.patch_fragment.total, fragments.length);
+          assert(fragment.patch_fragment.index >= 1 && fragment.patch_fragment.index <= fragments.length);
+        }
+      }
+    }
   } finally {
     fs.rmSync(workspace, {recursive: true, force: true});
   }
@@ -135,6 +154,7 @@ test('automatic trusted-base Claude review accepts a fork PR without writer perm
     assert.equal(permissionLookups, 0);
     assert.equal(outputs.get('run'), 'true');
     assert.equal(outputs.get('sha'), SHA);
+    assert.equal(outputs.get('snapshot_parts'), '1');
     assert.equal(JSON.parse(fs.readFileSync(path.join(workspace, 'claude-review-input.json'), 'utf8')).sha, SHA);
   } finally {
     if (priorWorkspace === undefined) delete process.env.GITHUB_WORKSPACE;
@@ -161,4 +181,80 @@ test('manual Claude review request remains writer-only', async () => {
   await assert.rejects(claude.prepare({github, context, core: {}}), /repository writer/);
 });
 
-console.log('PASS Claude receiver completion wakeup, chunked review input, and safe fork review behavior');
+test('publish rejects incomplete snapshot attestation before creating a completion marker', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-publish-'));
+  const executionFile = path.join(dir, 'result.json');
+  fs.writeFileSync(executionFile, JSON.stringify([{
+    type: 'result', subtype: 'success', is_error: false,
+    structured_output: {sha: SHA, parts_read: 1, summary: 'reviewed'},
+  }]));
+  let created = 0;
+  const github = {
+    rest: {
+      pulls: {get: async () => ({data: {state: 'open', draft: false, head: {sha: SHA}}})},
+      issues: {createComment: async () => { created += 1; return {data: {id: 7}}; }},
+    },
+  };
+  try {
+    await assert.rejects(
+      claude.publish({
+        github,
+        context: {repo: {owner: 'lutm6666', repo: 'repo'}, runId: 1},
+        core: {info() {}},
+        number: 41,
+        sha: SHA,
+        executionFile,
+        expectedParts: 2,
+      }),
+      /did not attest to reading every required snapshot input/
+    );
+    assert.equal(created, 0);
+  } finally {
+    fs.rmSync(dir, {recursive: true, force: true});
+  }
+});
+
+test('publish rolls back the completion marker when the required guard wakeup cannot be established', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-publish-rollback-'));
+  const executionFile = path.join(dir, 'result.json');
+  fs.writeFileSync(executionFile, JSON.stringify([{
+    type: 'result', subtype: 'success', is_error: false,
+    structured_output: {sha: SHA, parts_read: 1, summary: 'reviewed'},
+  }]));
+  const deleted = [];
+  const checksEndpoint = function checksEndpoint() {};
+  const github = {
+    rest: {
+      pulls: {get: async () => ({data: {state: 'open', draft: false, head: {sha: SHA}}})},
+      issues: {
+        createComment: async () => ({data: {id: 77}}),
+        deleteComment: async args => { deleted.push(args.comment_id); },
+      },
+      checks: {listForRef: checksEndpoint},
+    },
+    paginate: async method => {
+      assert.equal(method, checksEndpoint);
+      return [];
+    },
+  };
+  try {
+    await assert.rejects(
+      claude.publish({
+        github,
+        context: {repo: {owner: 'lutm6666', repo: 'repo'}, runId: 1},
+        core: {info() {}},
+        number: 41,
+        sha: SHA,
+        executionFile,
+        expectedParts: 1,
+        guardWait: {attempts: 1, delayMs: 0},
+      }),
+      /No native PR guard exists/
+    );
+    assert.deepEqual(deleted, [77]);
+  } finally {
+    fs.rmSync(dir, {recursive: true, force: true});
+  }
+});
+
+console.log('PASS Claude receiver completion wakeup, read-safe chunking, complete-input attestation, rollback recovery, and safe fork review behavior');
