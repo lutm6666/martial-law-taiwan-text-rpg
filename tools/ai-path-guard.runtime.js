@@ -2,22 +2,37 @@
 
 const basePolicy = require('./ai-workflow.js');
 const reviewPolicy = require('./ai-workflow.review.js');
+const reviewCompletion = require('./ai-workflow.review-completion.js');
 const identity = require('./ai-workflow.identity.js');
 const approval = require('./ai-path-guard.approval.js');
 const ACTIONS_APP_ID = basePolicy.ACTIONS_APP_ID;
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function matches(file, rules) {
   return rules.some(rule => rule.test(file));
 }
 
-function evaluateGuardPolicy({pr, files, comments = [], owner, headSeenAt}) {
+function evaluateGuardPolicy({pr, files, comments = [], reviews = [], owner, headSeenAt}) {
+  if ((files || []).length >= 3000) throw new Error('PR file list may be truncated at GitHub\'s 3000-file API limit; split the PR or review manually.');
+
   const paths = basePolicy.changedPaths(files || []);
   const controlPaths = paths.filter(path => matches(path, reviewPolicy.CONTROL_PATHS));
   const routingHint = identity.routingHint(pr);
   const provenance = identity.provenance(pr);
+  const plan = reviewPolicy.reviewPlan({pr, files});
+  const reviewStatus = reviewCompletion.completionStatus({
+    reviewers: plan.reviewers,
+    comments,
+    reviews,
+    sha: pr.head.sha,
+  });
   const messages = [];
 
   if (!paths.length) messages.push('No changed files; ownership check has no paths to evaluate.');
+
+  if (!reviewStatus.complete) {
+    throw new Error('Exact-head AI review completion is required for this change. Missing: ' + reviewStatus.missing.join(', '));
+  }
 
   // Security decisions are path-based. Mutable labels / branch names are only
   // routing hints and cannot prove authorship or relax the guard.
@@ -32,13 +47,44 @@ function evaluateGuardPolicy({pr, files, comments = [], owner, headSeenAt}) {
     messages.push('Observed provenance: ' + provenance.kind + ' (' + provenance.actor + ').');
   }
   messages.push('Routing hint: ' + routingHint.hint + ' (' + routingHint.source + '); routing metadata cannot weaken guard policy.');
-  if (needsOwner) messages.push('Owner confirmed the current SHA for control-path changes; AI review completion is tracked separately.');
+  if (reviewStatus.required.length) messages.push('Exact-head AI review completion verified: ' + reviewStatus.completed.join(', ') + '.');
+  else messages.push('Tier 1 path policy requires no AI completion gate for this change.');
+  if (needsOwner) messages.push('Owner confirmed the current SHA for control-path changes.');
 
-  return {paths, controlPaths, routingHint, provenance, needsOwner, messages};
+  return {paths, controlPaths, routingHint, provenance, plan, reviewStatus, needsOwner, messages};
 }
 
 async function commentsFor(github, repo, number) {
   return github.paginate(github.rest.issues.listComments, {...repo, issue_number: number, per_page: 100});
+}
+
+async function reviewsFor(github, repo, number) {
+  return github.paginate(github.rest.pulls.listReviews, {...repo, pull_number: number, per_page: 100});
+}
+
+async function nativeGuardForHead({github, repo, sha}) {
+  const guards = await github.paginate(github.rest.checks.listForRef, {
+    ...repo, ref: sha, check_name: 'guard', per_page: 100
+  });
+  const jobUrl = 'https://github.com/' + repo.owner + '/' + repo.repo + '/actions/runs/';
+  return guards
+    .filter(c => c.name === 'guard'
+      && c.head_sha === sha
+      && c.app?.id === ACTIONS_APP_ID
+      && c.conclusion !== 'skipped'
+      && c.details_url?.startsWith(jobUrl)
+      && /\/job\/\d+$/.test(c.details_url))
+    .sort((a, b) => b.id - a.id)[0] || null;
+}
+
+async function waitForNativeGuard({github, repo, sha, attempts = 12, delayMs = 5000}) {
+  let native = null;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    native = await nativeGuardForHead({github, repo, sha});
+    if (native?.status === 'completed') return native;
+    if (attempt < attempts - 1) await sleep(delayMs);
+  }
+  return native;
 }
 
 async function runGuard({github, context, core, number, expectedBaseSha}) {
@@ -61,6 +107,7 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
   let conclusion = 'success';
   let summary;
   let rawComments = [];
+  let rawReviews = [];
   let seenAt = null;
   let seenAtError = null;
 
@@ -68,7 +115,9 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
     if (pr.base.sha !== expectedBaseSha) throw new Error('Base changed during checkout; retry to load the current trusted policy.');
 
     const files = await github.paginate(github.rest.pulls.listFiles, {...repo, pull_number: number, per_page: 100});
+    if (files.length >= 3000) throw new Error('PR file list may be truncated at GitHub\'s 3000-file API limit; split the PR or review manually.');
     rawComments = await commentsFor(github, repo, number);
+    rawReviews = await reviewsFor(github, repo, number);
 
     try {
       seenAt = await approval.headSeenAt(github, repo, sha);
@@ -81,14 +130,19 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
       pr,
       files,
       comments: rawComments,
+      reviews: rawReviews,
       owner: repo.owner,
       headSeenAt: seenAt,
     });
 
-    summary = 'Trusted base `' + expectedBaseSha + '` checked head `' + sha + '`.\n\nProvenance: ' + result.provenance.kind + '\nRouting hint: ' + result.routingHint.hint + '\n\n' + result.messages.join('\n');
+    summary = 'Trusted base `' + expectedBaseSha + '` checked head `' + sha + '`.\n\nProvenance: ' + result.provenance.kind + '\nRouting hint: ' + result.routingHint.hint + '\nReview tier: ' + result.plan.name + '\n\n' + result.messages.join('\n');
   } catch (error) {
     conclusion = 'failure';
     summary = error.message;
+
+    if (/^Exact-head AI review completion is required/.test(summary)) {
+      summary += '\n\nCodex counts only a managed chatgpt-codex-connector Bot review whose full commit_id equals the current head. Claude counts only an unedited trusted GitHub Actions completion marker whose first line contains the current full head SHA. Old-head evidence does not count.';
+    }
 
     if (/^Owner confirmation is required/.test(summary)) {
       const reasons = approval.explainApprovals(rawComments, repo.owner, sha, {headSeenAt: seenAt});
@@ -112,19 +166,16 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
   });
 
   // Actions-created check conclusions are immutable through the Checks API.
-  // A comment run attaches to main; request a native job rerun on the PR head.
+  // Codex updates its managed PR summary comment when review completes; that
+  // issue_comment event is sourced from the trusted default-branch workflow.
+  // Wait for an in-flight native PR guard before deciding whether a rerun is
+  // needed, so completion events cannot race the original guard evaluation.
   if (context.eventName === 'issue_comment') {
-    const guards = await github.paginate(github.rest.checks.listForRef, {
-      ...repo, ref: sha, check_name: 'guard', per_page: 100
-    });
-    const jobUrl = 'https://github.com/' + repo.owner + '/' + repo.repo + '/actions/runs/';
-    const native = guards
-      .filter(c => c.name === 'guard' && c.head_sha === sha && c.app?.id === ACTIONS_APP_ID && c.conclusion !== 'skipped' && c.details_url?.startsWith(jobUrl) && /\/job\/\d+$/.test(c.details_url))
-      .sort((a, b) => b.id - a.id)[0];
+    const native = await waitForNativeGuard({github, repo, sha});
+    if (!native) throw new Error('No native PR guard exists for the current head; trigger a PR guard event.');
+    if (native.status !== 'completed') throw new Error('Native PR guard did not finish in time for completion re-evaluation.');
 
-    if (!native) throw new Error('No native PR guard to rerun; trigger a PR guard event.');
-    if (native.status !== 'completed') core.info('Native guard is already pending/running; no duplicate rerun.');
-    else if (native.conclusion !== conclusion) {
+    if (native.conclusion !== conclusion) {
       const {data: latest} = await github.rest.pulls.get({...repo, pull_number: number});
       if (latest.state !== 'open' || latest.head.sha !== sha) throw new Error('PR changed before native guard rerun; retry the current head.');
       const job_id = Number(native.details_url.split('/').pop());
@@ -136,4 +187,4 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
   if (conclusion === 'failure') core.setFailed(summary);
 }
 
-module.exports = {evaluateGuardPolicy, runGuard};
+module.exports = {evaluateGuardPolicy, nativeGuardForHead, waitForNativeGuard, runGuard};

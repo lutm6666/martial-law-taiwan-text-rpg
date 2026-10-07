@@ -142,14 +142,15 @@ async function loadPlan({github, context, core}) {
   const repo = context.repo;
   const number = context.payload.pull_request.number;
   const {data: pr} = await github.rest.pulls.get({...repo, pull_number: number});
-  if (pr.state !== 'open' || pr.draft || pr.head.repo?.full_name !== repo.owner + '/' + repo.repo) {
-    core.info('Closed, draft, or fork PR: no automatic cross-review.');
+  if (pr.state !== 'open' || pr.draft) {
+    core.info('Closed or draft PR: no automatic cross-review.');
     return {repo, number, pr, files: [], plan: null};
   }
   const files = await github.paginate(github.rest.pulls.listFiles, {...repo, pull_number: number, per_page: 100});
   if (files.length >= 3000) throw new Error('PR file list may be truncated; review manually.');
   const plan = reviewPlan({pr, files});
-  core.info(plan.name + ': ' + plan.reasons.join('; ') + '; provenance=' + plan.provenance.kind + '; routing=' + plan.routingHint.hint);
+  const fork = pr.head.repo?.full_name !== repo.owner + '/' + repo.repo;
+  core.info(plan.name + ': ' + plan.reasons.join('; ') + '; provenance=' + plan.provenance.kind + '; routing=' + plan.routingHint.hint + (fork ? '; fork API-only routing' : ''));
   return {repo, number, pr, files, plan};
 }
 async function prepareCrossReview({github, context, core}) {
