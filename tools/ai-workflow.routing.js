@@ -41,7 +41,7 @@ function issueText(title, body) {
     }
     // Exclusions such as "do not change engine" are not requested work, while
     // positive constraints can still add a real cross-boundary requirement.
-    const exclusion = /^\s*(?:do not|don't|avoid|never|keep\b.*\bunchanged|不得|不要|請勿|勿|避免)/i.test(line);
+    const exclusion = /^\s*(?:(?:[-*+]|\d+[.)])\s+)?(?:\[[ xX]\]\s*)?(?:do not|don't|avoid|never|keep\b.*\bunchanged|不得|不要|請勿|勿|避免)/i.test(line);
     if (!inConstraints || !exclusion) included.push(line);
   }
   return ((typeof title === 'string' ? title : '') + '\n' + included.join('\n'))

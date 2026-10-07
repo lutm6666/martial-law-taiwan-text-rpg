@@ -39,6 +39,21 @@ test('template Workstream is read but its constraint heading and exclusions do n
   assert(!route.signals.includes('canon'));
 });
 
+test('bulleted and checkbox negative constraints do not escalate a UI Issue', () => {
+  for (const constraint of [
+    '- Do not modify engine or Canon.',
+    '* [ ] Do not modify engine or Canon.',
+    '1. 請勿更動正典或引擎。',
+  ]) {
+    const route = routeIssue({
+      title: 'Improve mobile UI',
+      body: `### Constraints / Canon notes\n${constraint}`,
+    });
+    assert.equal(route.primary, 'claude');
+    assert.equal(route.tier, 2);
+  }
+});
+
 test('English engine filename in title routes to Codex Tier 3', () => {
   const route = routeIssue({title: 'Fix case3-film-engine.js transition', body: 'The next phase skips a state.'});
   assert.equal(route.agent, 'codex');

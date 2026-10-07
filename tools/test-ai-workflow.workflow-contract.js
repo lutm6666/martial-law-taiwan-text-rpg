@@ -16,6 +16,10 @@ const {reviewPlan} = require('./ai-workflow.review.js');
 
 assert.match(project, /^    name: project-validate$/m,
   'the existing ruleset-required project-validate job must keep its exact name');
+assert.match(project, /persist-credentials: false/,
+  'PR validation must not expose a checkout credential to model-generated code');
+assert.match(fs.readFileSync('.github/workflows/case3-ci.yml', 'utf8'), /persist-credentials: false/,
+  'Case 3 PR validation must not expose a checkout credential to model-generated code');
 assert.match(guard, /^  guard:$/m,
   'the existing ruleset-required guard job must keep its exact name');
 assert.match(guardRuntime, /sha: pr\.head\.sha/,
@@ -100,6 +104,10 @@ assert.match(modelJob, /safety-strategy: drop-sudo[\s\S]*?sandbox: workspace-wri
 assert.match(modelJob, /anthropics\/claude-code-action\/base-action@fd1c128679612beff4ca259c78021c506e8aa7a7/,
   'Claude implementation must use the pinned local-only base action');
 assert.match(modelJob, /claude_code_oauth_token: \$\{\{ secrets\.CLAUDE_CODE_OAUTH_TOKEN \}\}/);
+assert.match(modelJob, /--allowedTools Read,Glob,Grep,Edit,Write(?:\n|$)/,
+  'Claude may edit but must not run arbitrary shell commands with its OAuth credential');
+assert.doesNotMatch(modelJob, /--allowedTools[^\n]*Bash/,
+  'Claude implementation must not receive Bash beside its OAuth credential');
 assert.match(modelJob, /prompt_file: \$\{\{ runner\.temp \}\}\/claude-implementation-prompt\.md/,
   'Claude must read the trusted prompt from outside the repository checkout');
 assert.doesNotMatch(modelJob, /github_token:/,

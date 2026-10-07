@@ -2,7 +2,7 @@
 
 const assert = require('node:assert/strict');
 const test = require('node:test');
-const {dispatch, marker} = require('./ai-workflow.dispatch');
+const {dispatch, marker, managedBody} = require('./ai-workflow.dispatch');
 
 const repo = {owner: 'lutm6666', repo: 'martial-law-taiwan-text-rpg'};
 const sha = letter => letter.repeat(40);
@@ -26,6 +26,7 @@ function harness(options = {}) {
   const refs = new Map();
   const files = new Map();
   const prs = [];
+  const prFiles = new Map();
   const state = {
     mainSha: sha('a'),
     mergeCount: 0,
@@ -131,6 +132,10 @@ function harness(options = {}) {
       },
       pulls: {
         list: pullsList,
+        listFiles: async args => {
+          record('pulls.listFiles', args);
+          return {data: prFiles.get(args.pull_number) || []};
+        },
         create: async args => {
           record('pulls.create', args);
           if (state.failPrCreate) throw apiError(503, 'PR creation unavailable');
@@ -147,6 +152,7 @@ function harness(options = {}) {
             labels: [],
           };
           prs.push(pr);
+          prFiles.set(pr.number, [{filename: `.ai/dispatch/issue-${issue.number}.json`}]);
           return {data: pr};
         },
         update: async args => {
@@ -166,7 +172,7 @@ function harness(options = {}) {
       return {convertPullRequestToDraft: {pullRequest: {isDraft: true}}};
     },
     paginate: async (method, args) => {
-      assert.equal(method, pullsList, 'dispatch may paginate only the mocked PR list');
+      assert([pullsList, github.rest.pulls.listFiles].includes(method), 'unexpected pagination target');
       return (await method(args)).data;
     },
   };
@@ -180,7 +186,7 @@ function harness(options = {}) {
     info: message => record('core.info', message),
     setOutput: (name, value) => outputs.set(name, value),
   };
-  return {github, context, core, issue, calls, outputs, refs, files, prs, state,
+  return {github, context, core, issue, calls, outputs, refs, files, prs, prFiles, state,
     run: () => dispatch({github, context, core}),
   };
 }
@@ -295,6 +301,18 @@ test('draft PR references its Issue and records title/body routing plan', async 
   assert.equal(parsed.title, 'Improve UI');
 });
 
+test('source Issue title cannot break the managed Markdown link or ping reviewers', () => {
+  const issue = {
+    number: 42,
+    title: 'Fix [mobile](https://wrong.example) @team',
+    html_url: `https://github.com/${repo.owner}/${repo.repo}/issues/42`,
+  };
+  const body = managedBody(issue, {primary: 'claude', agent: 'claude', tier: 2, reason: 'UI', signals: []});
+  assert.match(body, /Fix \\\[mobile\\\]/);
+  assert.match(body, /&#64;team/);
+  assert.match(body, /Refs #42/);
+});
+
 test('duplicate opened delivery reuses branch and PR without relaunching the model', async () => {
   const mock = harness();
   const first = await mock.run();
@@ -335,6 +353,62 @@ test('editing the source Issue returns an already-ready work PR to draft before 
   const order = mock.calls.map(call => call.name);
   assert(order.indexOf('graphql.convertToDraft') < order.lastIndexOf('repos.createOrUpdateFileContents'));
   assert.equal(callsNamed(mock, 'graphql.convertToDraft').length, 1);
+});
+
+test('retry of ready work closes the old PR and starts from a clean main branch', async () => {
+  const mock = harness();
+  const first = await mock.run();
+  mock.prs[0].draft = false;
+  mock.prFiles.set(first.pr, [
+    {filename: '.ai/dispatch/issue-42.json'},
+    {filename: 'case3-film-engine.js'},
+  ]);
+  mock.context.payload.action = 'labeled';
+  mock.context.payload.label = {name: 'dispatch:retry'};
+  mock.issue.labels.push({name: 'dispatch:retry'});
+  const second = await mock.run();
+  assert.equal(second.run, true);
+  assert.equal(second.branch, 'ai/issue-42-r1234');
+  assert.equal(mock.prs[0].state, 'closed');
+  assert.equal(mock.prs[1].draft, true);
+  assert.deepEqual(callsNamed(mock, 'git.createRef').at(-1), {
+    ...repo, ref: 'refs/heads/ai/issue-42-r1234', sha: mock.state.mainSha,
+  });
+  assert.match(mock.prs[1].body, /Refs #42/);
+});
+
+test('retry of a ready plan-only PR converts it to draft and actually launches the model', async () => {
+  const mock = harness();
+  await mock.run();
+  mock.prs[0].draft = false;
+  mock.context.payload.action = 'labeled';
+  mock.context.payload.label = {name: 'dispatch:retry'};
+  mock.issue.labels.push({name: 'dispatch:retry'});
+  const result = await mock.run();
+  assert.equal(result.run, true);
+  assert.equal(result.pr, mock.prs[0].number);
+  assert.equal(mock.prs[0].draft, true);
+  assert.equal(callsNamed(mock, 'graphql.convertToDraft').length, 1);
+});
+
+test('retry after a stale partially published patch does not carry rejected code forward', async () => {
+  const mock = harness();
+  const first = await mock.run();
+  mock.prFiles.set(first.pr, [
+    {filename: '.ai/dispatch/issue-42.json'},
+    {filename: 'tools/stale-implementation.js'},
+  ]);
+  mock.issue.body = 'New scope after old patch failed freshness check.';
+  mock.context.payload.action = 'edited';
+  await mock.run();
+  mock.context.payload.action = 'labeled';
+  mock.context.payload.label = {name: 'dispatch:retry'};
+  mock.issue.labels.push({name: 'dispatch:retry'});
+  const next = await mock.run();
+  assert.equal(next.branch, 'ai/issue-42-r1234');
+  assert.equal(mock.prs[0].state, 'closed');
+  assert.equal(mock.prs[1].draft, true);
+  assert.equal(mock.prFiles.get(next.pr).some(file => file.filename === 'tools/stale-implementation.js'), false);
 });
 
 test('reopened Issue after merged plan PR starts a fresh retry branch from current main', async () => {

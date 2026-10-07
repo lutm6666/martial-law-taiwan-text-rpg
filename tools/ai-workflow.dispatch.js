@@ -57,7 +57,8 @@ function planFile(issue, route, branch = branchName(issue.number)) {
 }
 
 function managedBody(issue, route) {
-  const title = safeTitle(issue.title).replace(/@/g, '&#64;');
+  const title = safeTitle(issue.title).replace(/[\\[\]@]/g, character =>
+    character === '@' ? '&#64;' : `\\${character}`);
   if (!/^https:\/\/github\.com\/[^/]+\/[^/]+\/issues\/\d+$/.test(issue.html_url || '')) {
     throw new Error('Issue is missing a canonical GitHub URL.');
   }
@@ -213,16 +214,10 @@ async function chooseBranch(github, repo, number, runId) {
   const prs = await github.paginate(github.rest.pulls.list, {
     ...repo, state: 'all', head: `${repo.owner}:${initial}`, per_page: 100,
   });
-  const closed = prs.find(pr => pr.state === 'closed' && !pr.merged_at
-    && pr.base?.ref === 'main'
-    && pr.head?.repo?.full_name === `${repo.owner}/${repo.repo}`
-    && pr.head?.ref === initial
-    && String(pr.body || '').includes(marker(number)));
-  if (closed) return {branch: initial, create: false, reopen: closed};
   if (prs.some(pr => pr.state === 'open')) {
     throw new Error('Dispatch branch is already used by another open PR.');
   }
-  if (prs.some(pr => pr.merged_at)) {
+  if (prs.some(pr => pr.state === 'closed')) {
     const next = branchName(number, runId);
     if (await maybeRef(github, repo, next)) throw new Error('Retry branch already exists without an open PR.');
     return {branch: next, create: true};
@@ -253,13 +248,25 @@ async function dispatch({github, context, core}) {
   const route = routeIssue({title: issue.title, body: issue.body});
   let pr = await openPrForIssue(github, repo, number);
   const hadPr = Boolean(pr);
+  if (pr && (retry || action === 'reopened')) {
+    const files = await github.paginate(github.rest.pulls.listFiles, {
+      ...repo, pull_number: pr.number, per_page: 100,
+    });
+    if (files.length >= 3000) throw new Error('Work PR file listing reached the GitHub cap.');
+    const planPath = `.ai/dispatch/issue-${number}.json`;
+    if (files.some(file => file.filename !== planPath)) {
+      // A previous implementation may have been rejected after its ref update.
+      // Start a clean branch so stale code cannot survive a later retry.
+      await github.rest.pulls.update({...repo, pull_number: pr.number, state: 'closed'});
+      pr = null;
+    }
+  }
   let branch;
-  let reopen = null;
   if (pr) {
     branch = pr.head.ref;
     if (!pr.draft) {
       const currentPlan = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, branch);
-      if (planDigestFrom(currentPlan) !== issueDigest(issue)) {
+      if (retry || action === 'reopened' || planDigestFrom(currentPlan) !== issueDigest(issue)) {
         if (!pr.node_id) throw new Error('Ready PR is missing its GitHub node ID.');
         const result = await github.graphql(`
           mutation($pullRequestId: ID!) {
@@ -277,7 +284,6 @@ async function dispatch({github, context, core}) {
   } else {
     const choice = await chooseBranch(github, repo, number, context.runId);
     branch = choice.branch;
-    reopen = choice.reopen || null;
     if (choice.create) {
       const sha = await mainHead(github, repo);
       await github.rest.git.createRef({...repo, ref: `refs/heads/${branch}`, sha});
@@ -294,12 +300,6 @@ async function dispatch({github, context, core}) {
       const result = await github.rest.pulls.update({...repo, pull_number: pr.number, body});
       pr = result.data;
     }
-  } else if (reopen) {
-    const result = await github.rest.pulls.update({
-      ...repo, pull_number: reopen.number, state: 'open',
-      body: replaceManagedBody(reopen.body, issue, route),
-    });
-    pr = result.data;
   } else {
     const result = await github.rest.pulls.create({
       ...repo, title: `AI dispatch #${number}: ${safeTitle(issue.title)}`,
