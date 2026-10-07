@@ -51,7 +51,7 @@ const dispatchJob = job('dispatch', 'implement');
 const modelJob = job('implement', 'publish');
 const publisherJob = job('publish');
 
-assert.match(dispatch, /types: \[opened, reopened, edited, labeled\]/,
+assert.match(dispatch, /types: \[opened, reopened, edited, closed, labeled\]/,
   'opening or reopening an Issue must start automatic planning');
 assert.match(dispatchJob, /github\.event\.label\.name == 'dispatch:retry'/,
   'only the explicit retry label may wake dispatch through labeled events');
@@ -86,6 +86,8 @@ assert.doesNotMatch(modelJob, /permission-(?:contents|pull-requests|issues): wri
   'the model job must never receive the dispatch App token');
 assert.match(modelJob, /ref: \$\{\{ github\.sha \}\}[\s\S]*?persist-credentials: false/,
   'model checkout must use trusted main without persisted credentials');
+assert.match(modelJob, /sha256sum \.git\/config[\s\S]*?steps\.git-config\.outputs\.sha/,
+  'model output must not be packaged after it changes local Git configuration');
 assert.match(modelJob, /github\.rest\.issues\.get/,
   'model input must be fetched from the Issue API');
 assert.match(modelJob, /github\.rest\.repos\.getContent/,
@@ -112,7 +114,7 @@ assert.match(modelJob, /prompt_file: \$\{\{ runner\.temp \}\}\/claude-implementa
   'Claude must read the trusted prompt from outside the repository checkout');
 assert.doesNotMatch(modelJob, /github_token:/,
   'Claude base action must not receive a publishing GitHub token');
-assert.match(modelJob, /git add -A[\s\S]*?diff --cached --binary --no-ext-diff/,
+assert.match(modelJob, /git -c core\.fsmonitor=false -c core\.hooksPath=\/dev\/null add -A[\s\S]*?diff --cached --binary --no-ext-diff/,
   'model output must preserve binary edits in an artifact patch');
 assert.match(modelJob, /actions\/upload-artifact@v4/,
   'models must hand a patch to a separate trusted publisher');

@@ -18,7 +18,7 @@ const CONSTRAINT_HEADINGS = new Set(['constraints / canon notes', 'constraints',
 const PATTERNS = {
   control: /\b(?:workflow|workflows|ruleset|rulesets|governance|control|policy|policies|guard|codeowners|ci|github actions|branch protection|required checks|permissions?|approval|security)\b|\brepository admin settings\b|工作流程|控制層|守門|規則集|治理|政策|權限|安全|核准|審批|分支保護/u,
   canon: /\b(?:canon|canonical|schema|schemas|predicate|predicates|deduction|testimony|hypothesis|hypotheses)\b|正典|案件設定|資料結構|證據鏈|證詞|推理條件|假說/u,
-  engine: /\b(?:engine|state machine|state|save|saves|migration|migrations|logic)\b|引擎|狀態機|狀態轉換|存檔|遷移|遊戲邏輯/u,
+  engine: /\b(?:engine|state machine|state transition|game state|save state|quest state|battle state|combat state|save|saves|migration|migrations|logic)\b|引擎|狀態機|狀態轉換|存檔|遷移|遊戲邏輯/u,
   ui: /\b(?:ui|frontend|front end|css|scss|html|responsive|accessibility|a11y|layout|animation|animations|renderer|mobile|safari|typography|display|buttons?)\b|介面|前端|排版|版面|視覺|響應式|行動版|手機|無障礙|動畫|畫面|顯示|渲染|可讀性|按鈕|字體|樣式|玩家呈現/u,
   assets: /\b(?:asset|assets|image|images|sprite|sprites|art|artwork|illustration|illustrations|portrait|portraits|webp|png|jpeg|jpg|svg|icon|icons)\b|圖片|圖像|素材|美術|插圖|立繪|肖像|證物圖|場景圖/u,
   tier1: /\b(?:test|tests|validator|validators|validation|docs|documentation|readme|regression|smoke)\b|測試|驗證器|驗證腳本|文件|文檔|說明文件|回歸測試/u,

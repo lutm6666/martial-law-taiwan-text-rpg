@@ -28,7 +28,7 @@ function fixture({patch = PATCH, mutate} = {}) {
   state.planDigest = issueDigest(state.issue);
   const record = (kind, value) => { state.calls.push({kind, value}); mutate?.(kind, value, state); };
   const pull = () => ({
-    number: PR, state: 'open', draft: true,
+    number: PR, node_id: 'PR_99', state: 'open', draft: true,
     body: '<!-- ai-dispatch:plan:v1 issue=42 -->\nRefs #42',
     base: {ref: 'main', repo: {full_name: `${REPO.owner}/${REPO.repo}`}},
     head: {ref: BRANCH, sha: state.branch, repo: {full_name: `${REPO.owner}/${REPO.repo}`}},
@@ -64,11 +64,6 @@ function fixture({patch = PATCH, mutate} = {}) {
     },
     pulls: {
       get: async args => { record('prGet', args); return {data: pull()}; },
-      readyForReview: async args => {
-        record('ready', args);
-        state.ready = true;
-        return {data: {}};
-      },
     },
     git: {
       getRef: async args => {
@@ -105,7 +100,15 @@ function fixture({patch = PATCH, mutate} = {}) {
         return {data: {}};
       },
     },
-  }};
+  },
+    graphql: async (query, args) => {
+      assert.match(query, /markPullRequestReadyForReview/);
+      assert.equal(args.pullRequestId, 'PR_99');
+      record('ready', args);
+      state.ready = true;
+      return {markPullRequestReadyForReview: {pullRequest: {isDraft: false}}};
+    },
+  };
   const git = (args, options = {}) => {
     record('git', args);
     const command = args[0];
@@ -141,7 +144,7 @@ test('branch and PR identity bind source Issue, draft, main, and same repository
   }
   const f = fixture();
   const good = {
-    number: PR, state: 'open', draft: true,
+    number: PR, node_id: 'PR_99', state: 'open', draft: true,
     body: '<!-- ai-dispatch:plan:v1 issue=42 -->\nRefs #42',
     base: {ref: 'main', repo: {full_name: `${REPO.owner}/${REPO.repo}`}},
     head: {ref: BRANCH, sha: S('b'), repo: {full_name: `${REPO.owner}/${REPO.repo}`}},

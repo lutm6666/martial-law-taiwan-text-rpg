@@ -411,6 +411,19 @@ test('retry after a stale partially published patch does not carry rejected code
   assert.equal(mock.prFiles.get(next.pr).some(file => file.filename === 'tools/stale-implementation.js'), false);
 });
 
+test('closing the source Issue closes its managed ready PR without creating work', async () => {
+  const mock = harness();
+  await mock.run();
+  mock.prs[0].draft = false;
+  mock.issue.state = 'closed';
+  mock.context.payload.action = 'closed';
+  const before = callsNamed(mock, 'git.createRef').length;
+  const result = await mock.run();
+  assert.equal(result.run, false);
+  assert.equal(mock.prs[0].state, 'closed');
+  assert.equal(callsNamed(mock, 'git.createRef').length, before);
+});
+
 test('reopened Issue after merged plan PR starts a fresh retry branch from current main', async () => {
   const mock = harness();
   const first = await mock.run();

@@ -291,9 +291,19 @@ function createPublisher({git = defaultGit, files = fs, pause = ms => new Promis
       || await refSha(github, repo, branch) !== final.branchSha) {
       fail('Branch or main changed before making the PR ready.');
     }
-    await prAtHead(github, repo, number, branch, issueNumber, final.branchSha);
+    const readyPr = await prAtHead(github, repo, number, branch, issueNumber, final.branchSha);
     await assertFreshSource(github, repo, issueNumber, branch, agent, expectedDigest);
-    await github.rest.pulls.readyForReview({...repo, pull_number: number});
+    if (!readyPr.node_id) fail('PR is missing its GitHub node ID.');
+    const ready = await github.graphql(`
+      mutation($pullRequestId: ID!) {
+        markPullRequestReadyForReview(input: {pullRequestId: $pullRequestId}) {
+          pullRequest { isDraft }
+        }
+      }
+    `, {pullRequestId: readyPr.node_id});
+    if (ready?.markPullRequestReadyForReview?.pullRequest?.isDraft !== false) {
+      fail('GitHub did not mark the implementation PR ready for review.');
+    }
     core?.info?.(`Published ${commitSha} on ${branch}; PR #${number} is ready at ${final.branchSha}.`);
     return {issueNumber, branch, pr: number, commitSha, headSha: final.branchSha, mainSha: final.mainSha};
   }

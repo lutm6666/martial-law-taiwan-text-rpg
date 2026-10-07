@@ -107,6 +107,16 @@ test('UI with tests keeps Claude presentation priority', () => {
   assert(route.signals.includes('tier1'));
 });
 
+test('presentation states do not turn a UI Issue into engine work', () => {
+  for (const title of ['Add an empty state to mobile UI', 'Fix the button hover state']) {
+    const route = routeIssue({title});
+    assert.equal(route.primary, 'claude');
+    assert.equal(route.tier, 2);
+    assert(!route.signals.includes('engine'));
+  }
+  assert.equal(routeIssue({title: 'Fix game state transition'}).primary, 'codex');
+});
+
 test('logic plus presentation requires Codex-primary handoff Tier 3', () => {
   for (const issue of [
     {title: 'Update case3-film-engine.js and case3-film-ui.js'},
