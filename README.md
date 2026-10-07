@@ -59,11 +59,14 @@ assets/v2/canon/
 
 - Claude 主責 UI、CSS、responsive、accessibility 與互動 polish。
 - Codex / ChatGPT 主責 Canon、engine、state、tests、CI、證據鏈與防劇透邏輯。
-- Issue 透過 `.github/ISSUE_TEMPLATE/ai-task.yml` 建立後，由 `AI Dispatch` 準備路由；實作任務需確認接收端並手動啟動。
+- Issue `opened`／`reopened` 時，`AI Dispatch` 依標題與內容建立 routing plan、工作 branch 與引用來源 Issue 的 draft PR。具 repository 寫入權限的事件 actor 會自動啟動主責 AI 實作；公開 Issue 也會建 plan／PR，但須由 writer 使用 `dispatch:retry` 啟動模型。
+- UI／assets 優先交 Claude，Canon／engine／control 優先交 Codex，純 tests／validators／docs 規劃為 Tier 1。模型產生的 patch 經可信 publisher 驗證並同步最新 `main` 後，才更新工作 branch；AI 不直接 push `main`。
 - PR 由 `AI Path Guard` 檢查檔案責任邊界，並由 `AI Cross Review` 要求另一個 agent 交叉審查。
 - `Project validation` 是合併前的共同 CI；Case 3 有變動時會自動加跑 schema、regression 與 headless Chrome smoke test。
 
 required checks 使用 `project-validate`、`guard`；請求留言不代表 agent 已接收或完成 review。
+
+自動實作需先由 owner 設定 dispatch GitHub App 的 `AI_DISPATCH_APP_CLIENT_ID`（variable）與 `AI_DISPATCH_APP_PRIVATE_KEY`（secret），授予 App Contents、Pull requests、Issues、Workflows 的 write 權限，並依主責模型設定 `OPENAI_API_KEY` 或 `CLAUDE_CODE_OAUTH_TOKEN`。缺少憑證會停止對應階段；owner exact-SHA approval 仍只用於 control／governance 變更。
 
 詳細角色、branch 命名、SHA 綁定的 owner 核准與接收端限制見 `AI_WORKFLOW.md`。Agent 專用規則分別位於 `CLAUDE.md` 與 `AGENTS.md`。
 

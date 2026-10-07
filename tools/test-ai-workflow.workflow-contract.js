@@ -7,9 +7,119 @@ const assert = require('node:assert/strict');
 const guard = fs.readFileSync('.github/workflows/ai-path-guard.yml', 'utf8');
 const review = fs.readFileSync('.github/workflows/ai-cross-review.yml', 'utf8');
 const claude = fs.readFileSync('.github/workflows/claude-review.yml', 'utf8');
+const dispatch = fs.readFileSync('.github/workflows/ai-dispatch.yml', 'utf8').replace(/\r\n/g, '\n');
+const project = fs.readFileSync('.github/workflows/project-ci.yml', 'utf8').replace(/\r\n/g, '\n');
 const claudeRuntime = fs.readFileSync('tools/ai-workflow.claude-review.js', 'utf8');
 const guardRuntime = fs.readFileSync('tools/ai-path-guard.runtime.js', 'utf8');
 const reviewRuntime = fs.readFileSync('tools/ai-workflow.review.js', 'utf8');
+const {reviewPlan} = require('./ai-workflow.review.js');
+
+assert.match(project, /^    name: project-validate$/m,
+  'the existing ruleset-required project-validate job must keep its exact name');
+assert.match(guard, /^  guard:$/m,
+  'the existing ruleset-required guard job must keep its exact name');
+assert.match(guardRuntime, /sha: pr\.head\.sha/,
+  'guard must validate reviewer completion at the exact current PR head');
+assert.match(guardRuntime, /ownerApproval\(comments, \[\], owner, pr\.head\.sha/,
+  'only control-path changes may pass through exact-head owner approval');
+for (const path of [
+  'tools/ai-workflow.routing.js',
+  'tools/ai-workflow.dispatch.js',
+  'tools/ai-workflow.publish.js',
+  'tools/test-ai-workflow.routing.js',
+  'tools/test-ai-workflow.dispatch.js',
+  'tools/test-ai-workflow.publish.js',
+]) {
+  const plan = reviewPlan({pr: {head: {ref: 'ai/issue-1'}, labels: []}, files: [path]});
+  assert.equal(plan.flags.control, true, path + ' must retain the control owner gate');
+  assert.equal(plan.tier, 3, path + ' must retain Tier 3 review');
+}
+
+function job(name, next) {
+  const start = dispatch.indexOf('\n  ' + name + ':\n');
+  assert(start >= 0, 'AI Dispatch must define the ' + name + ' job');
+  const end = next ? dispatch.indexOf('\n  ' + next + ':\n', start + 1) : dispatch.length;
+  assert(end > start, 'AI Dispatch jobs must keep the expected order');
+  return dispatch.slice(start, end);
+}
+
+const dispatchJob = job('dispatch', 'implement');
+const modelJob = job('implement', 'publish');
+const publisherJob = job('publish');
+
+assert.match(dispatch, /types: \[opened, reopened, edited, labeled\]/,
+  'opening or reopening an Issue must start automatic planning');
+assert.match(dispatchJob, /github\.event\.label\.name == 'dispatch:retry'/,
+  'only the explicit retry label may wake dispatch through labeled events');
+assert.match(dispatchJob, /ref: \$\{\{ github\.sha \}\}[\s\S]*?persist-credentials: false/,
+  'Issue dispatch must execute only the trusted default-branch code');
+assert.match(dispatchJob, /ai-workflow\.dispatch\.js'\)\.dispatch/,
+  'Issue dispatch must use the dedicated trusted runtime');
+for (const output of ['branch', 'pr', 'agent', 'authorized', 'run', 'digest']) {
+  assert.match(dispatchJob, new RegExp('^      ' + output + ': \\$\\{\\{ steps\\.plan\\.outputs\\.' + output + ' \\}\\}$', 'm'),
+    'dispatch must expose ' + output + ' for the implementation and publisher jobs');
+}
+assert(dispatchJob.indexOf('Require dispatch GitHub App credentials') < dispatchJob.indexOf('Create narrowly scoped dispatch token'),
+  'missing App credentials must fail before dispatch can create a branch or PR');
+assert.match(dispatchJob, /vars\.AI_DISPATCH_APP_CLIENT_ID/);
+assert.match(dispatchJob, /secrets\.AI_DISPATCH_APP_PRIVATE_KEY/);
+assert.match(dispatchJob, /actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/,
+  'dispatch must use the pinned GitHub App token action');
+for (const permission of ['contents', 'pull-requests', 'issues', 'workflows']) {
+  assert.match(dispatchJob, new RegExp('permission-' + permission + ': write'),
+    'the dispatch App token needs scoped ' + permission + ' write access');
+}
+assert.match(dispatchJob, /github-token: \$\{\{ steps\.app-token\.outputs\.token \}\}/,
+  'branch and PR mutations must use the App token so downstream PR events run');
+
+assert.match(modelJob, /if: needs\.dispatch\.outputs\.run == 'true'/,
+  'only a writer-authorized Issue with a selected agent may reach the model');
+assert.match(modelJob, /permissions:\n      contents: read\n      issues: read/,
+  'the model job must have a read-only GITHUB_TOKEN');
+assert.doesNotMatch(modelJob, /permission-(?:contents|pull-requests|issues): write|steps\.app-token\.outputs\.token/,
+  'the model job must never receive the dispatch App token');
+assert.match(modelJob, /ref: \$\{\{ github\.sha \}\}[\s\S]*?persist-credentials: false/,
+  'model checkout must use trusted main without persisted credentials');
+assert.match(modelJob, /github\.rest\.issues\.get/,
+  'model input must be fetched from the Issue API');
+assert.match(modelJob, /github\.rest\.repos\.getContent/,
+  'model must read the planned route through the GitHub API');
+assert.match(modelJob, /title_body_sha256 !== digest/,
+  'the model brief must fail closed if Issue text changed after routing');
+assert.match(modelJob, /digest !== process\.env\.EXPECTED_DIGEST/,
+  'the model brief must be bound to the trusted dispatch snapshot');
+assert.match(modelJob, /RUNNER_TEMP, 'issue-brief\.md'/,
+  'untrusted Issue text must be stored outside the repository checkout');
+assert.match(modelJob, /openai\/codex-action@bdf19a4a223ec2549a3e2274a0cf61556bc07675/,
+  'Codex implementation action must use a pinned version');
+assert.match(modelJob, /openai-api-key: \$\{\{ secrets\.OPENAI_API_KEY \}\}/);
+assert.match(modelJob, /safety-strategy: drop-sudo[\s\S]*?sandbox: workspace-write/,
+  'Codex must keep the restricted implementation sandbox');
+assert.match(modelJob, /anthropics\/claude-code-action\/base-action@fd1c128679612beff4ca259c78021c506e8aa7a7/,
+  'Claude implementation must use the pinned local-only base action');
+assert.match(modelJob, /claude_code_oauth_token: \$\{\{ secrets\.CLAUDE_CODE_OAUTH_TOKEN \}\}/);
+assert.match(modelJob, /prompt_file: \$\{\{ runner\.temp \}\}\/claude-implementation-prompt\.md/,
+  'Claude must read the trusted prompt from outside the repository checkout');
+assert.doesNotMatch(modelJob, /github_token:/,
+  'Claude base action must not receive a publishing GitHub token');
+assert.match(modelJob, /git add -A[\s\S]*?diff --cached --binary --no-ext-diff/,
+  'model output must preserve binary edits in an artifact patch');
+assert.match(modelJob, /actions\/upload-artifact@v4/,
+  'models must hand a patch to a separate trusted publisher');
+
+assert.match(publisherJob, /needs: \[dispatch, implement\]/,
+  'publisher must wait for both routing and the model patch');
+assert.match(publisherJob, /needs\.implement\.result == 'success'/,
+  'publisher must not mark a PR ready after model failure');
+assert.match(publisherJob, /ref: \$\{\{ github\.sha \}\}[\s\S]*?persist-credentials: false/,
+  'publisher code must come from the trusted default branch');
+assert.match(publisherJob, /actions\/download-artifact@v4/);
+assert.match(publisherJob, /ai-workflow\.publish\.js'\)\.publish/,
+  'publication must go through the trusted patch validator');
+assert.match(publisherJob, /github-token: \$\{\{ steps\.app-token\.outputs\.token \}\}/,
+  'publisher mutations must use the GitHub App token');
+assert.doesNotMatch(dispatch, /git push (?:origin )?main|\/ai approve-handoff [0-9a-f]{40}/,
+  'Issue automation may neither push main nor impersonate owner approval');
 
 assert.match(review, /group: ai-cross-review-/,
   'cross-review concurrency must remain scoped to the PR');
@@ -82,7 +192,7 @@ for (const filename of [
   '.github/workflows/ai-dispatch.yml',
   '.github/workflows/claude-review.yml',
 ]) {
-  const yaml = fs.readFileSync(filename, 'utf8');
+  const yaml = fs.readFileSync(filename, 'utf8').replace(/\r\n/g, '\n');
   const scripts = [...yaml.matchAll(/          script: \|\n((?:            .*\n|\n)+)/g)];
   assert(scripts.length > 0, filename + ' must expose embedded github-script code to validate');
   for (const match of scripts) {
