@@ -2,6 +2,7 @@
 
 const basePolicy = require('./ai-workflow.js');
 const reviewPolicy = require('./ai-workflow.review.js');
+const reviewCompletion = require('./ai-workflow.review-completion.js');
 const identity = require('./ai-workflow.identity.js');
 const approval = require('./ai-path-guard.approval.js');
 const ACTIONS_APP_ID = basePolicy.ACTIONS_APP_ID;
@@ -10,14 +11,25 @@ function matches(file, rules) {
   return rules.some(rule => rule.test(file));
 }
 
-function evaluateGuardPolicy({pr, files, comments = [], owner, headSeenAt}) {
+function evaluateGuardPolicy({pr, files, comments = [], reviews = [], owner, headSeenAt}) {
   const paths = basePolicy.changedPaths(files || []);
   const controlPaths = paths.filter(path => matches(path, reviewPolicy.CONTROL_PATHS));
   const routingHint = identity.routingHint(pr);
   const provenance = identity.provenance(pr);
+  const plan = reviewPolicy.reviewPlan({pr, files});
+  const reviewStatus = reviewCompletion.completionStatus({
+    reviewers: plan.reviewers,
+    comments,
+    reviews,
+    sha: pr.head.sha,
+  });
   const messages = [];
 
   if (!paths.length) messages.push('No changed files; ownership check has no paths to evaluate.');
+
+  if (!reviewStatus.complete) {
+    throw new Error('Exact-head AI review completion is required for this change. Missing: ' + reviewStatus.missing.join(', '));
+  }
 
   // Security decisions are path-based. Mutable labels / branch names are only
   // routing hints and cannot prove authorship or relax the guard.
@@ -32,13 +44,19 @@ function evaluateGuardPolicy({pr, files, comments = [], owner, headSeenAt}) {
     messages.push('Observed provenance: ' + provenance.kind + ' (' + provenance.actor + ').');
   }
   messages.push('Routing hint: ' + routingHint.hint + ' (' + routingHint.source + '); routing metadata cannot weaken guard policy.');
-  if (needsOwner) messages.push('Owner confirmed the current SHA for control-path changes; AI review completion is tracked separately.');
+  if (reviewStatus.required.length) messages.push('Exact-head AI review completion verified: ' + reviewStatus.completed.join(', ') + '.');
+  else messages.push('Tier 1 path policy requires no AI completion gate for this change.');
+  if (needsOwner) messages.push('Owner confirmed the current SHA for control-path changes.');
 
-  return {paths, controlPaths, routingHint, provenance, needsOwner, messages};
+  return {paths, controlPaths, routingHint, provenance, plan, reviewStatus, needsOwner, messages};
 }
 
 async function commentsFor(github, repo, number) {
   return github.paginate(github.rest.issues.listComments, {...repo, issue_number: number, per_page: 100});
+}
+
+async function reviewsFor(github, repo, number) {
+  return github.paginate(github.rest.pulls.listReviews, {...repo, pull_number: number, per_page: 100});
 }
 
 async function runGuard({github, context, core, number, expectedBaseSha}) {
@@ -61,6 +79,7 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
   let conclusion = 'success';
   let summary;
   let rawComments = [];
+  let rawReviews = [];
   let seenAt = null;
   let seenAtError = null;
 
@@ -69,6 +88,7 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
 
     const files = await github.paginate(github.rest.pulls.listFiles, {...repo, pull_number: number, per_page: 100});
     rawComments = await commentsFor(github, repo, number);
+    rawReviews = await reviewsFor(github, repo, number);
 
     try {
       seenAt = await approval.headSeenAt(github, repo, sha);
@@ -81,14 +101,19 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
       pr,
       files,
       comments: rawComments,
+      reviews: rawReviews,
       owner: repo.owner,
       headSeenAt: seenAt,
     });
 
-    summary = 'Trusted base `' + expectedBaseSha + '` checked head `' + sha + '`.\n\nProvenance: ' + result.provenance.kind + '\nRouting hint: ' + result.routingHint.hint + '\n\n' + result.messages.join('\n');
+    summary = 'Trusted base `' + expectedBaseSha + '` checked head `' + sha + '`.\n\nProvenance: ' + result.provenance.kind + '\nRouting hint: ' + result.routingHint.hint + '\nReview tier: ' + result.plan.name + '\n\n' + result.messages.join('\n');
   } catch (error) {
     conclusion = 'failure';
     summary = error.message;
+
+    if (/^Exact-head AI review completion is required/.test(summary)) {
+      summary += '\n\nCodex counts only a managed chatgpt-codex-connector Bot review whose full commit_id equals the current head. Claude counts only an unedited trusted GitHub Actions completion marker whose first line contains the current full head SHA. Old-head evidence does not count.';
+    }
 
     if (/^Owner confirmation is required/.test(summary)) {
       const reasons = approval.explainApprovals(rawComments, repo.owner, sha, {headSeenAt: seenAt});
@@ -112,8 +137,8 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
   });
 
   // Actions-created check conclusions are immutable through the Checks API.
-  // A comment run attaches to main; request a native job rerun on the PR head.
-  if (context.eventName === 'issue_comment') {
+  // Comment/review runs attach to main; request a native PR guard rerun on the PR head.
+  if (context.eventName === 'issue_comment' || context.eventName === 'pull_request_review') {
     const guards = await github.paginate(github.rest.checks.listForRef, {
       ...repo, ref: sha, check_name: 'guard', per_page: 100
     });

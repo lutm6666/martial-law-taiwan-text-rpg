@@ -1,6 +1,9 @@
 'use strict';
 
 const ACTIONS_APP_ID = 15368;
+const CODEX_BOT_LOGIN = 'chatgpt-codex-connector[bot]';
+const CODEX_BOT_ID = 199175422;
+const CODEX_APP_URL = 'https://github.com/apps/chatgpt-codex-connector';
 const SHA_RE = /^[0-9a-f]{40}$/;
 
 function validSha(sha) {
@@ -35,15 +38,24 @@ function claudeCompleted(comments, sha) {
   return hasTrustedFirstLine(comments, '<!-- claude-review:completed:' + sha + ' -->');
 }
 
-// Managed Codex Cloud completion remains intentionally fail-closed until this
-// repository produces an observable exact-head review/check whose GitHub App
-// provenance can be locked by regression tests. A request marker is never a
-// completion marker.
-function codexCompleted() {
-  return false;
+function isTrustedCodexReview(review) {
+  return review?.user?.login === CODEX_BOT_LOGIN
+    && review?.user?.type === 'Bot'
+    && review?.user?.id === CODEX_BOT_ID
+    && review?.user?.html_url === CODEX_APP_URL
+    && review?.state === 'COMMENTED'
+    && typeof review?.submitted_at === 'string'
+    && validSha(review?.commit_id);
 }
 
-function completionStatus({reviewers = [], comments = [], sha}) {
+function codexCompleted(reviews, sha) {
+  if (!validSha(sha)) return false;
+  return (reviews || []).some(review =>
+    isTrustedCodexReview(review) && review.commit_id === sha
+  );
+}
+
+function completionStatus({reviewers = [], comments = [], reviews = [], sha}) {
   const required = [...new Set(reviewers)];
   const completed = [];
   const missing = [];
@@ -51,23 +63,25 @@ function completionStatus({reviewers = [], comments = [], sha}) {
     const ok = reviewer === 'claude'
       ? claudeCompleted(comments, sha)
       : reviewer === 'codex'
-        ? codexCompleted(comments, sha)
+        ? codexCompleted(reviews, sha)
         : false;
     (ok ? completed : missing).push(reviewer);
   }
   return {required, completed, missing, complete: missing.length === 0};
 }
 
-// No-op probe note: this commit exists only to validate Codex's per-push review trigger.
-
 module.exports = {
   ACTIONS_APP_ID,
+  CODEX_BOT_LOGIN,
+  CODEX_BOT_ID,
+  CODEX_APP_URL,
   SHA_RE,
   validSha,
   isTrustedActionsComment,
   firstLine,
   hasTrustedFirstLine,
   claudeCompleted,
+  isTrustedCodexReview,
   codexCompleted,
   completionStatus,
 };

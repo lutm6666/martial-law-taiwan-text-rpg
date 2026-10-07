@@ -2,6 +2,8 @@ name: AI Path Guard
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled, edited]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
   issue_comment:
     types: [created, edited, deleted]
 permissions:
