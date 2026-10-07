@@ -58,6 +58,8 @@ function completionStatus({reviewers = [], comments = [], sha}) {
   return {required, completed, missing, complete: missing.length === 0};
 }
 
+// No-op probe note: this commit exists only to validate Codex's per-push review trigger.
+
 module.exports = {
   ACTIONS_APP_ID,
   SHA_RE,
