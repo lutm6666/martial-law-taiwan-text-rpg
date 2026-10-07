@@ -63,7 +63,14 @@ test('stale Claude completion cannot rerun another head guard', async () => {
   assert.equal(h.requests.length, 0);
 });
 
-test('oversized Claude snapshot is fragmented into read-safe parts and reconstructs every patch', () => {
+test('snapshot limits stay conservatively below the observed Read truncation range', () => {
+  assert(claude.SNAPSHOT_INLINE_LIMIT <= 16000);
+  assert(claude.SNAPSHOT_PART_LIMIT <= 15000);
+  assert(claude.SNAPSHOT_RECORD_LIMIT < claude.SNAPSHOT_PART_LIMIT);
+  assert(claude.MAX_SNAPSHOT_PARTS < 100);
+});
+
+test('oversized and CJK-dense Claude snapshots are fragmented into read-safe parts and reconstruct every patch', () => {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-review-chunks-'));
   try {
     const metadata = {number: 41, sha: SHA, review: {tier: 3, name: 'Tier 3'}};
@@ -71,6 +78,7 @@ test('oversized Claude snapshot is fragmented into read-safe parts and reconstru
       {filename: 'a.js', status: 'modified', patch: 'a'.repeat(90000)},
       {filename: 'b.js', status: 'modified', patch: 'b'.repeat(90000)},
       {filename: 'c.js', status: 'modified', patch: 'c'.repeat(90000)},
+      {filename: 'zh-TW.md', status: 'modified', patch: '戒嚴時期的繁體中文密集測試內容。'.repeat(5000)},
     ];
     const result = claude.writeReviewSnapshot(workspace, metadata, files);
     assert.equal(result.chunked, true);
@@ -86,7 +94,7 @@ test('oversized Claude snapshot is fragmented into read-safe parts and reconstru
     const records = manifest.parts.flatMap(relative => {
       const absolute = path.join(workspace, relative);
       const raw = fs.readFileSync(absolute, 'utf8');
-      assert(raw.length <= claude.SNAPSHOT_PART_LIMIT, relative + ' must stay below the safe Read size');
+      assert(raw.length <= claude.SNAPSHOT_PART_LIMIT, relative + ' must stay below the conservative Read size');
       const part = JSON.parse(raw);
       assert.equal(part.sha, SHA);
       assert.equal(part.total_parts, result.parts);
@@ -257,4 +265,4 @@ test('publish rolls back the completion marker when the required guard wakeup ca
   }
 });
 
-console.log('PASS Claude receiver completion wakeup, read-safe chunking, complete-input attestation, rollback recovery, and safe fork review behavior');
+console.log('PASS Claude receiver completion wakeup, conservative read-safe chunking including CJK, complete-input attestation, rollback recovery, and safe fork review behavior');

@@ -46,8 +46,12 @@ assert.match(claude, /parts_read/,
   'Claude structured output must attest that every required snapshot input was read');
 assert.match(claude, /--max-turns 100/,
   'Claude turn budget must accommodate the bounded multi-part review input');
-assert.match(claudeRuntime, /SNAPSHOT_PART_LIMIT = 30000/,
-  'Claude review parts must stay below the observed Read truncation range');
+assert.match(claudeRuntime, /SNAPSHOT_INLINE_LIMIT = 16000/,
+  'Claude inline input must remain conservatively below the observed Read truncation range');
+assert.match(claudeRuntime, /SNAPSHOT_PART_LIMIT = 15000/,
+  'Claude review parts must remain conservatively below the observed Read truncation range');
+assert.match(claudeRuntime, /SNAPSHOT_RECORD_LIMIT = 12000/,
+  'single record budget must leave serialization headroom inside each part');
 assert.match(claudeRuntime, /MAX_SNAPSHOT_PARTS = 80/,
   'Claude review parts must remain bounded below the model turn budget');
 assert.match(claudeRuntime, /patch_fragment/,
@@ -77,4 +81,4 @@ for (const filename of [
   }
 }
 
-console.log('PASS AI workflow YAML contracts, trusted exact-head completion wakeups, read-safe Claude inputs, completion attestation, and embedded scripts compile');
+console.log('PASS AI workflow YAML contracts, trusted exact-head completion wakeups, conservative Claude input budgets, completion attestation, and embedded scripts compile');

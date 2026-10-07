@@ -36,7 +36,12 @@ Tier 1 仍可由 repository writer 留言全文 `@claude review` 手動要求 Cl
 
 `needs:*` label 或 request comment 只代表 **request sent**，不代表完成。新 head SHA 產生後，舊 head 的 completion 一律失效。
 
-Codex completion 只接受 managed `chatgpt-codex-connector[bot]` 的 GitHub PR review，而且 REST payload 的完整 `commit_id` 必須等於目前 40 字元 head SHA。短 SHA 顯示、mention、request comment 或 summary 文案本身都不算 completion。
+Codex completion 必須同時具備兩種 managed evidence：
+
+1. `chatgpt-codex-connector[bot]` 的 PR review，REST payload 的完整 `commit_id` 精確等於目前 40 字元 head SHA，且 review body 符合 managed Codex Review 模板並含該 head 的 reviewed-commit prefix。
+2. 同一 Codex GitHub App（App id 1144995）維護的 `codex-pull-request-review-summary` comment，狀態已是 `Completed`，且 summary 的 commit prefix 對應同一 head。
+
+因此短 SHA 顯示、mention、request comment、Running summary、一般 bot 訊息、額度／錯誤訊息或只有單一 evidence 都不算 Codex completion。summary 的短 SHA 只作 lifecycle 交叉確認；真正 exact-head 綁定仍來自 PR review 的完整 `commit_id`。
 
 Claude completion 只接受 trusted GitHub Actions bot 發出的未編輯 marker，首行必須精確綁定目前完整 head SHA。Claude structured output 還必須回報它實際讀取的 snapshot input 數量，且要和 receiver 預期數完全一致，否則不發布 completion marker。
 
@@ -48,7 +53,7 @@ Draft 或 closed PR 不做自動 receiver review。Cross-review router 不對 fo
 
 Claude tools 僅 Read / Glob / Grep；禁用 Bash、Edit、Write、Agent、Task。所有 PR patch 都視為不可信資料，不視為指令。
 
-`claude-review-input.json` 記錄 requested SHA、tier、routing hint、provenance 與 patch。小型輸入必須維持在約 32k 字元內；大型 snapshot 會拆成最多 80 個 `claude-review-parts/*.json`，每個 serialized part 上限 30k 字元。單一巨大 file patch 也會再拆成有序 `patch_fragment`，避免任何單一 part 超過 Read 安全範圍。若需要超過 80 parts，或 GitHub file list 達 3000 筆而可能截斷，receiver fail closed 並要求拆 PR。
+`claude-review-input.json` 記錄 requested SHA、tier、routing hint、provenance 與 patch。為保留 CJK／JSON escape 的 token-density 安全裕度，小型輸入約限制在 16k serialized characters；大型 snapshot 會拆成最多 80 個 `claude-review-parts/*.json`，每個 serialized part 上限 15k characters，單一 record 上限 12k。單一巨大 file patch 會再拆成有序 `patch_fragment`，避免任何單一 part 接近已觀察到的 Read 截斷範圍。若需要超過 80 parts，或 GitHub file list 達 3000 筆而可能截斷，receiver fail closed 並要求拆 PR。
 
 Claude workflow 的 turn budget 高於最大 part 數；prompt 要求實際讀完所有 parts，structured output 的 `parts_read` 必須精確等於 receiver 預期值。這不是額外身分證明，但可防止 receiver 在明知輸入未讀完時仍把結果發布成 completed。
 
@@ -105,9 +110,9 @@ Project validation 必須覆蓋：
 - routing conflict 只能升級，不能降級。
 - production guard 不得退回 legacy security decision。
 - guard 不使用 `pull_request_review` 執行 PR-controlled workflow。
-- Codex managed review 與 Claude marker 都必須 exact-head。
+- Codex completion 需要 exact-head managed review + managed Completed summary 的雙證據；Claude marker 必須 exact-head。
 - completion wakeup 遇到 in-flight native guard 時可等待並修復 stale failure。
-- Claude snapshot part 必須在 Read-safe 大小內；oversized single-file patch 要 fragment；`parts_read` 不完整不得發布 marker。
+- Claude snapshot part 必須維持保守 Read-safe 大小；oversized single-file patch 要 fragment；CJK dense input 要有回歸覆蓋；`parts_read` 不完整不得發布 marker。
 - Claude marker 已發布但 guard wakeup 失敗時必須 rollback 或在後續 receiver run 重試 wakeup。
 - 3000-file API cap 與超過 80 個 Claude parts 都 fail closed，要求拆 PR。
 - 非 control path 不因 mutable routing metadata 觸發 owner gate。

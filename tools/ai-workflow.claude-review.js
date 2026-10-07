@@ -6,9 +6,9 @@ const {reviewPlan} = require('./ai-workflow.review');
 const {claudeCompleted} = require('./ai-workflow.review-completion');
 
 const ACTIONS_APP_ID = 15368;
-const SNAPSHOT_INLINE_LIMIT = 32000;
-const SNAPSHOT_PART_LIMIT = 30000;
-const SNAPSHOT_RECORD_LIMIT = 26000;
+const SNAPSHOT_INLINE_LIMIT = 16000;
+const SNAPSHOT_PART_LIMIT = 15000;
+const SNAPSHOT_RECORD_LIMIT = 12000;
 const MAX_SNAPSHOT_PARTS = 80;
 const DEFAULT_GUARD_POLL_ATTEMPTS = 60;
 const DEFAULT_GUARD_POLL_DELAY_MS = 5000;
@@ -76,7 +76,7 @@ function writeReviewSnapshot(workspace, metadata, files) {
       current = candidate;
     }
     if (partPayload(metadata.sha, current).length > SNAPSHOT_PART_LIMIT) {
-      throw new Error('A Claude review snapshot part exceeds the safe read limit. Split the PR.');
+      throw new Error('A Claude review snapshot part exceeds the conservative Read limit. Split the PR.');
     }
   }
   if (current.length) chunks.push(current);
@@ -91,7 +91,7 @@ function writeReviewSnapshot(workspace, metadata, files) {
     const filename = 'part-' + String(index + 1).padStart(3, '0') + '.json';
     const relative = partDirName + '/' + filename;
     const body = partPayload(metadata.sha, chunk, index + 1, chunks.length);
-    if (body.length > SNAPSHOT_PART_LIMIT) throw new Error('Claude review snapshot part exceeded its final serialized read limit.');
+    if (body.length > SNAPSHOT_PART_LIMIT) throw new Error('Claude review snapshot part exceeded its final serialized Read limit.');
     fs.writeFileSync(path.join(partDir, filename), body);
     return relative;
   });
@@ -154,7 +154,7 @@ async function prepare({github, context, core}) {
     patch: f.patch || null,
   }));
   const snapshot = writeReviewSnapshot(process.env.GITHUB_WORKSPACE, metadata, fileRecords);
-  if (snapshot.chunked) core.info('Large Claude review snapshot split into ' + snapshot.parts + ' read-safe parts.');
+  if (snapshot.chunked) core.info('Large Claude review snapshot split into ' + snapshot.parts + ' conservative read-safe parts.');
 
   core.setOutput('number', String(number));
   core.setOutput('sha', pr.head.sha);
