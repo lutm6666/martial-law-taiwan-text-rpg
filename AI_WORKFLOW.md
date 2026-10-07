@@ -30,7 +30,7 @@ GitHub PR、changed paths、CI、review payload 與 exact-head 證據才是控�
 
 Routing hint 只能增加獨立第二視角。例如 `ai:codex` + UI 仍需 Claude；`ai:claude` + engine 仍需 Codex。
 
-Tier 1 仍可由 repository writer 留言全文 `@claude review` 手動要求 Claude review。`review:retry` 只重送本來就需要的自動 review。
+Tier 1 仍可由 repository writer 留言全文 `@claude review` 手動要求 Claude review。`review:retry` 只重送本來就需要的自動 review，並直接喚醒需要 Claude 的 trusted receiver；retry actor 必須具有 repository write／maintain／admin 權限。
 
 ## Exact-head completion
 
@@ -47,9 +47,11 @@ Claude completion 只接受 trusted GitHub Actions bot 發出的未編輯 marker
 
 Completion gate 只證明「指定 reviewer 已對 exact head 完成 review」，不是把 AI 意見轉成 GitHub APPROVE。具體 findings 仍需處理；thread-resolution 與 required checks 仍可阻止未解決問題被合併。
 
-## Fork PR 與 Claude receiver
+## Fork PR 與 reviewer routing
 
-Draft 或 closed PR 不做自動 receiver review。Cross-review router 不對 fork 建立需要寫入 PR 的 routing comment；但 Claude receiver 可在 `pull_request_target` 下只 checkout trusted default branch，再用 GitHub API 唯讀取得 fork patch。它不 checkout、不執行 fork code，且 checkout 使用 `persist-credentials: false`。
+Draft 或 closed PR 不做自動 receiver review。Fork PR 仍由 trusted-base Cross Review 透過 GitHub API 讀取 changed paths、計算 reviewer set、同步 `needs:*` labels，並在 base repository PR conversation 建立 Codex／Claude reviewer request comment；整個 routing 流程不 checkout、不執行 fork head。
+
+因此 Canon、engine、logic、control fork PR 仍具有 Codex request path，不會因 fork 身分永久卡在 mandatory completion gate。Claude receiver 同樣可在 `pull_request_target` 下只 checkout trusted default branch，再用 GitHub API 唯讀取得 fork patch。它不 checkout、不執行 fork code，且 checkout 使用 `persist-credentials: false`。
 
 Claude tools 僅 Read / Glob / Grep；禁用 Bash、Edit、Write、Agent、Task。所有 PR patch 都視為不可信資料，不視為指令。
 
@@ -60,6 +62,8 @@ Claude workflow 的 turn budget 高於最大 part 數；prompt 要求實際讀�
 只有 Claude 執行成功、回傳 SHA 與 requested head 完全相同、`parts_read` 完整且 summary 非空，才發布 `Claude review completed`。完成後 receiver 直接 rerun exact-head native `guard`；不依賴 workflow 自己建立的 comment 再觸發 workflow。
 
 若 marker 已發布但 guard wakeup 失敗，receiver 會嘗試刪除剛建立的 marker並 fail closed；若清理本身失敗，之後 receiver 再看到同 SHA 的既有 marker時也必須重試 guard wakeup，而不是靜默跳過。
+
+`review:retry` 是可恢復路徑：Cross Review 可重新發送本來需要的 reviewer request，而 Claude workflow 的 trusted `pull_request_target:labeled` 也會直接接受 `review:retry`。`prepare()` 會再次驗證 retry actor 是 repository writer；若該 SHA 已有 Claude completion marker，retry 只重新嘗試 guard wakeup，否則重新執行 Claude review。
 
 ## Trusted guard wakeup
 
@@ -108,6 +112,8 @@ Project validation 必須覆蓋：
 - identity / routing / provenance 分離。
 - mutable label / branch 不能移除 changed-path specialist review。
 - routing conflict 只能升級，不能降級。
+- fork PR 仍透過 trusted API-only Cross Review 取得 path-required reviewer request，不執行 fork code。
+- `review:retry` 直接喚醒 Claude receiver，且 retry actor 必須是 repository writer。
 - production guard 不得退回 legacy security decision。
 - guard 不使用 `pull_request_review` 執行 PR-controlled workflow。
 - Codex completion 需要 exact-head managed review + managed Completed summary 的雙證據；Claude marker 必須 exact-head。
@@ -123,7 +129,7 @@ Project validation 必須覆蓋：
 ## 失敗處理
 
 - CI fail：修正，不繞過測試。
-- reviewer receiver fail：保持 fail closed；不能偽造 completed。
+- reviewer receiver fail：保持 fail closed；可由 writer 使用 `review:retry`，不能偽造 completed。
 - merge conflict：以 Canon 與 regression tests 為基準。
 - binary / 缺 patch：review 必須明示限制。
 - PR 達 GitHub 3000-file list 上限、或 Claude snapshot 超過 bounded part budget：拆 PR，不用截斷資料推定低風險。

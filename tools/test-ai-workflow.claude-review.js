@@ -189,6 +189,77 @@ test('manual Claude review request remains writer-only', async () => {
   await assert.rejects(claude.prepare({github, context, core: {}}), /repository writer/);
 });
 
+test('review:retry label is writer-only', async () => {
+  const github = {
+    rest: {
+      repos: {getCollaboratorPermissionLevel: async () => ({data: {permission: 'read'}})},
+    },
+  };
+  const context = {
+    eventName: 'pull_request_target',
+    actor: 'external',
+    repo: {owner: 'lutm6666', repo: 'repo'},
+    payload: {
+      action: 'labeled',
+      label: {name: 'review:retry'},
+      pull_request: {number: 41},
+      repository: {default_branch: 'main'},
+    },
+  };
+  await assert.rejects(claude.prepare({github, context, core: {}}), /Retry Claude review requires a repository writer/);
+});
+
+test('writer review:retry directly starts a required Claude receiver run', async () => {
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-retry-'));
+  const priorWorkspace = process.env.GITHUB_WORKSPACE;
+  process.env.GITHUB_WORKSPACE = workspace;
+  const filesEndpoint = function filesEndpoint() {};
+  const commentsEndpoint = function commentsEndpoint() {};
+  const github = {
+    rest: {
+      repos: {getCollaboratorPermissionLevel: async () => ({data: {permission: 'write'}})},
+      pulls: {
+        get: async () => ({data: {
+          state: 'open', draft: false,
+          labels: [{name: 'review:retry'}], user: {login: 'lutm6666', type: 'User'},
+          head: {sha: SHA, ref: 'feature/retry-ui', repo: {full_name: 'lutm6666/repo'}},
+          base: {sha: 'b'.repeat(40), ref: 'main'},
+        }}),
+        listFiles: filesEndpoint,
+      },
+      issues: {listComments: commentsEndpoint},
+    },
+    paginate: async method => {
+      if (method === filesEndpoint) return [{filename: 'case3-film-ui.js', status: 'modified', patch: '@@ -1 +1 @@\n-old\n+new'}];
+      if (method === commentsEndpoint) return [];
+      throw new Error('unexpected paginate method');
+    },
+  };
+  const outputs = new Map();
+  const context = {
+    eventName: 'pull_request_target',
+    actor: 'lutm6666',
+    repo: {owner: 'lutm6666', repo: 'repo'},
+    payload: {
+      action: 'labeled',
+      label: {name: 'review:retry'},
+      pull_request: {number: 41},
+      repository: {default_branch: 'main'},
+    },
+  };
+  const core = {info() {}, setOutput(name, value) { outputs.set(name, value); }};
+  try {
+    await claude.prepare({github, context, core});
+    assert.equal(outputs.get('run'), 'true');
+    assert.equal(outputs.get('sha'), SHA);
+    assert.equal(outputs.get('snapshot_parts'), '1');
+  } finally {
+    if (priorWorkspace === undefined) delete process.env.GITHUB_WORKSPACE;
+    else process.env.GITHUB_WORKSPACE = priorWorkspace;
+    fs.rmSync(workspace, {recursive: true, force: true});
+  }
+});
+
 test('publish rejects incomplete snapshot attestation before creating a completion marker', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-publish-'));
   const executionFile = path.join(dir, 'result.json');
@@ -265,4 +336,4 @@ test('publish rolls back the completion marker when the required guard wakeup ca
   }
 });
 
-console.log('PASS Claude receiver completion wakeup, conservative read-safe chunking including CJK, complete-input attestation, rollback recovery, and safe fork review behavior');
+console.log('PASS Claude receiver completion wakeup, conservative read-safe chunking including CJK, complete-input attestation, rollback recovery, safe fork review behavior, and writer-only retry routing');

@@ -178,6 +178,17 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
   assert.deepEqual(routed.plan.reviewers, ['codex', 'claude']);
   assert.equal(m.calls.filter(call => call.name === 'createComment').length, 2);
 
+  const forkPr = makePr('claude', {
+    head: {sha, ref: 'feature/fork-engine', repo: {full_name: 'external/fork'}}
+  });
+  m = mock({pr: forkPr, files: [file('case3-film-engine.js')]});
+  routed = await policy.runCrossReview(m);
+  assert.deepEqual(routed.plan.reviewers, ['codex'], 'fork logic/control changes must still receive a Codex request path');
+  const forkRequests = m.calls.filter(call => call.name === 'createComment');
+  assert.equal(forkRequests.length, 1);
+  assert.match(forkRequests[0].args.body, /@codex review/);
+  assert.match(forkRequests[0].args.body, new RegExp(sha));
+
   m = mock({files: [file('case3-film-ui.js')]});
   await policy.runCrossReview(m);
   await policy.runCrossReview(m);
@@ -212,7 +223,7 @@ function mock({pr = makePr(), files = [], comments = [], permission = 'write'} =
     fs.rmSync(temp, {recursive: true, force: true});
   }
 
-  console.log('PASS path-based dual-AI review policy with separate provenance/routing');
+  console.log('PASS path-based dual-AI review policy with separate provenance/routing and API-only fork routing');
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;

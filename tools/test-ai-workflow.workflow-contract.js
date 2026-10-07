@@ -9,6 +9,7 @@ const review = fs.readFileSync('.github/workflows/ai-cross-review.yml', 'utf8');
 const claude = fs.readFileSync('.github/workflows/claude-review.yml', 'utf8');
 const claudeRuntime = fs.readFileSync('tools/ai-workflow.claude-review.js', 'utf8');
 const guardRuntime = fs.readFileSync('tools/ai-path-guard.runtime.js', 'utf8');
+const reviewRuntime = fs.readFileSync('tools/ai-workflow.review.js', 'utf8');
 
 assert.match(review, /group: ai-cross-review-/,
   'cross-review concurrency must remain scoped to the PR');
@@ -18,6 +19,8 @@ assert.match(review, /ai-workflow\.review\.js/,
   'cross-review workflow must use the path-based review module');
 assert.doesNotMatch(review, /ai-workflow\.js'\)\.crossReview/,
   'cross-review workflow must not fall back to legacy ai-workflow.crossReview');
+assert.doesNotMatch(reviewRuntime, /fork PR: no automatic cross-review/,
+  'fork PRs must retain an API-only reviewer request path instead of becoming permanently blocked');
 
 assert.match(guard, /path: trusted/,
   'guard must continue loading policy from the trusted base checkout');
@@ -38,6 +41,12 @@ assert.match(claude, /actions: write/,
   'Claude receiver needs actions: write to rerun the native guard after completion');
 assert.match(claude, /checks: read/,
   'Claude receiver needs checks: read to locate the native guard for the exact head');
+assert.match(claude, /github\.event\.label\.name == 'review:retry'/,
+  'review:retry must directly wake the trusted Claude receiver instead of relying on an Actions-authored comment');
+assert.match(claudeRuntime, /label\?\.name === 'review:retry'/,
+  'Claude prepare must recognize the retry label');
+assert.match(claudeRuntime, /Retry.*Claude review requires a repository writer/,
+  'retry-triggered Claude reviews must remain writer-authorized');
 assert.match(claude, /Publish verified result and re-evaluate guard/,
   'Claude completion publication must explicitly re-evaluate the guard');
 assert.match(claude, /steps\.prepare\.outputs\.snapshot_parts/,
@@ -81,4 +90,4 @@ for (const filename of [
   }
 }
 
-console.log('PASS AI workflow YAML contracts, trusted exact-head completion wakeups, conservative Claude input budgets, completion attestation, and embedded scripts compile');
+console.log('PASS AI workflow YAML contracts, fork reviewer routing, writer-only retry wakeups, trusted exact-head completion wakeups, conservative Claude input budgets, completion attestation, and embedded scripts compile');

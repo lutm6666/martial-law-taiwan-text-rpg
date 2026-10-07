@@ -109,12 +109,18 @@ function writeReviewSnapshot(workspace, metadata, files) {
 
 async function prepare({github, context, core}) {
   const manual = context.eventName === 'issue_comment';
+  const retry = !manual
+    && context.eventName === 'pull_request_target'
+    && context.payload.action === 'labeled'
+    && context.payload.label?.name === 'review:retry';
   const number = manual ? context.payload.issue.number : context.payload.pull_request.number;
   if (manual && (!context.payload.issue.pull_request || context.payload.comment.user.type !== 'User' || !/^@claude review\s*$/.test(context.payload.comment.body.trim()))) return;
 
-  if (manual) {
+  if (manual || retry) {
     const {data: permission} = await github.rest.repos.getCollaboratorPermissionLevel({...context.repo, username: context.actor});
-    if (!['admin', 'maintain', 'write'].includes(permission.permission)) throw new Error('Manual Claude review requires a repository writer.');
+    if (!['admin', 'maintain', 'write'].includes(permission.permission)) {
+      throw new Error((manual ? 'Manual' : 'Retry') + ' Claude review requires a repository writer.');
+    }
   }
 
   const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number: number});
