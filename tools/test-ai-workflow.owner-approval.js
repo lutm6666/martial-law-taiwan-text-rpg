@@ -24,6 +24,22 @@ function directComment(over = {}) {
   };
 }
 
+function codexReview(over = {}) {
+  return {
+    id: 2,
+    user: {
+      login: 'chatgpt-codex-connector[bot]',
+      id: 199175422,
+      type: 'Bot',
+      html_url: 'https://github.com/apps/chatgpt-codex-connector',
+    },
+    state: 'COMMENTED',
+    submitted_at: '2026-10-06T01:50:00Z',
+    commit_id: SHA,
+    ...over,
+  };
+}
+
 function reason(c, ctx = {owner: OWNER, sha: SHA, headSeenAt: HEAD_AT}) {
   return approval.checkApprovalComment(c, ctx).reason;
 }
@@ -161,24 +177,24 @@ test('headSeenAt returns null with no matching runs or invalid SHA', async () =>
   assert.equal(await approval.headSeenAt(github, {owner: OWNER, repo: 'r'}, 'bad'), null);
 });
 
-function runtimeMock({comments, workflowRuns, reviewWouldThrow = true}) {
+function runtimeMock({comments, reviews = [codexReview()], workflowRuns}) {
   const head = SHA;
   const checks = [];
   const calls = [];
   const pr = {
     state: 'open',
     draft: false,
-    labels: [{name: 'ai:codex'}],
-    head: {sha: head, ref: 'codex/harden-owner-approval-gate', repo: {full_name: OWNER + '/repo'}},
+    labels: [{name: 'ai:claude'}],
+    head: {sha: head, ref: 'claude/harden-owner-approval-gate', repo: {full_name: OWNER + '/repo'}},
     base: {sha: 'base', ref: 'main'},
   };
-  const methods = {files: 'files', comments: 'comments', checks: 'checks', runs: 'runs'};
+  const methods = {files: 'files', comments: 'comments', reviews: 'reviews', checks: 'checks', runs: 'runs'};
   const github = {
     rest: {
       pulls: {
         get: async () => ({data: pr}),
         listFiles: methods.files,
-        listReviews: async () => { if (reviewWouldThrow) throw new Error('reviews must not be fetched'); return []; },
+        listReviews: methods.reviews,
       },
       issues: {listComments: methods.comments},
       checks: {
@@ -195,6 +211,7 @@ function runtimeMock({comments, workflowRuns, reviewWouldThrow = true}) {
     paginate: async (method) => {
       if (method === methods.files) return ['tools/ai-path-guard.runtime.js'];
       if (method === methods.comments) return comments;
+      if (method === methods.reviews) return reviews;
       if (method === methods.checks) return checks;
       if (method === methods.runs) return workflowRuns;
       throw new Error('unexpected paginate method');
@@ -206,7 +223,7 @@ function runtimeMock({comments, workflowRuns, reviewWouldThrow = true}) {
   return {github, context, core, checks, calls};
 }
 
-test('production runtime rejects ChatGPT connector approval and never reads PR reviews', async () => {
+test('production runtime rejects ChatGPT connector approval after exact-head AI review completion', async () => {
   const m = runtimeMock({
     comments: [directComment({performed_via_github_app: {id: 1144995, slug: 'chatgpt-codex-connector'}})],
     workflowRuns: [{head_sha: SHA, created_at: HEAD_AT}],
@@ -216,7 +233,7 @@ test('production runtime rejects ChatGPT connector approval and never reads PR r
   assert(m.calls.some(([name, message]) => name === 'failed' && message.includes('via-github-app')));
 });
 
-test('production runtime accepts hardened direct owner approval', async () => {
+test('production runtime accepts hardened direct owner approval after exact-head AI review completion', async () => {
   const m = runtimeMock({
     comments: [directComment()],
     workflowRuns: [{head_sha: SHA, created_at: HEAD_AT}],
