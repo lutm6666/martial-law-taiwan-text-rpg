@@ -63,6 +63,37 @@ test('stale Claude completion cannot rerun another head guard', async () => {
   assert.equal(h.requests.length, 0);
 });
 
+test('oversized Claude snapshot is chunked instead of creating a permanent review dead-end', () => {
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-review-chunks-'));
+  try {
+    const metadata = {number: 41, sha: SHA, review: {tier: 3, name: 'Tier 3'}};
+    const files = [
+      {filename: 'a.js', status: 'modified', patch: 'a'.repeat(90000)},
+      {filename: 'b.js', status: 'modified', patch: 'b'.repeat(90000)},
+      {filename: 'c.js', status: 'modified', patch: 'c'.repeat(90000)},
+    ];
+    const result = claude.writeReviewSnapshot(workspace, metadata, files);
+    assert.equal(result.chunked, true);
+    assert(result.parts >= 2);
+
+    const manifest = JSON.parse(fs.readFileSync(path.join(workspace, 'claude-review-input.json'), 'utf8'));
+    assert.equal(manifest.sha, SHA);
+    assert.equal(manifest.chunked, true);
+    assert.equal(manifest.total_files, files.length);
+    assert.equal(manifest.parts.length, result.parts);
+
+    const reconstructed = manifest.parts.flatMap(relative => {
+      const part = JSON.parse(fs.readFileSync(path.join(workspace, relative), 'utf8'));
+      assert.equal(part.sha, SHA);
+      assert.equal(part.total_parts, result.parts);
+      return part.files;
+    });
+    assert.deepEqual(reconstructed.map(file => file.filename), files.map(file => file.filename));
+  } finally {
+    fs.rmSync(workspace, {recursive: true, force: true});
+  }
+});
+
 test('automatic trusted-base Claude review accepts a fork PR without writer permission', async () => {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-review-'));
   const priorWorkspace = process.env.GITHUB_WORKSPACE;
@@ -130,4 +161,4 @@ test('manual Claude review request remains writer-only', async () => {
   await assert.rejects(claude.prepare({github, context, core: {}}), /repository writer/);
 });
 
-console.log('PASS Claude receiver completion wakeup and safe fork review behavior');
+console.log('PASS Claude receiver completion wakeup, chunked review input, and safe fork review behavior');

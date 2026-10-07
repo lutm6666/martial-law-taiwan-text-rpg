@@ -6,6 +6,7 @@ const reviewCompletion = require('./ai-workflow.review-completion.js');
 const identity = require('./ai-workflow.identity.js');
 const approval = require('./ai-path-guard.approval.js');
 const ACTIONS_APP_ID = basePolicy.ACTIONS_APP_ID;
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function matches(file, rules) {
   return rules.some(rule => rule.test(file));
@@ -59,6 +60,31 @@ async function commentsFor(github, repo, number) {
 
 async function reviewsFor(github, repo, number) {
   return github.paginate(github.rest.pulls.listReviews, {...repo, pull_number: number, per_page: 100});
+}
+
+async function nativeGuardForHead({github, repo, sha}) {
+  const guards = await github.paginate(github.rest.checks.listForRef, {
+    ...repo, ref: sha, check_name: 'guard', per_page: 100
+  });
+  const jobUrl = 'https://github.com/' + repo.owner + '/' + repo.repo + '/actions/runs/';
+  return guards
+    .filter(c => c.name === 'guard'
+      && c.head_sha === sha
+      && c.app?.id === ACTIONS_APP_ID
+      && c.conclusion !== 'skipped'
+      && c.details_url?.startsWith(jobUrl)
+      && /\/job\/\d+$/.test(c.details_url))
+    .sort((a, b) => b.id - a.id)[0] || null;
+}
+
+async function waitForNativeGuard({github, repo, sha, attempts = 12, delayMs = 5000}) {
+  let native = null;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    native = await nativeGuardForHead({github, repo, sha});
+    if (native?.status === 'completed') return native;
+    if (attempt < attempts - 1) await sleep(delayMs);
+  }
+  return native;
 }
 
 async function runGuard({github, context, core, number, expectedBaseSha}) {
@@ -140,19 +166,16 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
   });
 
   // Actions-created check conclusions are immutable through the Checks API.
-  // Comment/review runs attach to main; request a native PR guard rerun on the PR head.
-  if (context.eventName === 'issue_comment' || context.eventName === 'pull_request_review') {
-    const guards = await github.paginate(github.rest.checks.listForRef, {
-      ...repo, ref: sha, check_name: 'guard', per_page: 100
-    });
-    const jobUrl = 'https://github.com/' + repo.owner + '/' + repo.repo + '/actions/runs/';
-    const native = guards
-      .filter(c => c.name === 'guard' && c.head_sha === sha && c.app?.id === ACTIONS_APP_ID && c.conclusion !== 'skipped' && c.details_url?.startsWith(jobUrl) && /\/job\/\d+$/.test(c.details_url))
-      .sort((a, b) => b.id - a.id)[0];
+  // Codex updates its managed PR summary comment when review completes; that
+  // issue_comment event is sourced from the trusted default-branch workflow.
+  // Wait for an in-flight native PR guard before deciding whether a rerun is
+  // needed, so completion events cannot race the original guard evaluation.
+  if (context.eventName === 'issue_comment') {
+    const native = await waitForNativeGuard({github, repo, sha});
+    if (!native) throw new Error('No native PR guard exists for the current head; trigger a PR guard event.');
+    if (native.status !== 'completed') throw new Error('Native PR guard did not finish in time for completion re-evaluation.');
 
-    if (!native) throw new Error('No native PR guard to rerun; trigger a PR guard event.');
-    if (native.status !== 'completed') core.info('Native guard is already pending/running; no duplicate rerun.');
-    else if (native.conclusion !== conclusion) {
+    if (native.conclusion !== conclusion) {
       const {data: latest} = await github.rest.pulls.get({...repo, pull_number: number});
       if (latest.state !== 'open' || latest.head.sha !== sha) throw new Error('PR changed before native guard rerun; retry the current head.');
       const job_id = Number(native.details_url.split('/').pop());
@@ -164,4 +187,4 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
   if (conclusion === 'failure') core.setFailed(summary);
 }
 
-module.exports = {evaluateGuardPolicy, runGuard};
+module.exports = {evaluateGuardPolicy, nativeGuardForHead, waitForNativeGuard, runGuard};

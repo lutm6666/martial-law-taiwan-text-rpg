@@ -10,10 +10,12 @@ const runtimeSource = fs.readFileSync('tools/ai-path-guard.runtime.js', 'utf8');
 
 assert.match(workflow, /pull_request_target:/,
   'production guard must remain pull_request_target based on trusted base policy');
-assert.match(workflow, /^  pull_request_review:/m,
-  'Codex review submissions must retrigger the trusted-base completion guard');
-assert.match(workflow, /types: \[submitted, edited, dismissed\]/,
-  'review submission, edit, and dismissal must all re-evaluate completion');
+assert.doesNotMatch(workflow, /^  pull_request_review:/m,
+  'PR review events must not execute an untrusted PR copy of the guard workflow');
+assert.match(workflow, /^  issue_comment:/m,
+  'trusted default-branch issue comment events must re-evaluate completion and owner approval');
+assert.match(workflow, /types: \[created, edited, deleted\]/,
+  'Codex summary edits and owner comment changes must re-evaluate the guard');
 assert.match(workflow, /checks: write/,
   'production guard needs checks: write for the enforced head check');
 assert.match(workflow, /actions: write/,
@@ -38,6 +40,12 @@ assert.match(runtimeSource, /ai-path-guard\.approval\.js/,
   'production runtime must keep the hardened owner approval helper');
 assert.match(runtimeSource, /ownerApproval\(comments, \[\], owner,/,
   'PR reviews must never be passed into the owner approval helper');
+assert.match(runtimeSource, /waitForNativeGuard/,
+  'completion wakeups must wait for an in-flight native guard before deciding whether to rerun');
+assert.match(runtimeSource, /context\.eventName === 'issue_comment'/,
+  'only trusted issue-comment wakeups should drive native guard reruns');
+assert.doesNotMatch(runtimeSource, /context\.eventName === 'pull_request_review'/,
+  'runtime must not depend on pull_request_review workflow execution');
 
 const scripts = [...workflow.matchAll(/          script: \|\n((?:            .*\n|\n)+)/g)];
 assert(scripts.length > 0, 'guard workflow must contain github-script code to validate');
@@ -163,4 +171,40 @@ for (const filename of [
   assert.equal(result.routingHint.hint, 'claude');
 }
 
-console.log('PASS production guard enforces trusted-base path security, exact-head AI completion, file-list fail-closed, and separate owner approval');
+async function testNativeGuardWait() {
+  const checksEndpoint = function checksEndpoint() {};
+  let calls = 0;
+  const github = {
+    rest: {checks: {listForRef: checksEndpoint}},
+    paginate: async method => {
+      assert.equal(method, checksEndpoint);
+      calls += 1;
+      return [{
+        id: 99,
+        name: 'guard',
+        head_sha: sha,
+        status: calls === 1 ? 'in_progress' : 'completed',
+        conclusion: calls === 1 ? null : 'failure',
+        app: {id: 15368},
+        details_url: 'https://github.com/lutm6666/repo/actions/runs/123/job/456',
+      }];
+    },
+  };
+  const native = await runtime.waitForNativeGuard({
+    github,
+    repo: {owner: 'lutm6666', repo: 'repo'},
+    sha,
+    attempts: 2,
+    delayMs: 0,
+  });
+  assert.equal(calls, 2, 'race repair must poll past an in-progress native guard');
+  assert.equal(native.status, 'completed');
+  assert.equal(native.conclusion, 'failure');
+}
+
+testNativeGuardWait()
+  .then(() => console.log('PASS production guard enforces trusted-base path security, exact-head AI completion, race-safe wakeups, file-list fail-closed, and separate owner approval'))
+  .catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+  });
