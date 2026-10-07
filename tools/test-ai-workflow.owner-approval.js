@@ -24,19 +24,35 @@ function directComment(over = {}) {
   };
 }
 
+function codexUser() {
+  return {
+    login: 'chatgpt-codex-connector[bot]',
+    id: 199175422,
+    type: 'Bot',
+    html_url: 'https://github.com/apps/chatgpt-codex-connector',
+  };
+}
+
 function codexReview(over = {}) {
   return {
     id: 2,
-    user: {
-      login: 'chatgpt-codex-connector[bot]',
-      id: 199175422,
-      type: 'Bot',
-      html_url: 'https://github.com/apps/chatgpt-codex-connector',
-    },
+    user: codexUser(),
     state: 'COMMENTED',
     submitted_at: '2026-10-06T01:50:00Z',
     commit_id: SHA,
+    body: '\n### 💡 Codex Review\n\nHere are some automated review suggestions for this pull request.\n\n**Reviewed commit:** `' + SHA.slice(0, 10) + '`\n',
     ...over,
+  };
+}
+
+function codexSummary() {
+  return {
+    id: 3,
+    user: codexUser(),
+    performed_via_github_app: {id: 1144995, slug: 'chatgpt-codex-connector'},
+    created_at: '2026-10-06T01:49:00Z',
+    updated_at: '2026-10-06T01:51:00Z',
+    body: '<!-- codex-pull-request-review-summary -->\n\n## Codex Review Summary\n\n| Review | Status | Commit | Review trigger |\n| --- | --- | --- | --- |\n| 📝 **Code Review** | ✅ **Completed** | `' + SHA.slice(0, 7) + '` | New commits |',
   };
 }
 
@@ -189,6 +205,7 @@ function runtimeMock({comments, reviews = [codexReview()], workflowRuns}) {
     base: {sha: 'base', ref: 'main'},
   };
   const methods = {files: 'files', comments: 'comments', reviews: 'reviews', checks: 'checks', runs: 'runs'};
+  const allComments = [...comments, codexSummary()];
   const github = {
     rest: {
       pulls: {
@@ -209,8 +226,8 @@ function runtimeMock({comments, reviews = [codexReview()], workflowRuns}) {
       actions: {listWorkflowRunsForRepo: methods.runs},
     },
     paginate: async (method) => {
-      if (method === methods.files) return ['tools/ai-path-guard.runtime.js'];
-      if (method === methods.comments) return comments;
+      if (method === methods.files) return [{filename: 'tools/ai-path-guard.runtime.js', status: 'modified'}];
+      if (method === methods.comments) return allComments;
       if (method === methods.reviews) return reviews;
       if (method === methods.checks) return checks;
       if (method === methods.runs) return workflowRuns;

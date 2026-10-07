@@ -79,18 +79,29 @@ const claudeCompletion = {
   updated_at: '2026-10-06T01:02:00Z',
   body: '<!-- claude-review:completed:' + sha + ' -->\n**Claude review completed**',
 };
+const codexUser = {
+  login: 'chatgpt-codex-connector[bot]',
+  id: 199175422,
+  type: 'Bot',
+  html_url: 'https://github.com/apps/chatgpt-codex-connector',
+};
 const codexCompletion = {
   id: 3,
-  user: {
-    login: 'chatgpt-codex-connector[bot]',
-    id: 199175422,
-    type: 'Bot',
-    html_url: 'https://github.com/apps/chatgpt-codex-connector',
-  },
+  user: codexUser,
   state: 'COMMENTED',
   submitted_at: '2026-10-06T01:02:00Z',
   commit_id: sha,
+  body: '\n### 💡 Codex Review\n\nHere are some automated review suggestions for this pull request.\n\n**Reviewed commit:** `' + sha.slice(0, 10) + '`\n',
 };
+const codexSummary = {
+  id: 4,
+  user: codexUser,
+  performed_via_github_app: {id: 1144995, slug: 'chatgpt-codex-connector'},
+  created_at: '2026-10-06T01:01:30Z',
+  updated_at: '2026-10-06T01:02:01Z',
+  body: '<!-- codex-pull-request-review-summary -->\n\n## Codex Review Summary\n\n| Review | Status | Commit | Review trigger |\n| --- | --- | --- | --- |\n| 📝 **Code Review** | ✅ **Completed** | `' + sha.slice(0, 7) + '` | New commits |',
+};
+const reviewComments = [claudeCompletion, codexSummary];
 
 assert.throws(
   () => runtime.evaluateGuardPolicy({
@@ -113,7 +124,7 @@ for (const scenario of [
 ]) {
   assert.doesNotThrow(() => runtime.evaluateGuardPolicy({
     ...scenario,
-    comments: [claudeCompletion],
+    comments: reviewComments,
     reviews: [codexCompletion],
     owner,
     headSeenAt,
@@ -148,7 +159,7 @@ for (const filename of [
     () => runtime.evaluateGuardPolicy({
       pr: makePr({label: 'ai:claude', ref: 'claude/control'}),
       files: [file(filename)],
-      comments: [],
+      comments: [codexSummary],
       reviews: [codexCompletion],
       owner,
       headSeenAt,
@@ -160,7 +171,7 @@ for (const filename of [
   const result = runtime.evaluateGuardPolicy({
     pr: makePr({label: 'ai:claude', ref: 'claude/control'}),
     files: [file(filename)],
-    comments: [approvalComment],
+    comments: [approvalComment, codexSummary],
     reviews: [codexCompletion],
     owner,
     headSeenAt,
@@ -203,7 +214,7 @@ async function testNativeGuardWait() {
 }
 
 testNativeGuardWait()
-  .then(() => console.log('PASS production guard enforces trusted-base path security, exact-head AI completion, race-safe wakeups, file-list fail-closed, and separate owner approval'))
+  .then(() => console.log('PASS production guard enforces trusted-base path security, dual managed Codex completion, exact-head AI completion, race-safe wakeups, file-list fail-closed, and separate owner approval'))
   .catch(error => {
     console.error(error);
     process.exitCode = 1;
