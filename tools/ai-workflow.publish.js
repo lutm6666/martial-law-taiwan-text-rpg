@@ -8,7 +8,7 @@ const cp = require('node:child_process');
 const {issueDigest} = require('./ai-workflow.dispatch');
 
 const SHA = /^[0-9a-f]{40}$/;
-const BRANCH = /^ai\/issue-([1-9]\d*)(?:-r\d+)?$/;
+const BRANCH = /^ai\/issue-([1-9]\d*)(?:-r\d+(?:-a\d+)?)?$/;
 const MAX_PATCH_BYTES = 50 * 1024 * 1024;
 const MAX_BLOB_BYTES = 100 * 1024 * 1024;
 const SYNC_ATTEMPTS = 3;
