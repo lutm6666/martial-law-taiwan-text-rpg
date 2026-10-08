@@ -635,6 +635,21 @@ test('orphan pre-plan branch at main SHA recovers without deleting it', async ()
   assert.equal(callsNamed(mock, 'repos.createOrUpdateFileContents').length, 1);
 });
 
+test('orphan pre-plan retry branch at main SHA recovers without deleting it', async () => {
+  const mock = harness();
+  await mock.run();
+  mock.prs[0].state = 'closed';
+  mock.prs[0].merged_at = '2026-10-08T01:00:00Z';
+  mock.context.payload.action = 'reopened';
+  mock.refs.set('ai/issue-42-r1234', {object: {sha: mock.state.mainSha}});
+  const result = await mock.run();
+  assert.equal(result.run, true);
+  assert.equal(result.branch, 'ai/issue-42-r1234');
+  assert.equal(mock.prs.length, 2);
+  assert.equal(callsNamed(mock, 'git.createRef').length, 1);
+  assert.equal(callsNamed(mock, 'repos.createOrUpdateFileContents').length, 2);
+});
+
 test('rerunning partially published reopened work selects a fresh clean ref', async () => {
   const mock = harness();
   await mock.run();
@@ -650,7 +665,7 @@ test('rerunning partially published reopened work selects a fresh clean ref', as
   const resumed = await mock.run();
   assert.equal(resumed.run, true);
   assert.notEqual(resumed.branch, first.branch);
-  assert.match(resumed.branch, /^ai\\/issue-42-r\\d+$/);
+  assert.match(resumed.branch, /^ai\/issue-42-r\d+$/);
   assert.equal(mock.prs[1].state, 'closed');
   assert.equal(mock.prs[2].draft, true);
 });
