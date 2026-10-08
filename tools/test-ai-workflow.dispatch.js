@@ -624,6 +624,17 @@ test('failed retry of an initial plan-only PR resumes on the same run', async ()
   assert.equal(mock.prs.length, 1);
 });
 
+test('orphan pre-plan branch at main SHA recovers without deleting it', async () => {
+  const mock = harness();
+  mock.refs.set('ai/issue-42', {object: {sha: mock.state.mainSha}});
+  const result = await mock.run();
+  assert.equal(result.run, true);
+  assert.equal(result.branch, 'ai/issue-42');
+  assert.equal(mock.prs.length, 1);
+  assert.equal(callsNamed(mock, 'git.createRef').length, 0);
+  assert.equal(callsNamed(mock, 'repos.createOrUpdateFileContents').length, 1);
+});
+
 test('unowned branch collision fails closed', async () => {
   const mock = harness();
   mock.refs.set('ai/issue-42', {object: {sha: sha('c')}});
