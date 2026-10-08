@@ -107,7 +107,7 @@ function renderFrameCompare(){
  var cats=C.frameAnalysis.categories;
  var html='<div class="c3-note"><strong>影格比對</strong><br>先分開檢查人物、移動物體與固定背景，不直接替照片補上人物身分或行動目的。</div>';
  html+='<div class="c3-frame-strip">';
- [11,12,13,14,15].forEach(function(n){var id='F'+n,p=artPath('frames',id);html+='<div class="c3-frame '+(p?'has-art':'')+'">'+(p?imageHtml(p,'','c3-frame-img'):'')+'<span class="c3-frame-label">第 '+n+' 格</span></div>'});
+ [11,12,13,14,15].forEach(function(n){var id='F'+n,p=(n===13&&!state.flags.e10Verified)?'':artPath('frames',id);html+='<div class="c3-frame '+(p?'has-art':'')+'">'+(p?imageHtml(p,'','c3-frame-img'):'')+'<span class="c3-frame-label">第 '+n+' 格</span></div>'});
  html+='</div><div class="c3-frame-grid">';
  Object.keys(cats).forEach(function(k){
   var done=!!state.frameAnalysis[k];
