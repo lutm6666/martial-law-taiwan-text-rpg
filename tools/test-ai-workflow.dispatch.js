@@ -532,6 +532,26 @@ test('reopened Issue after merged plan PR starts a fresh retry branch from curre
   assert(callsNamed(mock, 'repos.merge').every(call => call.base !== 'main'));
 });
 
+test('re-running an already processed reopened event preserves its ready implementation PR', async () => {
+  const mock = harness();
+  const first = await mock.run();
+  mock.prs[0].state = 'closed';
+  mock.prs[0].merged_at = '2026-10-08T01:00:00Z';
+  mock.context.payload.action = 'reopened';
+  const second = await mock.run();
+  assert.equal(second.branch, 'ai/issue-42-r1234');
+  mock.prs[1].draft = false;
+  mock.prFiles.set(mock.prs[1].number, [{filename: 'case3-film-ui.js'}]);
+  const before = mock.calls.length;
+  const again = await mock.run();
+  assert.equal(again.run, false);
+  assert.equal(again.alreadyProcessed, true);
+  assert.equal(mock.prs[1].state, 'open');
+  assert.equal(mock.prs[1].draft, false);
+  assert.equal(mock.prs.length, 2);
+  assert.equal(mock.calls.slice(before).filter(call => call.name === 'pulls.update').length, 0);
+});
+
 test('unowned branch collision fails closed', async () => {
   const mock = harness();
   mock.refs.set('ai/issue-42', {object: {sha: sha('c')}});
