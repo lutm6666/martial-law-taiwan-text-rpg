@@ -587,6 +587,23 @@ test('failed opened implementation can be rerun without recreating its draft PR'
   assert.equal(mock.prs.length, 1);
 });
 
+test('rerunning partially published opened work selects a fresh clean ref and reruns implementation', async () => {
+  const mock = harness();
+  const first = await mock.run();
+  mock.prFiles.set(first.pr, [
+    {filename: '.ai/dispatch/issue-42.json'},
+    {filename: 'case3-film-ui.js'},
+  ]);
+  mock.context.runAttempt = 2;
+  const resumed = await mock.run();
+  assert.equal(resumed.run, true);
+  assert.notEqual(resumed.branch, first.branch);
+  assert.match(resumed.branch, /^ai\/issue-42-r\d+$/);
+  assert.equal(mock.prs[0].state, 'closed');
+  assert.equal(mock.prs[1].draft, true);
+  assert.equal(resumed.pr, mock.prs[1].number);
+});
+
 test('failed labeled retry can resume only for the matching writer and run', async () => {
   const mock = harness();
   await mock.run();
@@ -606,6 +623,31 @@ test('failed labeled retry can resume only for the matching writer and run', asy
   assert.equal(mock.prs.length, 2);
   mock.context.runId = 9999;
   await assert.rejects(mock.run(), /Only a repository writer/);
+});
+
+test('rerunning partially published retry work selects a fresh clean ref', async () => {
+  const mock = harness();
+  await mock.run();
+  mock.prs[0].draft = false;
+  mock.prFiles.set(mock.prs[0].number, [
+    {filename: '.ai/dispatch/issue-42.json'},
+    {filename: 'case3-film-ui.js'},
+  ]);
+  mock.context.payload.action = 'labeled';
+  mock.context.payload.label = {name: 'dispatch:retry'};
+  mock.issue.labels.push({name: 'dispatch:retry'});
+  const first = await mock.run();
+  mock.prFiles.set(first.pr, [
+    {filename: '.ai/dispatch/issue-42.json'},
+    {filename: 'case3-film-ui.js'},
+  ]);
+  mock.context.runAttempt = 2;
+  const resumed = await mock.run();
+  assert.equal(resumed.run, true);
+  assert.notEqual(resumed.branch, first.branch);
+  assert.match(resumed.branch, /^ai\/issue-42-r\d+$/);
+  assert.equal(mock.prs[1].state, 'closed');
+  assert.equal(mock.prs[2].draft, true);
 });
 
 test('failed retry of an initial plan-only PR resumes on the same run', async () => {
