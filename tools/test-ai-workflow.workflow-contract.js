@@ -30,9 +30,11 @@ for (const path of [
   'tools/ai-workflow.routing.js',
   'tools/ai-workflow.dispatch.js',
   'tools/ai-workflow.publish.js',
+  'tools/ai-workflow.secret-scan.js',
   'tools/test-ai-workflow.routing.js',
   'tools/test-ai-workflow.dispatch.js',
   'tools/test-ai-workflow.publish.js',
+  'tools/test-ai-workflow.secret-scan.js',
 ]) {
   const plan = reviewPlan({pr: {head: {ref: 'ai/issue-1'}, labels: []}, files: [path]});
   assert.equal(plan.flags.control, true, path + ' must retain the control owner gate');
@@ -48,7 +50,8 @@ function job(name, next) {
 }
 
 const dispatchJob = job('dispatch', 'implement');
-const modelJob = job('implement', 'publish');
+const modelJob = job('implement', 'scan');
+const scanJob = job('scan', 'publish');
 const publisherJob = job('publish');
 
 assert.match(dispatch, /types: \[opened, reopened, edited, closed, labeled\]/,
@@ -123,10 +126,28 @@ assert.match(modelJob, /git -c core\.fsmonitor=false -c core\.hooksPath=\/dev\/n
 assert.match(modelJob, /actions\/upload-artifact@v4/,
   'models must hand a patch to a separate trusted publisher');
 
-assert.match(publisherJob, /needs: \[dispatch, implement\]/,
-  'publisher must wait for both routing and the model patch');
+assert.match(scanJob, /needs: \[dispatch, implement\]/,
+  'the scanner must wait for the implementation artifact');
+assert.match(scanJob, /needs\.implement\.result == 'success'/,
+  'the scanner must not run after a failed implementation');
+assert.match(scanJob, /permissions:\n      contents: read/,
+  'the scanner must have read-only repository permissions');
+assert.doesNotMatch(scanJob, /app-token|AI_DISPATCH_APP_PRIVATE_KEY|permission-(?:contents|pull-requests|issues): write/,
+  'the scanner must not receive a publishing App credential');
+assert.match(scanJob, /ref: \$\{\{ github\.sha \}\}[\s\S]*?persist-credentials: false/,
+  'the scanner must use trusted main without a checkout credential');
+assert.match(scanJob, /actions\/download-artifact@v4/,
+  'the scanner must inspect the exact implementation artifact');
+assert.match(scanJob, /OPENAI_API_KEY: \$\{\{ secrets\.OPENAI_API_KEY \}\}/);
+assert.match(scanJob, /CLAUDE_CODE_OAUTH_TOKEN: \$\{\{ secrets\.CLAUDE_CODE_OAUTH_TOKEN \}\}/);
+assert.match(scanJob, /node tools\/ai-workflow\.secret-scan\.js "\$PATCH_PATH"/,
+  'the scanner must inspect the staged model output before publication');
+assert.match(publisherJob, /needs: \[dispatch, implement, scan\]/,
+  'publisher must wait for routing, implementation, and secret scanning');
 assert.match(publisherJob, /needs\.implement\.result == 'success'/,
   'publisher must not mark a PR ready after model failure');
+assert.match(publisherJob, /needs\.scan\.result == 'success'/,
+  'publisher must not publish a patch that failed secret scanning');
 assert.match(publisherJob, /ref: \$\{\{ github\.sha \}\}[\s\S]*?persist-credentials: false/,
   'publisher code must come from the trusted default branch');
 assert.match(publisherJob, /actions\/download-artifact@v4/);

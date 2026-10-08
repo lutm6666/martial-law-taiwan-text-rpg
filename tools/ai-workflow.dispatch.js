@@ -244,18 +244,25 @@ async function dispatch({github, context, core}) {
     core.info(`Source Issue #${number} closed; its managed work PR is no longer ready for merge.`);
     return {run: false};
   }
-  if (action === 'closed' || (action === 'labeled' && !retry)) return {run: false};
+  if (action === 'closed') return {run: false};
   if (issue.state !== 'open' || issue.pull_request) return {run: false};
   const {data: repository} = await github.rest.repos.get(repo);
   if (repository.default_branch !== 'main') throw new Error('The dispatch contract requires main as the default branch.');
-  const writer = await canWrite(github, repo, context.actor);
+  // A later unrelated label event may be the only surviving delivery after
+  // GitHub replaces a pending opened/edited run. Reconcile the live Issue,
+  // but never let that label event authorize a model job.
+  const writer = action === 'labeled' && !retry ? false : await canWrite(github, repo, context.actor);
   if (retry && (!writer || !names(issue.labels).includes('dispatch:retry'))) {
     throw new Error('Only a repository writer may request implementation retry.');
   }
+  // A later label delivery can replace the retry delivery. Preserve its live
+  // intent in the PR state, while only the writer-authorized retry event may
+  // launch a model or consume the label.
+  const retryPending = names(issue.labels).includes('dispatch:retry');
   const route = routeIssue({title: issue.title, body: issue.body});
   let pr = await openPrForIssue(github, repo, number);
   const hadPr = Boolean(pr);
-  if (pr && (retry || action === 'reopened')) {
+  if (pr && (retryPending || action === 'reopened')) {
     const files = await github.paginate(github.rest.pulls.listFiles, {
       ...repo, pull_number: pr.number, per_page: 100,
     });
@@ -273,7 +280,7 @@ async function dispatch({github, context, core}) {
     branch = pr.head.ref;
     if (!pr.draft) {
       const currentPlan = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, branch);
-      if (retry || action === 'reopened' || planDigestFrom(currentPlan) !== issueDigest(issue)) {
+      if (retryPending || action === 'reopened' || planDigestFrom(currentPlan) !== issueDigest(issue)) {
         if (!pr.node_id) throw new Error('Ready PR is missing its GitHub node ID.');
         const result = await github.graphql(`
           mutation($pullRequestId: ID!) {

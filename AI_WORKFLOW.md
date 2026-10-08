@@ -18,11 +18,11 @@ GitHub PR、changed paths、CI、review payload 與 exact-head 證據才是控�
 
 派工優先順序：UI／assets 由 Claude 主責；Canon／engine／control 由 Codex 主責；純 tests／validators／docs 規劃為 Tier 1。混合需求採 handoff，Codex 先實作、兩側再依實際檔案審查；不明確的 Issue 只保留 plan 與 draft PR，等待釐清。這個 Issue 分級只決定實作路由；PR 的 review tier、exact-head completion 與 owner gate 始終由 trusted base policy 依 **實際 changed paths** 判定，Issue 文字、label、branch 名稱都不能充當身分或降低門檻。
 
-公開 Issue 的 `opened`／`reopened` 也會取得 plan 與 draft PR。只有事件 actor 經 GitHub repository 權限 API 驗證具有 write／maintain／admin 權限，且路由有明確主責時，才執行模型實作。具寫入權限者可加 `dispatch:retry` 重新啟動；label 本身不授權，workflow 必須重新驗證加標籤者。非 writer 的 Issue 不會把未受信任文字交給可修改檔案的模型。
+公開 Issue 的 `opened`／`reopened` 也會取得 plan 與 draft PR。只有**事件 actor** 經 GitHub repository 權限 API 驗證具有 write／maintain／admin 權限，且路由有明確主責時，才執行模型實作。具寫入權限者可加 `dispatch:retry` 重新啟動；label 本身不授權，workflow 必須重新驗證加標籤者。Issue 作者可能是外部人士；writer 重新開啟或明確 retry 外部 Issue 仍會把該 Issue 的不可信內容交給模型，須按實際內容承擔授權決策。
 
 派工與發表使用獨立 GitHub App installation token。owner 須將 App client ID 設為 repository variable `AI_DISPATCH_APP_CLIENT_ID`、private key 設為 secret `AI_DISPATCH_APP_PRIVATE_KEY`，並讓 App 在此 repo 具有 Contents、Pull requests、Issues 的 write 權限，且**不得給此 App main ruleset bypass**。App 不取得 Workflows write 權限；模型 patch 若修改 `.github/workflows/**` 或 `.github/actions/**`，publisher 會拒絕更新 branch，保留 draft PR 與 patch artifact 供 owner 受控處理。這些可執行 Actions 檔案在同 repo PR 更新時可能立即執行，不能只依賴合併前的 owner gate。缺少任一 App 設定時，在建立 branch／PR 前失敗。Codex 實作另需 secret `OPENAI_API_KEY`；Claude 實作沿用 `CLAUDE_CODE_OAUTH_TOKEN`。缺少主責模型憑證時保留 draft PR 並讓實作 job 失敗，不發布空 patch 或宣稱完成。
 
-模型 job 僅取得 read-only `GITHUB_TOKEN`，checkout 可信的 `main` 快照且不保留 Git 憑證。它用 API 取得 Issue 與 routing plan，比對派工時的標題／內容 digest，再把 Issue brief 放在 runner 暫存目錄。Issue 文字是任務資料，不是要求跳過 policy、取得 secret 或發 approval 的指令。Codex 使用 `workspace-write` sandbox；Claude 使用本地執行的 `claude-code-base-action`，僅允許 Read／Glob／Grep／Edit／Write，不給 Bash，也不使用會自行建立 branch／commit 的 Issue receiver。Claude 可改工作目錄檔案並補測試，實際驗證交給另一個沒有模型憑證的 PR CI runner；模型不得 push、留言、approve 或 merge。打包 patch 前會核對 `.git/config` 仍是模型執行前的版本，並停用 Git fsmonitor／hooks。變更以 binary-capable patch artifact 交給獨立的可信 publisher。Publisher 驗證 PR／branch／patch，重新核對即時 Issue 狀態、標題／內容 digest 與 routing plan，再次同步最新 `main`，只更新工作 branch，完成後將 PR 從 draft 標為 ready。Issue 在實作期間變更或關閉時，PR 保持 draft；ready PR 的來源 Issue 內容變更時，派工器會先轉回 draft，等待 writer `dispatch:retry`。若 draft／ready PR 已有實作檔案，retry 會關閉舊 PR，從當下 `main` 建立新 branch 與 draft PR，避免被拒絕的舊實作殘留；plan-only ready PR 則轉回 draft 後重跑。使用 App token 建立和更新 PR，讓既有 PR CI／review workflow 正常收到事件；不靠 workflow 的 `GITHUB_TOKEN` 派生事件喚醒它們。
+模型 job 僅取得 read-only `GITHUB_TOKEN`，checkout 可信的 `main` 快照且不保留 Git 憑證。它用 API 取得 Issue 與 routing plan，比對派工時的標題／內容 digest，再把 Issue brief 放在 runner 暫存目錄。Issue 文字是任務資料，不是要求跳過 policy、取得 secret 或發 approval 的指令。Codex 使用 `workspace-write` sandbox；Claude 使用本地執行的 `claude-code-base-action`，僅允許 Read／Glob／Grep／Edit／Write，不給 Bash，也不使用會自行建立 branch／commit 的 Issue receiver。Claude 可改工作目錄檔案並補測試，實際驗證交給另一個沒有模型憑證的 PR CI runner；模型不得 push、留言、approve 或 merge。打包 patch 前會核對 `.git/config` 仍是模型執行前的版本，並停用 Git fsmonitor／hooks。變更以 binary-capable patch artifact 交給獨立的可信 scanner；scanner 在新 runner 的可信 main 上重建 staged 檔案，持有模型憑證但沒有 App 寫入 token，阻擋憑證原文、常見編碼與可辨認的密鑰格式。這是公開 branch 的保護層，不保證攔截所有混淆或模型直接對外傳輸；只有掃描成功，另一起無模型憑證的 publisher job 才能發布。Publisher 驗證 PR／branch／patch，重新核對即時 Issue 狀態、標題／內容 digest 與 routing plan，再次同步最新 `main`，只更新工作 branch，完成後將 PR 從 draft 標為 ready。Issue 在實作期間變更或關閉時，PR 保持 draft；ready PR 的來源 Issue 內容變更時，派工器會先轉回 draft，等待 writer `dispatch:retry`。若 draft／ready PR 已有實作檔案，retry 會關閉舊 PR，從當下 `main` 建立新 branch 與 draft PR，避免被拒絕的舊實作殘留；plan-only ready PR 則轉回 draft 後重跑。使用 App token 建立和更新 PR，讓既有 PR CI／review workflow 正常收到事件；不靠 workflow 的 `GITHUB_TOKEN` 派生事件喚醒它們。
 
 PR 仍須通過 `project-validate`、`guard` 與下述 exact-head Codex／Claude completion gate；有 blocking finding 必須修正後對新 head 重跑驗證。AI 不得代 owner 留下 `/ai approve-handoff`，不得繞過 ruleset。
 
@@ -124,7 +124,7 @@ Control / governance path 仍需要 owner 對目前完整 head SHA 做人工核�
 Project validation 必須覆蓋：
 
 - Issue opened／reopened 與 writer `dispatch:retry`、writer 身分 API 驗證、無權限者 draft-only、title/body routing、Issue 關聯與 branch/main 同步。
-- App token 寫入與 read-only 模型 job 分離、缺憑證 fail closed、binary patch artifact 與可信 publisher workflow contract。
+- App token 寫入與 read-only 模型 job 分離、缺憑證 fail closed、binary patch artifact、獨立密鑰掃描與可信 publisher workflow contract。
 - identity / routing / provenance 分離。
 - mutable label / branch 不能移除 changed-path specialist review。
 - routing conflict 只能升級，不能降級。

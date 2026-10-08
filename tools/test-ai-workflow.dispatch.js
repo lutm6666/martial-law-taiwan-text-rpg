@@ -439,13 +439,63 @@ test('a later edited or unrelated labeled event reconciles a lost closed event',
   }
 });
 
-test('unrelated labels on an open Issue do not reroute or authorize implementation', async () => {
+test('an unrelated label recovers a pending opened event without authorizing implementation', async () => {
   const mock = harness({action: 'labeled', labels: ['area:ui']});
   mock.context.payload.label = {name: 'area:ui'};
   const result = await mock.run();
   assert.equal(result.run, false);
-  assert.equal(callsNamed(mock, 'git.createRef').length, 0);
-  assert.equal(callsNamed(mock, 'pulls.create').length, 0);
+  assert.equal(result.authorized, false);
+  assert.equal(result.route.agent, 'codex');
+  assert.equal(callsNamed(mock, 'repos.getCollaboratorPermissionLevel').length, 0);
+  assert.equal(callsNamed(mock, 'git.createRef').length, 1);
+  assert.equal(callsNamed(mock, 'pulls.create').length, 1);
+  assert.equal(mock.prs[0].draft, true);
+  assert(mock.issue.labels.some(label => label.name === 'ai:codex'));
+  assert(mock.issue.labels.some(label => label.name === 'area:logic'));
+  const plan = mock.files.get(result.branch).get('.ai/dispatch/issue-42.json');
+  assert.equal(JSON.parse(Buffer.from(plan.content, 'base64').toString('utf8')).source_issue, 42);
+});
+
+test('an unrelated label recovers a pending edit and returns stale work to draft', async () => {
+  const mock = harness();
+  await mock.run();
+  mock.prs[0].draft = false;
+  mock.issue.title = 'Improve responsive UI';
+  mock.issue.body = 'Make mobile layout readable.';
+  mock.issue.labels.push({name: 'area:ui'});
+  mock.context.payload.action = 'labeled';
+  mock.context.payload.label = {name: 'area:ui'};
+  const result = await mock.run();
+  assert.equal(result.run, false);
+  assert.equal(result.authorized, false);
+  assert.equal(result.route.agent, 'claude');
+  assert.equal(mock.prs[0].draft, true);
+  assert.equal(mock.prs.length, 1);
+  assert.match(mock.prs[0].body, /Improve responsive UI/);
+  assert.equal(callsNamed(mock, 'graphql.convertToDraft').length, 1);
+  assert.equal(callsNamed(mock, 'repos.createOrUpdateFileContents').length, 2);
+  assert.equal(callsNamed(mock, 'repos.getCollaboratorPermissionLevel').length, 1);
+});
+
+test('an unrelated label preserves a displaced retry as a clean draft without launching a model', async () => {
+  const mock = harness();
+  const first = await mock.run();
+  mock.prs[0].draft = false;
+  mock.prFiles.set(first.pr, [
+    {filename: '.ai/dispatch/issue-42.json'},
+    {filename: 'case3-film-engine.js'},
+  ]);
+  mock.issue.labels.push({name: 'dispatch:retry'}, {name: 'area:ui'});
+  mock.context.payload.action = 'labeled';
+  mock.context.payload.label = {name: 'area:ui'};
+  const result = await mock.run();
+  assert.equal(result.run, false);
+  assert.equal(result.authorized, false);
+  assert.equal(mock.prs[0].state, 'closed');
+  assert.equal(mock.prs[1].draft, true);
+  assert.equal(result.branch, 'ai/issue-42-r1234');
+  assert(mock.issue.labels.some(label => label.name === 'dispatch:retry'));
+  assert.equal(callsNamed(mock, 'repos.getCollaboratorPermissionLevel').length, 1);
 });
 
 test('reopened Issue after merged plan PR starts a fresh retry branch from current main', async () => {

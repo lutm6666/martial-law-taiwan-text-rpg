@@ -153,9 +153,33 @@ jobs:
           path: ${{ runner.temp }}/issue-implementation.patch
           if-no-files-found: error
 
-  publish:
+  scan:
     needs: [dispatch, implement]
     if: needs.dispatch.outputs.run == 'true' && needs.implement.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout trusted scanner without credentials
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Download implementation patch from this run
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-implementation-${{ github.run_id }}
+          path: ${{ runner.temp }}/implementation
+      - name: Scan staged model output without a publishing token
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          PATCH_PATH: ${{ runner.temp }}/implementation/issue-implementation.patch
+        run: node tools/ai-workflow.secret-scan.js "$PATCH_PATH"
+
+  publish:
+    needs: [dispatch, implement, scan]
+    if: needs.dispatch.outputs.run == 'true' && needs.implement.result == 'success' && needs.scan.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read
