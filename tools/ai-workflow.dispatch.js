@@ -231,8 +231,18 @@ async function chooseBranch(github, repo, number, runId) {
   }
   if (prs.some(pr => pr.state === 'closed')) {
     const next = branchName(number, runId);
-    if (await maybeRef(github, repo, next)) throw new Error('Retry branch already exists without an open PR.');
-    return {branch: next, create: true};
+    const nextRef = await maybeRef(github, repo, next);
+    if (!nextRef) return {branch: next, create: true};
+    const nextPrs = await github.paginate(github.rest.pulls.list, {
+      ...repo, state: 'all', head: `${repo.owner}:${next}`, per_page: 100,
+    });
+    if (nextPrs.length >= 3000) throw new Error('Retry PR listing reached the GitHub cap.');
+    const nextPlan = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, next);
+    const mainSha = await mainHead(github, repo);
+    if (!nextPrs.length && !nextPlan && nextRef.object?.sha === mainSha) {
+      return {branch: next, create: false};
+    }
+    throw new Error('Retry branch already exists without a recoverable clean state.');
   }
   const file = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, initial);
   if (!file) {
