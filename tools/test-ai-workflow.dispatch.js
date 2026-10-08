@@ -597,8 +597,7 @@ test('rerunning partially published opened work selects a fresh clean ref and re
   mock.context.runAttempt = 2;
   const resumed = await mock.run();
   assert.equal(resumed.run, true);
-  assert.notEqual(resumed.branch, first.branch);
-  assert.match(resumed.branch, /^ai\/issue-42-r\d+$/);
+  assert.equal(resumed.branch, 'ai/issue-42-r1234-a2');
   assert.equal(mock.prs[0].state, 'closed');
   assert.equal(mock.prs[1].draft, true);
   assert.equal(resumed.pr, mock.prs[1].number);
@@ -625,7 +624,7 @@ test('failed labeled retry can resume only for the matching writer and run', asy
   await assert.rejects(mock.run(), /Only a repository writer/);
 });
 
-test('rerunning partially published retry work selects a fresh clean ref', async () => {
+test('rerunning partially published retry work selects a fresh clean ref and later attempts resume it', async () => {
   const mock = harness();
   await mock.run();
   mock.prs[0].draft = false;
@@ -644,10 +643,18 @@ test('rerunning partially published retry work selects a fresh clean ref', async
   mock.context.runAttempt = 2;
   const resumed = await mock.run();
   assert.equal(resumed.run, true);
-  assert.notEqual(resumed.branch, first.branch);
-  assert.match(resumed.branch, /^ai\/issue-42-r\d+$/);
+  assert.equal(resumed.branch, 'ai/issue-42-r1234-a2');
   assert.equal(mock.prs[1].state, 'closed');
   assert.equal(mock.prs[2].draft, true);
+  const plan = mock.files.get(resumed.branch).get('.ai/dispatch/issue-42.json');
+  assert.equal(JSON.parse(Buffer.from(plan.content, 'base64').toString('utf8')).retry_run, '1234');
+
+  mock.context.runAttempt = 3;
+  const again = await mock.run();
+  assert.equal(again.run, true);
+  assert.equal(again.branch, resumed.branch);
+  assert.equal(again.pr, resumed.pr);
+  assert.equal(mock.prs.length, 3);
 });
 
 test('failed retry of an initial plan-only PR resumes on the same run', async () => {
@@ -692,7 +699,7 @@ test('orphan pre-plan retry branch at main SHA recovers without deleting it', as
   assert.equal(callsNamed(mock, 'repos.createOrUpdateFileContents').length, 2);
 });
 
-test('rerunning partially published reopened work selects a fresh clean ref', async () => {
+test('rerunning partially published reopened work selects a fresh clean ref and preserves it once ready', async () => {
   const mock = harness();
   await mock.run();
   mock.prs[0].state = 'closed';
@@ -706,10 +713,22 @@ test('rerunning partially published reopened work selects a fresh clean ref', as
   mock.context.runAttempt = 2;
   const resumed = await mock.run();
   assert.equal(resumed.run, true);
-  assert.notEqual(resumed.branch, first.branch);
-  assert.match(resumed.branch, /^ai\/issue-42-r\d+$/);
+  assert.equal(resumed.branch, 'ai/issue-42-r1234-a2');
   assert.equal(mock.prs[1].state, 'closed');
   assert.equal(mock.prs[2].draft, true);
+
+  mock.prs[2].draft = false;
+  mock.prFiles.set(resumed.pr, [
+    {filename: '.ai/dispatch/issue-42.json'},
+    {filename: 'case3-film-ui.js'},
+  ]);
+  mock.context.runAttempt = 3;
+  const again = await mock.run();
+  assert.equal(again.run, false);
+  assert.equal(again.alreadyProcessed, true);
+  assert.equal(again.branch, resumed.branch);
+  assert.equal(mock.prs[2].state, 'open');
+  assert.equal(mock.prs.length, 3);
 });
 
 test('unowned branch collision fails closed', async () => {
