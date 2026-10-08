@@ -386,7 +386,7 @@ async function dispatch({github, context, core}) {
   // A mutable label is never authorization. GitHub's actor permission is
   // checked through the API before any model receives an implementation job.
   const run = writer && route.primary !== null
-    && (action === 'reopened' || retry || (action === 'opened' && (!hadPr || (isRerun && pr.head?.ref === branchName(number)))))
+    && (action === 'reopened' || retry || (action === 'opened' && (!hadPr || (isRerun && (pr.head?.ref === branchName(number) || discardedDirtyPr)))))
     && pr.draft === true;
   const result = {
     branch, pr: pr.number, agent: route.primary || '', authorized: writer,
