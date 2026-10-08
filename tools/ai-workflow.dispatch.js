@@ -57,8 +57,8 @@ function planFile(issue, route, branch = branchName(issue.number)) {
 }
 
 function managedBody(issue, route) {
-  const title = safeTitle(issue.title).replace(/[\\[\]@]/g, character =>
-    character === '@' ? '&#64;' : `\\${character}`);
+  const title = safeTitle(issue.title).replace(/[\\[\]@<>]/g, character =>
+    character === '@' ? '&#64;' : character === '<' ? '&lt;' : character === '>' ? '&gt;' : `\\${character}`);
   if (!/^https:\/\/github\.com\/[^/]+\/[^/]+\/issues\/\d+$/.test(issue.html_url || '')) {
     throw new Error('Issue is missing a canonical GitHub URL.');
   }
@@ -252,7 +252,16 @@ async function dispatch({github, context, core}) {
   // GitHub replaces a pending opened/edited run. Reconcile the live Issue,
   // but never let that label event authorize a model job.
   const writer = action === 'labeled' && !retry ? false : await canWrite(github, repo, context.actor);
-  if (retry && (!writer || !names(issue.labels).includes('dispatch:retry'))) {
+  const isRerun = Number(context.runAttempt || 1) > 1;
+  // A retry label is consumed by the first attempt. Only a writer's rerun
+  // of the same run ID with a matching draft plan may resume the model job.
+  const retryPr = retry ? await openPrForIssue(github, repo, number) : null;
+  const retryPlan = retryPr?.draft && retryPr.head?.ref === branchName(number, context.runId)
+    ? await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, retryPr.head.ref)
+    : null;
+  const retryResume = Boolean(retry && isRerun && writer && retryPlan
+    && planDigestFrom(retryPlan) === issueDigest(issue));
+  if (retry && (!writer || (!names(issue.labels).includes('dispatch:retry') && !retryResume))) {
     throw new Error('Only a repository writer may request implementation retry.');
   }
   // A pending label is mutable task data. Only the verified retry event may
@@ -269,7 +278,7 @@ async function dispatch({github, context, core}) {
       return {run: false, branch: pr.head.ref, pr: pr.number, alreadyProcessed: true};
     }
   }
-  if (pr && (retry || action === 'reopened')) {
+  if (pr && ((retry && !retryResume) || action === 'reopened')) {
     const files = await github.paginate(github.rest.pulls.listFiles, {
       ...repo, pull_number: pr.number, per_page: 100,
     });
@@ -333,12 +342,12 @@ async function dispatch({github, context, core}) {
 
   await syncManagedLabels(github, repo, number, issue.labels, route);
   await syncManagedLabels(github, repo, pr.number, pr.labels, route);
-  if (retry) await removeLabel(github, repo, number, 'dispatch:retry');
+  if (retry && names(issue.labels).includes('dispatch:retry')) await removeLabel(github, repo, number, 'dispatch:retry');
 
   // A mutable label is never authorization. GitHub's actor permission is
   // checked through the API before any model receives an implementation job.
   const run = writer && route.primary !== null
-    && (action === 'reopened' || retry || (action === 'opened' && !hadPr))
+    && (action === 'reopened' || retry || (action === 'opened' && (!hadPr || (isRerun && pr.head?.ref === branchName(number)))))
     && pr.draft === true;
   const result = {
     branch, pr: pr.number, agent: route.primary || '', authorized: writer,
