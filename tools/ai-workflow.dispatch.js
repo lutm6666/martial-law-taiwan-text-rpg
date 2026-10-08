@@ -207,6 +207,17 @@ async function openPrForIssue(github, repo, number) {
   return prs.find(pr => isDispatchPr(pr, repo, number)) || null;
 }
 
+async function chooseCleanAttemptBranch(github, repo, number, runId, runAttempt) {
+  // A rerun retains runId; a discarded implementation needs a new ref.
+  // Never reuse a ref that could contain unreviewed implementation commits.
+  const base = branchName(number, runId);
+  const candidate = runAttempt > 1 ? `${base}-a${runAttempt}` : base;
+  if (await maybeRef(github, repo, candidate)) {
+    throw new Error('Clean retry branch is already occupied; refusing to overwrite it.');
+  }
+  return {branch: candidate, create: true};
+}
+
 async function chooseBranch(github, repo, number, runId) {
   const initial = branchName(number);
   const ref = await maybeRef(github, repo, initial);
@@ -287,7 +298,8 @@ async function dispatch({github, context, core}) {
       return {run: false, branch: pr.head.ref, pr: pr.number, alreadyProcessed: true};
     }
   }
-  if (pr && ((retry && !retryResume) || action === 'reopened')) {
+  let discardedDirtyPr = false;
+  if (pr && ((retry && !retryResume) || action === 'reopened' || (isRerun && action === 'opened') || retryResume)) {
     const files = await github.paginate(github.rest.pulls.listFiles, {
       ...repo, pull_number: pr.number, per_page: 100,
     });
@@ -296,7 +308,8 @@ async function dispatch({github, context, core}) {
     if (files.some(file => file.filename !== planPath)) {
       // A previous implementation may have been rejected after its ref update.
       // Start a clean branch so stale code cannot survive a later retry.
-      await github.rest.pulls.update({...repo, pull_number: pr.number, state: 'closed'});
+      discardedDirtyPr = true;
+      // Do not close the old PR until a clean replacement ref is validated.
       pr = null;
     }
   }
@@ -321,11 +334,17 @@ async function dispatch({github, context, core}) {
       }
     }
   } else {
-    const choice = await chooseBranch(github, repo, number, context.runId);
+    const choice = discardedDirtyPr
+      ? await chooseCleanAttemptBranch(github, repo, number, context.runId, Number(context.runAttempt || 1))
+      : await chooseBranch(github, repo, number, context.runId);
     branch = choice.branch;
     if (choice.create) {
       const sha = await mainHead(github, repo);
       await github.rest.git.createRef({...repo, ref: `refs/heads/${branch}`, sha});
+    }
+    if (discardedDirtyPr) {
+      const old = await openPrForIssue(github, repo, number);
+      if (old) await github.rest.pulls.update({...repo, pull_number: old.number, state: 'closed'});
     }
   }
 
