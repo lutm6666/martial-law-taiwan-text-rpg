@@ -147,6 +147,7 @@ Project validation 必須覆蓋：
 - CI fail：修正，不繞過測試。
 - 派工 App 或主責模型憑證缺失：保留清楚失敗狀態；未取得 App 憑證前不得建立 branch／PR，模型失敗時 PR 保持 draft。
 - reviewer receiver fail：保持 fail closed；可由 writer 使用 `review:retry`，不能偽造 completed。
+- `dispatch:retry` 的事件若被後續標籤事件取代，標籤會保留但不能單憑標籤關閉舊 PR 或啟動模型；writer 可移除再加入，產生新的已驗證 retry 事件。
 - merge conflict：以 Canon 與 regression tests 為基準。
 - binary / 缺 patch：review 必須明示限制。
 - PR 達 GitHub 3000-file list 上限、或 Claude snapshot 超過 bounded part budget：拆 PR，不用截斷資料推定低風險。

@@ -477,7 +477,7 @@ test('an unrelated label recovers a pending edit and returns stale work to draft
   assert.equal(callsNamed(mock, 'repos.getCollaboratorPermissionLevel').length, 1);
 });
 
-test('an unrelated label preserves a displaced retry as a clean draft without launching a model', async () => {
+test('an unrelated label cannot use a pending retry label to discard implementation', async () => {
   const mock = harness();
   const first = await mock.run();
   mock.prs[0].draft = false;
@@ -491,9 +491,10 @@ test('an unrelated label preserves a displaced retry as a clean draft without la
   const result = await mock.run();
   assert.equal(result.run, false);
   assert.equal(result.authorized, false);
-  assert.equal(mock.prs[0].state, 'closed');
-  assert.equal(mock.prs[1].draft, true);
-  assert.equal(result.branch, 'ai/issue-42-r1234');
+  assert.equal(mock.prs[0].state, 'open');
+  assert.equal(mock.prs[0].draft, false);
+  assert.equal(mock.prs.length, 1);
+  assert.equal(result.branch, first.branch);
   assert(mock.issue.labels.some(label => label.name === 'dispatch:retry'));
   assert.equal(callsNamed(mock, 'repos.getCollaboratorPermissionLevel').length, 1);
 });

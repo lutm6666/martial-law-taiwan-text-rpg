@@ -255,14 +255,12 @@ async function dispatch({github, context, core}) {
   if (retry && (!writer || !names(issue.labels).includes('dispatch:retry'))) {
     throw new Error('Only a repository writer may request implementation retry.');
   }
-  // A later label delivery can replace the retry delivery. Preserve its live
-  // intent in the PR state, while only the writer-authorized retry event may
-  // launch a model or consume the label.
-  const retryPending = names(issue.labels).includes('dispatch:retry');
+  // A pending label is mutable task data. Only the verified retry event may
+  // discard earlier implementation work or return a ready PR to draft.
   const route = routeIssue({title: issue.title, body: issue.body});
   let pr = await openPrForIssue(github, repo, number);
   const hadPr = Boolean(pr);
-  if (pr && (retryPending || action === 'reopened')) {
+  if (pr && (retry || action === 'reopened')) {
     const files = await github.paginate(github.rest.pulls.listFiles, {
       ...repo, pull_number: pr.number, per_page: 100,
     });
@@ -280,7 +278,7 @@ async function dispatch({github, context, core}) {
     branch = pr.head.ref;
     if (!pr.draft) {
       const currentPlan = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, branch);
-      if (retryPending || action === 'reopened' || planDigestFrom(currentPlan) !== issueDigest(issue)) {
+      if (retry || action === 'reopened' || planDigestFrom(currentPlan) !== issueDigest(issue)) {
         if (!pr.node_id) throw new Error('Ready PR is missing its GitHub node ID.');
         const result = await github.graphql(`
           mutation($pullRequestId: ID!) {
