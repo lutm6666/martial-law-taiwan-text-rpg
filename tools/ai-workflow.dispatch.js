@@ -22,11 +22,25 @@ function marker(number) {
   return `${PLAN_START} issue=${number} -->`;
 }
 
-function branchName(number, runId) {
+function branchName(number, runId, attempt) {
   if (!Number.isSafeInteger(number) || number < 1) throw new Error('Invalid Issue number.');
-  if (runId == null) return `ai/issue-${number}`;
+  if (runId == null) {
+    if (attempt != null) throw new Error('Attempt requires a run id.');
+    return `ai/issue-${number}`;
+  }
   if (!/^\d+$/.test(String(runId))) throw new Error('Invalid run id.');
-  return `ai/issue-${number}-r${runId}`;
+  const base = `ai/issue-${number}-r${runId}`;
+  if (attempt == null) return base;
+  if (!Number.isSafeInteger(attempt) || attempt < 2) throw new Error('Invalid run attempt.');
+  return `${base}-a${attempt}`;
+}
+
+function isRunBranch(number, runId, branch) {
+  const base = branchName(number, runId);
+  if (branch === base) return true;
+  const prefix = `${base}-a`;
+  const suffix = String(branch || '').startsWith(prefix) ? String(branch).slice(prefix.length) : '';
+  return /^\d+$/.test(suffix) && Number(suffix) >= 2;
 }
 
 function safeTitle(title) {
@@ -44,7 +58,7 @@ function issueDigest(issue) {
 }
 
 function planFile(issue, route, branch = branchName(issue.number)) {
-  const retry = new RegExp(`^ai/issue-${issue.number}-r(\\d+)$`).exec(branch);
+  const retry = new RegExp(`^ai/issue-${issue.number}-r(\\d+)(?:-a\\d+)?$`).exec(branch);
   return JSON.stringify({
     version: 1,
     source_issue: issue.number,
@@ -178,7 +192,7 @@ async function mainHead(github, repo) {
 }
 
 async function syncLatestMain(github, repo, branch) {
-  if (branch === 'main' || !/^ai\/issue-\d+(?:-r\d+)?$/.test(branch)) {
+  if (branch === 'main' || !/^ai\/issue-\d+(?:-r\d+(?:-a\d+)?)?$/.test(branch)) {
     throw new Error('Dispatch may only sync an ai/issue work branch.');
   }
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -197,7 +211,7 @@ function isDispatchPr(pr, repo, number) {
   return pr.state === 'open'
     && pr.base?.ref === 'main'
     && pr.head?.repo?.full_name === `${repo.owner}/${repo.repo}`
-    && new RegExp(`^ai/issue-${number}(?:-r\\d+)?$`).test(pr.head?.ref || '')
+    && new RegExp(`^ai/issue-${number}(?:-r\\d+(?:-a\\d+)?)?$`).test(pr.head?.ref || '')
     && String(pr.body || '').includes(marker(number));
 }
 
@@ -213,7 +227,7 @@ async function chooseCleanAttemptBranch(github, repo, number, runId, runAttempt)
   const base = branchName(number, runId);
   for (let offset = 0; offset < 10; offset++) {
     const candidate = offset === 0 && runAttempt === 1
-      ? base : branchName(number, `${runId}0${runAttempt + offset}`);
+      ? base : branchName(number, runId, runAttempt + offset);
     if (!(await maybeRef(github, repo, candidate))) return {branch: candidate, create: true};
   }
   throw new Error('No clean retry branch available; refusing to overwrite existing refs.');
@@ -287,7 +301,7 @@ async function dispatch({github, context, core}) {
   // A retry label is consumed by the first attempt. Only a writer's rerun
   // of the same run ID with a matching draft plan may resume the model job.
   const retryPr = retry ? await openPrForIssue(github, repo, number) : null;
-  const retryPlan = retryPr?.draft && (retryPr.head?.ref === branchName(number, context.runId) || retryPr.head?.ref === branchName(number))
+  const retryPlan = retryPr?.draft && (isRunBranch(number, context.runId, retryPr.head?.ref) || retryPr.head?.ref === branchName(number))
     ? await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, retryPr.head.ref)
     : null;
   const retryResume = Boolean(retry && isRerun && writer && retryPlan
@@ -302,7 +316,7 @@ async function dispatch({github, context, core}) {
   const hadPr = Boolean(pr);
   // GitHub Actions re-runs preserve runId. A completed reopened delivery must
   // not close its already-published PR and attempt to recreate the same retry ref.
-  if (pr && !pr.draft && action === 'reopened' && !retry && pr.head?.ref === branchName(number, context.runId)) {
+  if (pr && !pr.draft && action === 'reopened' && !retry && isRunBranch(number, context.runId, pr.head?.ref)) {
     const existingPlan = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, pr.head.ref);
     if (planDigestFrom(existingPlan) === issueDigest(issue)) {
       core.info('Reopened dispatch already processed for this run; leaving the managed PR unchanged.');
@@ -401,7 +415,7 @@ async function dispatch({github, context, core}) {
 
 module.exports = {
   ROUTING_LABELS, AREA_LABELS, PLAN_START, PLAN_END,
-  names, changedPaths, marker, branchName, safeTitle, issueDigest,
+  names, changedPaths, marker, branchName, isRunBranch, safeTitle, issueDigest,
   planFile, managedBody, replaceManagedBody, syncLatestMain,
   isDispatchPr, dispatch,
 };
