@@ -256,7 +256,7 @@ async function dispatch({github, context, core}) {
   // A retry label is consumed by the first attempt. Only a writer's rerun
   // of the same run ID with a matching draft plan may resume the model job.
   const retryPr = retry ? await openPrForIssue(github, repo, number) : null;
-  const retryPlan = retryPr?.draft && retryPr.head?.ref === branchName(number, context.runId)
+  const retryPlan = retryPr?.draft && (retryPr.head?.ref === branchName(number, context.runId) || retryPr.head?.ref === branchName(number))
     ? await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, retryPr.head.ref)
     : null;
   const retryResume = Boolean(retry && isRerun && writer && retryPlan
