@@ -635,6 +635,26 @@ test('orphan pre-plan branch at main SHA recovers without deleting it', async ()
   assert.equal(callsNamed(mock, 'repos.createOrUpdateFileContents').length, 1);
 });
 
+test('rerunning partially published reopened work selects a fresh clean ref', async () => {
+  const mock = harness();
+  await mock.run();
+  mock.prs[0].state = 'closed';
+  mock.prs[0].merged_at = '2026-10-08T01:00:00Z';
+  mock.context.payload.action = 'reopened';
+  const first = await mock.run();
+  mock.prFiles.set(first.pr, [
+    {filename: '.ai/dispatch/issue-42.json'},
+    {filename: 'case3-film-ui.js'},
+  ]);
+  mock.context.runAttempt = 2;
+  const resumed = await mock.run();
+  assert.equal(resumed.run, true);
+  assert.notEqual(resumed.branch, first.branch);
+  assert.match(resumed.branch, /^ai\\/issue-42-r\\d+$/);
+  assert.equal(mock.prs[1].state, 'closed');
+  assert.equal(mock.prs[2].draft, true);
+});
+
 test('unowned branch collision fails closed', async () => {
   const mock = harness();
   mock.refs.set('ai/issue-42', {object: {sha: sha('c')}});
