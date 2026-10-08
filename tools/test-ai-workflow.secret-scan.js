@@ -155,7 +155,7 @@ test('a real Git binary patch is scanned from its applied staged blob', t => {
   const patchPath = path.join(root, 'implementation.patch');
   fs.writeFileSync(patchPath, patch);
   git(['reset', '--hard', 'HEAD']);
-  fs.unlinkSync(binaryPath);
+  assert.equal(fs.existsSync(binaryPath), false);
   assert.equal(String(git(['status', '--porcelain', '--untracked-files=no'])).trim(), '');
 
   const scanner = createSecretScanner({git});
