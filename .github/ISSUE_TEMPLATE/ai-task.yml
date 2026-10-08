@@ -1,16 +1,17 @@
 name: AI task
-description: 準備 Claude、Codex 或 handoff 路由；確認接收端後手動啟動任務
+description: 建立後自動規劃路由與 draft PR；具寫入權限者的 Issue 會啟動 AI 實作
 title: "[AI] "
-labels: ["dispatch:ready"]
 body:
   - type: dropdown
     id: workstream
     attributes:
       label: Workstream
+      description: 路由提示；標題與內容也會參與規劃，PR 的實際檔案路徑決定 review 與 owner gate。
       options:
         - Canon / Logic / State / Tests
         - Frontend / UI / Responsive / Accessibility
         - Art / Assets
+        - Tests / Validators / Docs
         - Mixed / Cross-boundary
         - Repository admin / Settings
     validations:

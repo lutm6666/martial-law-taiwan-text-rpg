@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const runtime = require('./ai-path-guard.runtime.js');
 
-const workflow = fs.readFileSync('.github/workflows/ai-path-guard.yml', 'utf8');
+const workflow = fs.readFileSync('.github/workflows/ai-path-guard.yml', 'utf8').replace(/\r\n/g, '\n');
 const runtimeSource = fs.readFileSync('tools/ai-path-guard.runtime.js', 'utf8');
 
 assert.match(workflow, /pull_request_target:/,
