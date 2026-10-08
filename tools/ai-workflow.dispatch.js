@@ -223,7 +223,16 @@ async function chooseBranch(github, repo, number, runId) {
     return {branch: next, create: true};
   }
   const file = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, initial);
-  if (!file) throw new Error('Dispatch branch exists without a matching plan or PR.');
+  if (!file) {
+    // Recover only a branch that is still exactly main and has never had a PR.
+    // Do not reset or delete a branch that contains any independent commits.
+    const mainSha = await mainHead(github, repo);
+    const freshRef = await maybeRef(github, repo, initial);
+    if (!prs.length && freshRef?.object?.sha === mainSha) {
+      return {branch: initial, create: false};
+    }
+    throw new Error('Dispatch branch exists without a matching plan or PR.');
+  }
   const data = JSON.parse(Buffer.from(file.content.replace(/\s/g, ''), 'base64').toString('utf8'));
   if (data.source_issue !== number) throw new Error('Dispatch branch plan does not match Issue.');
   return {branch: initial, create: false};
