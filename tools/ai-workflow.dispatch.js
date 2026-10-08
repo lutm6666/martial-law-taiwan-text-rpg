@@ -314,10 +314,11 @@ async function dispatch({github, context, core}) {
   const route = routeIssue({title: issue.title, body: issue.body});
   let pr = await openPrForIssue(github, repo, number);
   const hadPr = Boolean(pr);
-  // GitHub Actions re-runs preserve runId. A completed delivery from the same
-  // workflow run must not close its already-published PR or relaunch a model.
-  const completedSameRun = pr && !pr.draft && !retry && isRerun && (
-    (action === 'opened' && (pr.head?.ref === branchName(number)
+  // GitHub Actions re-runs preserve runId. A completed opened rerun must be
+  // explicit (runAttempt > 1); reopened delivery idempotency remains keyed by
+  // the retry branch's runId so duplicate deliveries stay harmless.
+  const completedSameRun = pr && !pr.draft && !retry && (
+    (action === 'opened' && isRerun && (pr.head?.ref === branchName(number)
       || isRunBranch(number, context.runId, pr.head?.ref)))
     || (action === 'reopened' && isRunBranch(number, context.runId, pr.head?.ref))
   );
