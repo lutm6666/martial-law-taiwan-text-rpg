@@ -608,6 +608,22 @@ test('failed labeled retry can resume only for the matching writer and run', asy
   await assert.rejects(mock.run(), /Only a repository writer/);
 });
 
+test('failed retry of an initial plan-only PR resumes on the same run', async () => {
+  const mock = harness();
+  const first = await mock.run();
+  mock.context.payload.action = 'labeled';
+  mock.context.payload.label = {name: 'dispatch:retry'};
+  mock.issue.labels.push({name: 'dispatch:retry'});
+  const retry = await mock.run();
+  assert.equal(retry.run, true);
+  assert.equal(retry.branch, first.branch);
+  mock.context.runAttempt = 2;
+  const resumed = await mock.run();
+  assert.equal(resumed.run, true);
+  assert.equal(resumed.pr, first.pr);
+  assert.equal(mock.prs.length, 1);
+});
+
 test('unowned branch collision fails closed', async () => {
   const mock = harness();
   mock.refs.set('ai/issue-42', {object: {sha: sha('c')}});
