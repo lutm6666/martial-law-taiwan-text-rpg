@@ -139,7 +139,8 @@ function fixture({patch = PATCH, mutate} = {}) {
 
 test('branch and PR identity bind source Issue, draft, main, and same repository', () => {
   assert.equal(issueFromBranch(BRANCH), 42);
-  for (const bad of ['main', 'ai/issue-0', 'ai/issue-42-rbad', 'ai/issue-42/other']) {
+  assert.equal(issueFromBranch('ai/issue-42-r123-a2'), 42);
+  for (const bad of ['main', 'ai/issue-0', 'ai/issue-42-rbad', 'ai/issue-42-a2', 'ai/issue-42-r123-ax', 'ai/issue-42/other']) {
     assert.throws(() => issueFromBranch(bad));
   }
   const f = fixture();
