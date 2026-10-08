@@ -211,11 +211,12 @@ async function chooseCleanAttemptBranch(github, repo, number, runId, runAttempt)
   // A rerun retains runId; a discarded implementation needs a new ref.
   // Never reuse a ref that could contain unreviewed implementation commits.
   const base = branchName(number, runId);
-  const candidate = runAttempt > 1 ? `${base}-a${runAttempt}` : base;
-  if (await maybeRef(github, repo, candidate)) {
-    throw new Error('Clean retry branch is already occupied; refusing to overwrite it.');
+  for (let offset = 0; offset < 10; offset++) {
+    const candidate = offset === 0 && runAttempt === 1
+      ? base : branchName(number, `${runId}0${runAttempt + offset}`);
+    if (!(await maybeRef(github, repo, candidate))) return {branch: candidate, create: true};
   }
-  return {branch: candidate, create: true};
+  throw new Error('No clean retry branch available; refusing to overwrite existing refs.');
 }
 
 async function chooseBranch(github, repo, number, runId) {
