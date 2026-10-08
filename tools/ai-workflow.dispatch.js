@@ -260,6 +260,15 @@ async function dispatch({github, context, core}) {
   const route = routeIssue({title: issue.title, body: issue.body});
   let pr = await openPrForIssue(github, repo, number);
   const hadPr = Boolean(pr);
+  // GitHub Actions re-runs preserve runId. A completed reopened delivery must
+  // not close its already-published PR and attempt to recreate the same retry ref.
+  if (pr && action === 'reopened' && !retry && pr.head?.ref === branchName(number, context.runId)) {
+    const existingPlan = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, pr.head.ref);
+    if (planDigestFrom(existingPlan) === issueDigest(issue)) {
+      core.info('Reopened dispatch already processed for this run; leaving the managed PR unchanged.');
+      return {run: false, branch: pr.head.ref, pr: pr.number, alreadyProcessed: true};
+    }
+  }
   if (pr && (retry || action === 'reopened')) {
     const files = await github.paginate(github.rest.pulls.listFiles, {
       ...repo, pull_number: pr.number, per_page: 100,
