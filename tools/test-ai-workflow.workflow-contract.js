@@ -95,6 +95,20 @@ assert.match(modelJob, /ref: \$\{\{ github\.sha \}\}[\s\S]*?persist-credentials:
   'model checkout must use trusted main without persisted credentials');
 assert.match(modelJob, /sha256sum \.git\/config[\s\S]*?steps\.git-config\.outputs\.sha/,
   'model output must not be packaged after it changes local Git configuration');
+assert(modelJob.indexOf('Record trusted artifact uploader') < modelJob.indexOf('Implement Issue with Codex'),
+  'the artifact uploader must be checked before the model receives Issue text');
+assert.match(modelJob, /_actions\/actions\/upload-artifact\/v4[\s\S]*?realpath -e -- "\$action_dir"[\s\S]*?find "\$action_dir" -type l[\s\S]*?echo "sha=\$uploader_sha"/,
+  'the trusted runner must record the canonical uploader tree and digest');
+assert.match(modelJob, /realpath -e -- "\$UPLOADER_PATH"[\s\S]*?find "\$UPLOADER_PATH" -type l[\s\S]*?"\$uploader_sha" == "\$UPLOADER_SHA"/,
+  'packaging must reject a changed artifact uploader before it runs');
+assert.match(modelJob, /shell: \/bin\/bash --noprofile --norc -e -o pipefail \{0\}/,
+  'model patch packaging must use a fixed shell without startup files');
+assert.match(modelJob, /BASH_ENV: \/dev\/null[\s\S]*?LD_PRELOAD: ''[\s\S]*?PATH: \/usr\/bin:\/bin/,
+  'model patch packaging must discard startup and loader injection paths');
+assert.match(modelJob, /\/usr\/bin\/env -i PATH=\/usr\/bin:\/bin HOME=\/[\s\S]*?GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_SYSTEM=\/dev\/null[\s\S]*?GIT_CONFIG_GLOBAL=\/dev\/null GIT_CONFIG_COUNT=0 GIT_CONFIG_PARAMETERS=/,
+  'packaging Git must ignore model-written global, system, and environment config');
+assert.match(modelJob, /GIT_DIR="\$PACKAGE_WORKSPACE\/\.git"[\s\S]*?GIT_WORK_TREE="\$PACKAGE_WORKSPACE" GIT_INDEX_FILE="\$PACKAGE_WORKSPACE\/\.git\/index"/,
+  'packaging Git must use the trusted checkout metadata and index');
 assert.match(modelJob, /github\.rest\.issues\.get/,
   'model input must be fetched from the Issue API');
 assert.match(modelJob, /github\.rest\.repos\.getContent/,
@@ -105,6 +119,8 @@ assert.match(modelJob, /digest !== process\.env\.EXPECTED_DIGEST/,
   'the model brief must be bound to the trusted dispatch snapshot');
 assert.match(modelJob, /RUNNER_TEMP, 'issue-brief\.md'/,
   'untrusted Issue text must be stored outside the repository checkout');
+assert.match(modelJob, /'', brief,[\s\S]*?claude-implementation-prompt\.md/,
+  'the restricted Claude model must receive Issue data in the prompt instead of reading runner temp');
 assert.match(modelJob, /openai\/codex-action@bdf19a4a223ec2549a3e2274a0cf61556bc07675/,
   'Codex implementation action must use a pinned version');
 assert.match(modelJob, /openai-api-key: \$\{\{ secrets\.OPENAI_API_KEY \}\}/);
@@ -113,18 +129,31 @@ assert.match(modelJob, /safety-strategy: drop-sudo[\s\S]*?sandbox: workspace-wri
 assert.match(modelJob, /anthropics\/claude-code-action\/base-action@fd1c128679612beff4ca259c78021c506e8aa7a7/,
   'Claude implementation must use the pinned local-only base action');
 assert.match(modelJob, /claude_code_oauth_token: \$\{\{ secrets\.CLAUDE_CODE_OAUTH_TOKEN \}\}/);
-assert.match(modelJob, /--allowedTools Read,Glob,Grep,Edit,Write(?:\n|$)/,
-  'Claude may edit but must not run arbitrary shell commands with its OAuth credential');
-assert.doesNotMatch(modelJob, /--allowedTools[^\n]*Bash/,
-  'Claude implementation must not receive Bash beside its OAuth credential');
+assert.match(modelJob, /--restricted\n            --tools Read,Glob,Grep,Edit,Write\n            --allowedTools Read,Glob,Grep,Edit,Write\n            --disallowedTools mcp__\*\n            --permission-mode dontAsk/,
+  'Claude must confine file operations to the workspace and exclude shell, agent, and MCP tools');
 assert.match(modelJob, /prompt_file: \$\{\{ runner\.temp \}\}\/claude-implementation-prompt\.md/,
   'Claude must read the trusted prompt from outside the repository checkout');
 assert.doesNotMatch(modelJob, /github_token:/,
   'Claude base action must not receive a publishing GitHub token');
-assert.match(modelJob, /git -c core\.fsmonitor=false -c core\.hooksPath=\/dev\/null add -A[\s\S]*?diff --cached --binary --no-ext-diff/,
-  'model output must preserve binary edits in an artifact patch');
+assert.match(modelJob, /safe_git -c core\.fsmonitor=false -c core\.hooksPath=\/dev\/null -c core\.attributesFile=\/dev\/null add -A[\s\S]*?safe_git[^\n]* diff --cached --binary --no-ext-diff/,
+  'the isolated packaging Git must preserve binary edits without external hooks or attributes');
 assert.match(modelJob, /actions\/upload-artifact@v4/,
   'models must hand a patch to a separate trusted publisher');
+assert.match(modelJob, /if-no-files-found: error\n          overwrite: true/,
+  'rerunning implementation must replace its prior immutable artifact for this run');
+const uploadStep = modelJob.slice(modelJob.indexOf('      - name: Upload implementation patch'));
+assert.match(uploadStep, /NODE_OPTIONS: ''[\s\S]*?NODE_PATH: ''[\s\S]*?LD_PRELOAD: ''[\s\S]*?PATH: \/usr\/bin:\/bin/,
+  'artifact action must not inherit model-written Node, loader, or executable search paths');
+for (const variable of ['HTTPS_PROXY', 'https_proxy', 'HTTP_PROXY', 'http_proxy', 'ALL_PROXY', 'all_proxy', 'NO_PROXY', 'no_proxy']) {
+  assert.match(uploadStep, new RegExp('^          ' + variable + ": ''$", 'm'),
+    'artifact action must clear model-injected proxy variable ' + variable);
+}
+assert.match(uploadStep, /NODE_EXTRA_CA_CERTS: ''[\s\S]*?NODE_TLS_REJECT_UNAUTHORIZED: '1'/,
+  'artifact action must not accept a model-provided CA or disabled TLS verification');
+for (const variable of ['OPENSSL_CONF', 'SSL_CERT_FILE', 'SSL_CERT_DIR']) {
+  assert.match(uploadStep, new RegExp('^          ' + variable + ": ''$", 'm'),
+    'artifact action must clear model-injected TLS variable ' + variable);
+}
 
 assert.match(scanJob, /needs: \[dispatch, implement\]/,
   'the scanner must wait for the implementation artifact');
@@ -243,6 +272,18 @@ for (const filename of [
   assert(scripts.length > 0, filename + ' must expose embedded github-script code to validate');
   for (const match of scripts) {
     new vm.Script('(async function(){\n' + match[1].replace(/^            /gm, '') + '\n})', {filename});
+  }
+}
+
+if (process.platform === 'linux') {
+  const {spawnSync} = require('node:child_process');
+  for (const step of ['Record trusted artifact uploader', 'Package binary-capable implementation patch']) {
+    const escaped = step.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = dispatch.match(new RegExp('      - name: ' + escaped + '\\n(?:        .*\\n|          .*\\n|\\n)*?        run: \\|\\n((?:          .*\\n|\\n)+)'));
+    assert(match, step + ' shell block must be present');
+    const shell = match[1].replace(/^          /gm, '');
+    const result = spawnSync('/bin/bash', ['-n'], {input: shell, encoding: 'utf8'});
+    assert.equal(result.status, 0, step + ' shell must parse on the Actions runner: ' + result.stderr);
   }
 }
 
