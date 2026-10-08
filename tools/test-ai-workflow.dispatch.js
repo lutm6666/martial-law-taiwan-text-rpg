@@ -552,6 +552,22 @@ test('re-running an already processed reopened event preserves its ready impleme
   assert.equal(mock.calls.slice(before).filter(call => call.name === 'pulls.update').length, 0);
 });
 
+test('re-running an unfinished draft reopened event still requests implementation', async () => {
+  const mock = harness();
+  await mock.run();
+  mock.prs[0].state = 'closed';
+  mock.prs[0].merged_at = '2026-10-08T01:00:00Z';
+  mock.context.payload.action = 'reopened';
+  const first = await mock.run();
+  assert.equal(first.run, true);
+  assert.equal(mock.prs[1].draft, true);
+  const again = await mock.run();
+  assert.equal(again.run, true);
+  assert.equal(again.branch, first.branch);
+  assert.equal(mock.prs[1].state, 'open');
+  assert.equal(mock.prs.length, 2);
+});
+
 test('unowned branch collision fails closed', async () => {
   const mock = harness();
   mock.refs.set('ai/issue-42', {object: {sha: sha('c')}});
