@@ -90,8 +90,9 @@ function actionResultHtml(){
 function renderScene(){
  var l=C.locations[state.loc],actions=E.availableActions(state);
  var scenePath=artPath('scenes',state.loc);
- var html='<article class="c3-card c3-scene">'+(scenePath?'<figure class="c3-scene-art">'+imageHtml(scenePath,'','c3-art-img')+'</figure>':'')+'<div class="c3-kicker">'+esc(l.sub)+'</div><h2>'+esc(l.name)+'</h2><p>'+esc(sceneIntroText())+'</p>';
- html+=actionResultHtml();
+ var result=actionResultHtml();
+ var html='<article class="c3-card c3-scene">'+(scenePath?'<figure class="c3-scene-art">'+imageHtml(scenePath,'','c3-art-img')+'</figure>':'')+'<div class="c3-kicker">'+esc(l.sub)+'</div><h2>'+esc(l.name)+'</h2>';
+ html+=result||'<p class="c3-intro">'+esc(sceneIntroText())+'</p>';
  if(state.loc==='alley'&&state.flags.frameCompareOpen)html+=renderFrameCompare();
  html+='<div class="c3-actions">';
  if(actions.length){
@@ -174,11 +175,27 @@ function recordsTestimonies(){
 }
 function recordsHypotheses(){
  var ids=Object.keys(state.hypotheses||{});
- if(!ids.length)return '<div class="c3-empty">目前沒有已建立的假說。第三案不會替玩家自動建立錯誤假說；只有玩家主動提出的假說才會出現在這裡。</div>';
- return ids.map(function(id){
+ var html=ids.length?'':'<div class="c3-empty">目前沒有已建立的假說。只有你主動提出的假說才會記在這裡。</div>';
+ html+=ids.map(function(id){
   var h=state.hypotheses[id];
-  return '<div class="c3-record"><strong>'+esc(id+'｜'+h.text)+'</strong><small>狀態：'+esc(h.status)+'｜修訂 '+esc(h.revision)+'</small></div>';
+  var status={active:'保留中',revised:'已修正',withdrawn:'已撤回'};
+  var card='<div class="c3-record"><strong>'+esc(h.text)+'</strong><small>狀態：'+esc(status[h.status])+'｜修訂 '+esc(h.revision)+'</small><small>最初想法：'+esc(h.originalText||h.text)+'</small>';
+  (h.history||[]).forEach(function(entry){card+='<small>先前紀錄：'+esc(entry.text)+' → '+esc(status[entry.to]||entry.to)+'</small>'});
+  var spec=C.hypotheses[id],canReview=state.phase==='investigate'&&C.predicates[spec.reviewRequires](state);
+  (spec.relatedConclusions||[]).filter(function(cid){return has(state.conclusions,cid)}).forEach(function(cid){card+='<small>可核對資料：'+esc(C.conclusions[cid].text)+'</small>'});
+  if(canReview){
+   card+='<small>新的調查資料已取得。請先核對結論與人物紀錄，再決定是否調整這個想法；新的資料不會替你自動撤回假說。</small><label><small>修正後的想法</small><input data-hypothesis-text="'+esc(id)+'" maxlength="240" value="'+esc(h.text)+'" style="width:100%;min-width:0"></label>';
+   ['active','revised','withdrawn'].forEach(function(decision){card+='<button type="button" class="c3-hypothesis-btn" data-hypothesis-review="'+esc(id)+'" data-decision="'+decision+'">'+({active:'保留',revised:'修正',withdrawn:'撤回'})[decision]+'</button>'});
+  }
+  return card+'</div>';
  }).join('');
+ Object.keys(C.hypotheses).forEach(function(id){
+  var spec=C.hypotheses[id];
+  if(!state.hypotheses[id]&&state.phase==='investigate'&&C.predicates[spec.requires](state)){
+   html+='<button type="button" class="c3-hypothesis-btn" data-hypothesis-create="'+esc(id)+'"><strong>提出假說</strong><small>'+esc(spec.text)+'</small></button>';
+  }
+ });
+ return html;
 }
 
 function deductionProgress(){
@@ -227,6 +244,15 @@ function changedNotice(before){
 }
 
 function bind(){
+ $all('[data-hypothesis-create]').forEach(function(b){b.onclick=function(){
+  var r=E.createHypothesis(state,b.getAttribute('data-hypothesis-create'));
+  if(r.ok){state=r.state;notice='已記下你的假說；它仍是待查的想法。';render()}
+ }});
+ $all('[data-hypothesis-review]').forEach(function(b){b.onclick=function(){
+  var id=b.getAttribute('data-hypothesis-review'),input=$('[data-hypothesis-text="'+id+'"]');
+  var r=E.reviewHypothesis(state,id,b.getAttribute('data-decision'),input&&input.value);
+  if(r.ok){state=r.state;notice='假說紀錄已更新。';render()}
+ }});
  $all('[data-view]').forEach(function(b){b.onclick=function(){view=b.getAttribute('data-view');notice='';render()}});
  var startDeduction=$('[data-start-deduction]');if(startDeduction)startDeduction.onclick=function(){
   var r=E.startDeduction(state);

@@ -96,11 +96,22 @@ function negativeChecks(){
  assert(!C.predicates.canTracePackage(s),'package tracing available too early');
  // Fresh state must not contain hypotheses until the player creates one.
  let n=E.fresh('H');assert.deepStrictEqual(Object.keys(n.hypotheses),[]);
+ assert.strictEqual(E.observeFrame(n,'personMovement').reason,'requirements');
  assert(!E.availableActions(s).some(a=>a.label==='查看店務紀錄'),'duty record leaked before Xiulian lead');
- let r=E.createHypothesis(n,'H_SIDE_DOOR');assert(r.ok);
+ let r=E.createHypothesis(n,'H_SIDE_DOOR');assert(!r.ok&&r.reason==='requirements');
+ n=opening(n);n=go(n,'alley');n=act(n,'alley_frames');
+ r=E.createHypothesis(n,'H_SIDE_DOOR');assert(r.ok);
  assert(n.hypotheses.H_SIDE_DOOR,'player-created hypothesis missing');
+ r=E.reviewHypothesis(n,'H_SIDE_DOOR','withdrawn');assert(!r.ok&&r.reason==='requirements');
+ n=frames(n);
+ r=E.reviewHypothesis(n,'H_SIDE_DOOR','revised','側門的位置本身不能證明秘密行動。');assert(r.ok);
+ assert.strictEqual(n.hypotheses.H_SIDE_DOOR.originalText,C.hypotheses.H_SIDE_DOOR.text);
+ assert.strictEqual(n.hypotheses.H_SIDE_DOOR.history[0].text,C.hypotheses.H_SIDE_DOOR.text);
  r=E.reviewHypothesis(n,'H_SIDE_DOOR','withdrawn');assert(r.ok);
  assert.strictEqual(n.hypotheses.H_SIDE_DOOR.status,'withdrawn');
+ n.phase='deduction';
+ assert.strictEqual(E.observeFrame(n,'movingObject').reason,'phase');
+ assert.strictEqual(E.reviewHypothesis(n,'H_SIDE_DOOR','active').reason,'phase');
 
  let x=opening(E.fresh('X'));
  x=go(x,'newsstand');x=act(x,'newsstand_visit');

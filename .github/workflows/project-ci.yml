@@ -82,6 +82,9 @@ jobs:
           test "$(find assets/v2/canon -maxdepth 1 -type f -name 'e*.png' | wc -l)" -eq 12
           test "$(find assets/v2/canon -maxdepth 1 -type f -name '0[1-7]_*.png' | wc -l)" -eq 7
 
+      - name: Verify production Pages bundle
+        run: node tools/test-pages-bundle.js
+
       - name: Detect Case 3 changes
         id: case3
         env:
@@ -119,11 +122,17 @@ jobs:
       - name: Case 3 browser smoke playthrough
         if: steps.case3.outputs.changed == 'true'
         run: |
-          node -e "const http=require('http'),fs=require('fs'),path=require('path');http.createServer((req,res)=>{const p=path.join(process.cwd(),req.url==='/'?'tools/case3-browser-smoke.html':req.url.slice(1));fs.readFile(p,(e,d)=>{if(e){res.statusCode=404;return res.end('not found')}res.end(d)})}).listen(8765,'127.0.0.1')" >/tmp/case3-server.log 2>&1 &
+          node -e "const http=require('http'),fs=require('fs'),path=require('path');http.createServer((req,res)=>{const p=path.join(process.cwd(),new URL(req.url,'http://localhost').pathname.slice(1)||'tools/case3-browser-smoke.html');fs.readFile(p,(e,d)=>{if(e){res.statusCode=404;return res.end('not found')}res.end(d)})}).listen(8765,'127.0.0.1')" >/tmp/case3-server.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID' EXIT
           sleep 1
           CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
           test -n "$CHROME"
           "$CHROME" --headless=new --no-sandbox --disable-gpu --dump-dom http://127.0.0.1:8765/tools/case3-browser-smoke.html > /tmp/case3-smoke-dom.html
-          grep -q "PASS FULL BROWSER FLOW" /tmp/case3-smoke-dom.html
+          grep -Fq '<title>PASS Case3 Browser Smoke</title>' /tmp/case3-smoke-dom.html
+          for MODE in desktop mobile; do
+            QUERY=""
+            if [ "$MODE" = "mobile" ]; then QUERY="?mobile=1"; fi
+            "$CHROME" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=10000 --dump-dom "http://127.0.0.1:8765/tools/case3-production-smoke.html$QUERY" > "/tmp/case3-production-$MODE.html"
+            grep -Fq '<title>PASS Case3 Production Smoke</title>' "/tmp/case3-production-$MODE.html"
+          done

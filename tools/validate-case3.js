@@ -54,6 +54,12 @@ expect(C.saveKey!=='mist-taiwan-rain-canon-v1','Case 3 collides with Case 2 save
 const fresh=E.fresh('validator');
 const flagKeys=keys(fresh.flags), keyKeys=keys(fresh.keys);
 
+keys(C.hypotheses).forEach(id=>{
+  const h=C.hypotheses[id];
+  expect(typeof C.predicates[h.requires]==='function','hypothesis '+id+' missing creation gate');
+  expect(typeof C.predicates[h.reviewRequires]==='function','hypothesis '+id+' missing review gate');
+});
+
 const allowedEffects=new Set(['gain','conclude','testimony','unlock','flag','key','mechanic']);
 const allowedMechanics=new Set(['frame_compare']);
 

@@ -26,9 +26,9 @@ index.html + 正式 JavaScript + 正式圖片
 2. 設定 GitHub Pages。
 3. 用 Node.js 語法檢查正式 JavaScript。
 4. 執行 `tools/verify-javascript.js`，確認 `index.html` 直接載入的腳本可解析。
-5. 確認第一案與第二案正式圖片數量。
-6. 建立乾淨的 `_site`。
-7. 只複製正式入口、正式引擎與正式圖片。
+5. 確認第一案與第二案正式圖片數量，並驗證第三案 manifest、資料與狀態引擎。
+6. 使用 `tools/build-pages.js` 建立乾淨的 `_site`，檢查所有延遲載入腳本與第三案 21 張圖片。
+7. `tools/test-pages-bundle.js` 驗證正式入口／路由依賴、圖片、開發檔排除與乾淨重建；PR CI 與 Pages 使用同一建置方式。
 8. 將 `_site` 上傳為 Pages artifact 並部署。
 
 ## 目前會發布的檔案
@@ -41,11 +41,15 @@ _site/
 ├─ case2-engine.js
 ├─ case2-rain-canon.js
 ├─ case2-rain-canon-engine.js
-├─ start-screen-hotfix.js
+├─ case3-film-canon.js
+├─ case3-art-manifest.js
+├─ case3-film-engine.js
+├─ case3-film-ui.js
 └─ assets/
    ├─ case1/
-   └─ v2/
-      └─ canon/
+   ├─ v2/
+   │  └─ canon/
+   └─ case3/
 ```
 
 ## 不會發布
@@ -66,7 +70,7 @@ _site/
 ```text
 修改遊戲
   ↓
-commit / push 到 main
+工作分支提交 → PR 驗證與 review → 合併 main
   ↓
 Actions 驗證
   ↓

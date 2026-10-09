@@ -188,10 +188,10 @@ function loadCase3Runtime(done){
  if(case3Loading)return;
  case3Loading=true;
  var steps=[
-  {src:'case3-film-canon.js?v=1',ready:function(){return !!window.CASE3_FILM_CANON}},
+  {src:'case3-film-canon.js?v=2',ready:function(){return !!window.CASE3_FILM_CANON}},
   {src:'case3-art-manifest.js?v=1',ready:function(){return !!window.CASE3_ART_MANIFEST}},
-  {src:'case3-film-engine.js?v=1',ready:function(){return !!window.Case3FilmEngine}},
-  {src:'case3-film-ui.js?v=2',ready:function(){return !!window.Case3FilmUI}}
+  {src:'case3-film-engine.js?v=2',ready:function(){return !!window.Case3FilmEngine}},
+  {src:'case3-film-ui.js?v=3',ready:function(){return !!window.Case3FilmUI}}
  ];
  function next(i){
   if(i>=steps.length){flushCase3Loaded();return}

@@ -70,4 +70,4 @@ jobs:
           CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
           test -n "$CHROME"
           "$CHROME" --headless=new --no-sandbox --disable-gpu --dump-dom http://127.0.0.1:8765/tools/case3-browser-smoke.html > /tmp/case3-smoke-dom.html
-          grep -q "PASS FULL BROWSER FLOW" /tmp/case3-smoke-dom.html
+          grep -Fq '<title>PASS Case3 Browser Smoke</title>' /tmp/case3-smoke-dom.html
