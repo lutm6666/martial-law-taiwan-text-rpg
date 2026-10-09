@@ -9,58 +9,45 @@ const claude = require('./ai-workflow.claude-review.js');
 
 const SHA = '0123456789abcdef0123456789abcdef01234567';
 
-function harness({guardConclusion = 'failure', guardStatus = 'completed', prSha = SHA} = {}) {
-  const requests = [];
-  const guard = {
-    id: 10,
-    name: 'guard',
-    head_sha: SHA,
-    status: guardStatus,
-    conclusion: guardConclusion,
-    app: {id: 15368},
-    details_url: 'https://github.com/lutm6666/repo/actions/runs/123/job/456',
-  };
-  const methods = {checks: function checks() {}};
+function harness({prSha = SHA} = {}) {
+  const dispatches = [];
   const github = {
     rest: {
       pulls: {get: async () => ({data: {state: 'open', draft: false, head: {sha: prSha}}})},
-      checks: {listForRef: methods.checks},
+      actions: {
+        createWorkflowDispatch: async args => { dispatches.push(args); return {status: 204}; },
+      },
     },
-    paginate: async (method) => {
-      assert.equal(method, methods.checks);
-      return [guard];
-    },
-    request: async (route, args) => { requests.push([route, args]); return {status: 201}; },
   };
-  const context = {repo: {owner: 'lutm6666', repo: 'repo'}};
+  const context = {
+    repo: {owner: 'lutm6666', repo: 'repo'},
+    payload: {repository: {default_branch: 'main'}},
+  };
   const infos = [];
   const core = {info(message) { infos.push(message); }};
-  return {github, context, core, requests, infos};
+  return {github, context, core, dispatches, infos};
 }
 
-test('verified Claude completion reruns a failed native guard for the exact head', async () => {
+test('verified Claude completion dispatches the trusted guard workflow for the exact head', async () => {
   const h = harness();
   const rerun = await claude.rerunGuardAfterCompletion({...h, number: 41, sha: SHA});
   assert.equal(rerun, true);
-  assert.equal(h.requests.length, 1);
-  assert.equal(h.requests[0][0], 'POST /repos/{owner}/{repo}/actions/jobs/{job_id}/rerun');
-  assert.equal(h.requests[0][1].job_id, 456);
+  assert.equal(h.dispatches.length, 1);
+  assert.deepEqual(h.dispatches[0], {
+    owner: 'lutm6666', repo: 'repo',
+    workflow_id: 'ai-path-guard.yml',
+    ref: 'main',
+    inputs: {pr_number: '41'},
+  });
 });
 
-test('already-successful native guard is not rerun', async () => {
-  const h = harness({guardConclusion: 'success'});
-  const rerun = await claude.rerunGuardAfterCompletion({...h, number: 41, sha: SHA});
-  assert.equal(rerun, false);
-  assert.equal(h.requests.length, 0);
-});
-
-test('stale Claude completion cannot rerun another head guard', async () => {
+test('stale Claude completion cannot dispatch a guard for another head', async () => {
   const h = harness({prSha: 'f'.repeat(40)});
   await assert.rejects(
     claude.rerunGuardAfterCompletion({...h, number: 41, sha: SHA}),
-    /PR changed before guard rerun/
+    /PR changed before guard wakeup/
   );
-  assert.equal(h.requests.length, 0);
+  assert.equal(h.dispatches.length, 0);
 });
 
 test('snapshot limits stay conservatively below the observed Read truncation range', () => {
@@ -293,7 +280,7 @@ test('publish rejects incomplete snapshot attestation before creating a completi
   }
 });
 
-test('publish rolls back the completion marker when the required guard wakeup cannot be established', async () => {
+test('publish rolls back the completion marker when trusted guard dispatch fails', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-publish-rollback-'));
   const executionFile = path.join(dir, 'result.json');
   fs.writeFileSync(executionFile, JSON.stringify([{
@@ -301,7 +288,6 @@ test('publish rolls back the completion marker when the required guard wakeup ca
     structured_output: {sha: SHA, parts_read: 1, summary: 'reviewed'},
   }]));
   const deleted = [];
-  const checksEndpoint = function checksEndpoint() {};
   const github = {
     rest: {
       pulls: {get: async () => ({data: {state: 'open', draft: false, head: {sha: SHA}}})},
@@ -309,26 +295,26 @@ test('publish rolls back the completion marker when the required guard wakeup ca
         createComment: async () => ({data: {id: 77}}),
         deleteComment: async args => { deleted.push(args.comment_id); },
       },
-      checks: {listForRef: checksEndpoint},
-    },
-    paginate: async method => {
-      assert.equal(method, checksEndpoint);
-      return [];
+      actions: {
+        createWorkflowDispatch: async () => { throw new Error('dispatch unavailable'); },
+      },
     },
   };
   try {
     await assert.rejects(
       claude.publish({
         github,
-        context: {repo: {owner: 'lutm6666', repo: 'repo'}, runId: 1},
+        context: {
+          repo: {owner: 'lutm6666', repo: 'repo'}, runId: 1,
+          payload: {repository: {default_branch: 'main'}},
+        },
         core: {info() {}},
         number: 41,
         sha: SHA,
         executionFile,
         expectedParts: 1,
-        guardWait: {attempts: 1, delayMs: 0},
       }),
-      /No native PR guard exists/
+      /dispatch unavailable/
     );
     assert.deepEqual(deleted, [77]);
   } finally {
@@ -336,4 +322,4 @@ test('publish rolls back the completion marker when the required guard wakeup ca
   }
 });
 
-console.log('PASS Claude receiver completion wakeup, conservative read-safe chunking including CJK, complete-input attestation, rollback recovery, safe fork review behavior, and writer-only retry routing');
+console.log('PASS Claude receiver trusted guard dispatch, conservative read-safe chunking including CJK, complete-input attestation, rollback recovery, safe fork review behavior, and writer-only retry routing');
