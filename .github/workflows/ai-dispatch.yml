@@ -189,6 +189,9 @@ jobs:
           safe_git -c core.fsmonitor=false -c core.hooksPath=/dev/null -c core.attributesFile=/dev/null add -A
           safe_git -c core.fsmonitor=false -c core.hooksPath=/dev/null -c core.attributesFile=/dev/null -c core.quotePath=false diff --cached --binary --no-ext-diff > "$PACKAGE_TEMP/issue-implementation.patch"
           [[ -s "$PACKAGE_TEMP/issue-implementation.patch" ]] || { echo 'Model produced no implementation patch'; exit 1; }
+          # Workflow env keys are case-insensitive; Linux process env keys are not.
+          # Clear lowercase proxies through the runner env file before the upload action.
+          printf '%s\n' 'https_proxy=' 'http_proxy=' 'all_proxy=' 'no_proxy=' >> "$GITHUB_ENV"
       - name: Upload implementation patch
         uses: actions/upload-artifact@v4
         env:
@@ -204,13 +207,9 @@ jobs:
           LD_AUDIT: ''
           PATH: /usr/bin:/bin
           HTTPS_PROXY: ''
-          https_proxy: ''
           HTTP_PROXY: ''
-          http_proxy: ''
           ALL_PROXY: ''
-          all_proxy: ''
           NO_PROXY: ''
-          no_proxy: ''
         with:
           name: issue-implementation-${{ github.run_id }}
           path: ${{ runner.temp }}/issue-implementation.patch
