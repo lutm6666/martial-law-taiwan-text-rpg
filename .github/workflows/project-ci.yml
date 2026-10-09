@@ -18,10 +18,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Verify AI workflow regressions
         run: |
           node --check tools/ai-workflow.js
+          node --check tools/ai-workflow.routing.js
+          node --check tools/ai-workflow.dispatch.js
+          node --check tools/ai-workflow.publish.js
+          node --check tools/ai-workflow.secret-scan.js
           node --check tools/ai-workflow.identity.js
           node --check tools/ai-workflow.review.js
           node --check tools/ai-workflow.claude-review.js
@@ -29,6 +34,12 @@ jobs:
           node --check tools/ai-path-guard.approval.js
           node --check tools/ai-path-guard.runtime.js
           node --check tools/test-ai-workflow.owner-approval.js
+          node --check tools/test-ai-workflow.routing.js
+          node --check tools/test-ai-workflow.dispatch.js
+          node --check tools/test-ai-workflow.dispatch-recovery.js
+          node --check tools/test-ai-workflow.dispatch-contract.js
+          node --check tools/test-ai-workflow.publish.js
+          node --check tools/test-ai-workflow.secret-scan.js
           node --check tools/test-ai-workflow.guard-contract.js
           node --check tools/test-ai-workflow.review.js
           node --check tools/test-ai-workflow.review-completion.js
@@ -37,6 +48,12 @@ jobs:
           node --check tools/ai-orchestrator.js
           node --check tools/test-ai-orchestrator.js
           node tools/test-ai-workflow.js
+          node tools/test-ai-workflow.routing.js
+          node tools/test-ai-workflow.dispatch.js
+          node tools/test-ai-workflow.dispatch-recovery.js
+          node tools/test-ai-workflow.dispatch-contract.js
+          node tools/test-ai-workflow.publish.js
+          node tools/test-ai-workflow.secret-scan.js
           node --test tools/test-ai-workflow.owner-approval.js
           node tools/test-ai-workflow.guard-contract.js
           node tools/test-ai-workflow.review.js
