@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "source_issue": 49,
+  "source_url": "https://github.com/lutm6666/martial-law-taiwan-text-rpg/issues/49",
+  "title": "AI Dispatch activation smoke test: add docs marker",
+  "title_body_sha256": "ffbb33bb9bde3e726c369ef981c8767a2a6ebb4e018212ea75b377be3e681ad1",
+  "retry_run": null,
+  "routing": {
+    "agent": "codex",
+    "primary": "codex",
+    "tier": 3,
+    "area": "area:admin",
+    "reason": "Issue describes workflow, policy, or governance changes.",
+    "signals": [
+      "control",
+      "tier1"
+    ]
+  }
+}
