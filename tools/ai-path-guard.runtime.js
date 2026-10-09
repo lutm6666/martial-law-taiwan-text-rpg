@@ -6,7 +6,6 @@ const reviewCompletion = require('./ai-workflow.review-completion.js');
 const identity = require('./ai-workflow.identity.js');
 const approval = require('./ai-path-guard.approval.js');
 const ACTIONS_APP_ID = basePolicy.ACTIONS_APP_ID;
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function matches(file, rules) {
   return rules.some(rule => rule.test(file));
@@ -62,31 +61,6 @@ async function reviewsFor(github, repo, number) {
   return github.paginate(github.rest.pulls.listReviews, {...repo, pull_number: number, per_page: 100});
 }
 
-async function nativeGuardForHead({github, repo, sha}) {
-  const guards = await github.paginate(github.rest.checks.listForRef, {
-    ...repo, ref: sha, check_name: 'guard', per_page: 100
-  });
-  const jobUrl = 'https://github.com/' + repo.owner + '/' + repo.repo + '/actions/runs/';
-  return guards
-    .filter(c => c.name === 'guard'
-      && c.head_sha === sha
-      && c.app?.id === ACTIONS_APP_ID
-      && c.conclusion !== 'skipped'
-      && c.details_url?.startsWith(jobUrl)
-      && /\/job\/\d+$/.test(c.details_url))
-    .sort((a, b) => b.id - a.id)[0] || null;
-}
-
-async function waitForNativeGuard({github, repo, sha, attempts = 12, delayMs = 5000}) {
-  let native = null;
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
-    native = await nativeGuardForHead({github, repo, sha});
-    if (native?.status === 'completed') return native;
-    if (attempt < attempts - 1) await sleep(delayMs);
-  }
-  return native;
-}
-
 async function runGuard({github, context, core, number, expectedBaseSha}) {
   const repo = context.repo;
   const {data: pr} = await github.rest.pulls.get({...repo, pull_number: number});
@@ -95,13 +69,13 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
   const sha = pr.head.sha;
   const externalId = 'ai-path-guard:' + number + ':' + sha;
   const existing = await github.paginate(github.rest.checks.listForRef, {
-    ...repo, ref: sha, check_name: 'ai-ownership-policy', per_page: 100
+    ...repo, ref: sha, check_name: 'guard', per_page: 100
   });
   let check = existing.find(c => c.external_id === externalId && c.app?.id === ACTIONS_APP_ID);
   const details_url = 'https://github.com/' + repo.owner + '/' + repo.repo + '/actions/runs/' + context.runId;
   if (check) await github.rest.checks.update({...repo, check_run_id: check.id, status: 'in_progress', details_url});
   else ({data: check} = await github.rest.checks.create({
-    ...repo, name: 'ai-ownership-policy', head_sha: sha, status: 'in_progress', external_id: externalId, details_url
+    ...repo, name: 'guard', head_sha: sha, status: 'in_progress', external_id: externalId, details_url
   }));
 
   let conclusion = 'success';
@@ -165,26 +139,7 @@ async function runGuard({github, context, core, number, expectedBaseSha}) {
     output: {title: 'AI ownership guard: ' + conclusion, summary: summary.slice(0, 60000)},
   });
 
-  // Actions-created check conclusions are immutable through the Checks API.
-  // Codex updates its managed PR summary comment when review completes; that
-  // issue_comment event is sourced from the trusted default-branch workflow.
-  // Wait for an in-flight native PR guard before deciding whether a rerun is
-  // needed, so completion events cannot race the original guard evaluation.
-  if (context.eventName === 'issue_comment') {
-    const native = await waitForNativeGuard({github, repo, sha});
-    if (!native) throw new Error('No native PR guard exists for the current head; trigger a PR guard event.');
-    if (native.status !== 'completed') throw new Error('Native PR guard did not finish in time for completion re-evaluation.');
-
-    if (native.conclusion !== conclusion) {
-      const {data: latest} = await github.rest.pulls.get({...repo, pull_number: number});
-      if (latest.state !== 'open' || latest.head.sha !== sha) throw new Error('PR changed before native guard rerun; retry the current head.');
-      const job_id = Number(native.details_url.split('/').pop());
-      await github.request('POST /repos/{owner}/{repo}/actions/jobs/{job_id}/rerun', {...repo, job_id});
-      core.info('Native guard rerun requested. Required guard changes only after that job completes.');
-    } else core.info('Native guard already matches the current policy conclusion.');
-  }
-
   if (conclusion === 'failure') core.setFailed(summary);
 }
 
-module.exports = {evaluateGuardPolicy, nativeGuardForHead, waitForNativeGuard, runGuard};
+module.exports = {evaluateGuardPolicy, runGuard};

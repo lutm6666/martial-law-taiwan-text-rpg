@@ -32,15 +32,23 @@ assert.match(guard, /^  issue_comment:/m,
   'Codex summary edits must wake the trusted default-branch guard through issue comments');
 assert.match(guard, /types: \[created, edited, deleted\]/,
   'issue comment creation, edit, and deletion must all re-evaluate the guard');
-assert.match(guardRuntime, /waitForNativeGuard/,
-  'guard wakeups must wait out an in-flight native guard before rerunning it');
+assert.match(guard, /^  workflow_dispatch:/m,
+  'trusted receivers must be able to wake the guard explicitly when GITHUB_TOKEN suppresses comment events');
+assert.match(guard, /name: guard-runner/,
+  'the Actions runner check must not collide with the synthetic required guard check');
+assert.match(guardRuntime, /check_name: 'guard'/,
+  'guard runtime must locate the synthetic required guard check on the PR head');
+assert.match(guardRuntime, /name: 'guard'/,
+  'guard runtime must publish the ruleset-required guard context on the PR head');
+assert.doesNotMatch(guardRuntime, /waitForNativeGuard/,
+  'synthetic guard evaluation must not depend on a second native guard job');
 
 assert.match(claude, /persist-credentials: false/,
   'trusted-base Claude checkout must not persist repository credentials');
 assert.match(claude, /actions: write/,
-  'Claude receiver needs actions: write to rerun the native guard after completion');
+  'Claude receiver needs actions: write to dispatch the trusted guard workflow after completion');
 assert.match(claude, /checks: read/,
-  'Claude receiver needs checks: read to locate the native guard for the exact head');
+  'Claude receiver retains read-only check visibility during the bootstrap transition');
 assert.match(claude, /github\.event\.label\.name == 'review:retry'/,
   'review:retry must directly wake the trusted Claude receiver instead of relying on an Actions-authored comment');
 assert.match(claudeRuntime, /label\?\.name === 'review:retry'/,
@@ -72,9 +80,13 @@ assert.match(claudeRuntime, /deleteComment/,
 assert.match(claudeRuntime, /already completed for this SHA; retrying the exact-head guard wakeup/,
   'an existing completion marker must retry guard wakeup rather than silently skip');
 assert.match(claudeRuntime, /rerunGuardAfterCompletion/,
-  'Claude receiver runtime must directly rerun the guard after its trusted marker');
-assert.match(claudeRuntime, /POST \/repos\/\{owner\}\/\{repo\}\/actions\/jobs\/\{job_id\}\/rerun/,
-  'Claude receiver must use the native job rerun endpoint instead of relying on a suppressed GITHUB_TOKEN comment event');
+  'Claude receiver runtime must explicitly wake the guard after its trusted marker');
+assert.match(claudeRuntime, /createWorkflowDispatch/,
+  'Claude receiver must use an explicit trusted workflow dispatch instead of relying on a suppressed GITHUB_TOKEN comment event');
+assert.match(claudeRuntime, /workflow_id: 'ai-path-guard\.yml'/,
+  'Claude receiver must dispatch the trusted guard workflow by its stable workflow id');
+assert.doesNotMatch(claudeRuntime, /actions\/jobs\/\{job_id\}\/rerun/,
+  'Claude receiver must not depend on a native PR-head guard job that pull_request_target cannot provide');
 
 for (const filename of [
   '.github/workflows/ai-path-guard.yml',
@@ -90,4 +102,4 @@ for (const filename of [
   }
 }
 
-console.log('PASS AI workflow YAML contracts, fork reviewer routing, writer-only retry wakeups, trusted exact-head completion wakeups, conservative Claude input budgets, completion attestation, and embedded scripts compile');
+console.log('PASS AI workflow YAML contracts, fork reviewer routing, writer-only retry wakeups, synthetic exact-head guard dispatch, conservative Claude input budgets, completion attestation, and embedded scripts compile');
