@@ -391,11 +391,13 @@ async function dispatch({github, context, core, implementationMode = 'work'}) {
     }
   }
   const hadPr = Boolean(pr);
-  const completedSameRun = actionsImplementation && pr && !pr.draft && !retry
+  const completedSameRun = pr && !pr.draft && !retry
     && completedRunBranch(number, context.runId, context.runAttempt, action, pr.head?.ref);
   if (completedSameRun) {
     const existingPlan = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, pr.head.ref);
-    if (completedRunPlanMatches(number, context.runId, action, pr.head.ref, existingPlan, issueDigest(issue))) {
+    const currentInstructions = actionsImplementation && !pr.body.includes('Work handoff: planning only')
+      || replaceManagedBody(pr.body, issue, route, implementationMode) === pr.body;
+    if (currentInstructions && completedRunPlanMatches(number, context.runId, action, pr.head.ref, existingPlan, issueDigest(issue))) {
       core.info('Dispatch already processed for this workflow run; leaving the managed PR unchanged.');
       return {run: false, branch: pr.head.ref, pr: pr.number, alreadyProcessed: true};
     }

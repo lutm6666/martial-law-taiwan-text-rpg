@@ -839,6 +839,31 @@ test('closing then reopening a Work Issue restores its unmerged PR and implement
   assert(callsNamed(mock, 'repos.merge').every(call => call.base === first.branch));
 });
 
+test('rerunning completed opened Work preserves the ready head without syncing main', async () => {
+  const mock = harness({implementationMode: 'work'});
+  const first = await mock.run();
+  mock.prs[0].draft = false;
+  mock.refs.get(first.branch).object.sha = sha('c');
+  mock.context.runAttempt = 2;
+  const before = mock.calls.length;
+  const result = await mock.run();
+  assert.equal(result.alreadyProcessed, true);
+  assert.equal(result.run, false);
+  assert.equal(mock.refs.get(first.branch).object.sha, sha('c'));
+  assert.equal(mock.calls.slice(before).filter(call => ['repos.merge', 'repos.createOrUpdateFileContents', 'pulls.update'].includes(call.name)).length, 0);
+});
+
+test('ready Actions PR can switch to Work instructions on opened rerun', async () => {
+  const mock = harness();
+  await mock.run();
+  mock.prs[0].draft = false;
+  mock.context.runAttempt = 2;
+  const result = await dispatch({...mock, implementationMode: 'work'});
+  assert.equal(result.alreadyProcessed, undefined);
+  assert.equal(result.run, false);
+  assert(mock.prs[0].body.includes('Work handoff: planning only'));
+});
+
 test('Work retry restores a closed PR and preserves its implementation branch', async () => {
   const mock = harness({implementationMode: 'work'});
   const first = await mock.run();
