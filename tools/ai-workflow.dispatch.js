@@ -340,8 +340,6 @@ async function chooseBranch(github, repo, number, runId, expectedDigest, runAtte
 }
 
 async function dispatch({github, context, core, implementationMode = 'work'}) {
-  if (!['work', 'actions'].includes(implementationMode)) throw new Error('Invalid dispatch implementation mode.');
-  const actionsImplementation = implementationMode === 'actions';
   const repo = context.repo;
   const number = context.payload.issue?.number;
   if (!Number.isSafeInteger(number) || number < 1) throw new Error('Issue event is missing a valid number.');
@@ -358,6 +356,8 @@ async function dispatch({github, context, core, implementationMode = 'work'}) {
   }
   if (action === 'closed') return {run: false};
   if (issue.state !== 'open' || issue.pull_request) return {run: false};
+  if (!['work', 'actions'].includes(implementationMode)) throw new Error('Invalid dispatch implementation mode.');
+  const actionsImplementation = implementationMode === 'actions';
   const {data: repository} = await github.rest.repos.get(repo);
   if (repository.default_branch !== 'main') throw new Error('The dispatch contract requires main as the default branch.');
   const writer = action === 'labeled' && !retry ? false : await canWrite(github, repo, context.actor);

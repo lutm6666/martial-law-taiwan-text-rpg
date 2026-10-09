@@ -795,7 +795,9 @@ test('Work retry and reopened events preserve existing implementation branch and
 test('invalid implementation modes fail before GitHub mutations', async () => {
   const mock = harness({implementationMode: 'unexpected'});
   await assert.rejects(mock.run(), /Invalid dispatch implementation mode/);
-  assert.equal(mock.calls.length, 0);
+  assert.equal(callsNamed(mock, 'git.createRef').length, 0);
+  assert.equal(callsNamed(mock, 'pulls.update').length, 0);
+  assert.equal(callsNamed(mock, 'pulls.create').length, 0);
 });
 
 
@@ -845,5 +847,18 @@ test('reopening Work with a missing preserved branch fails without replacing its
   mock.context.payload.action = 'reopened';
   await assert.rejects(mock.run(), /Preserved Work branch is missing/);
   assert.equal(mock.prs.length, 1);
+  assert.equal(callsNamed(mock, 'git.createRef').length, 1);
+});
+
+
+test('closed Issue reconciliation still closes a ready PR with an invalid mode', async () => {
+  const mock = harness({implementationMode: 'work'});
+  await mock.run();
+  mock.prs[0].draft = false;
+  mock.issue.state = 'closed';
+  mock.context.payload.action = 'closed';
+  const result = await dispatch({github: mock.github, context: mock.context, core: mock.core, implementationMode: 'typo'});
+  assert.equal(result.run, false);
+  assert.equal(mock.prs[0].state, 'closed');
   assert.equal(callsNamed(mock, 'git.createRef').length, 1);
 });
