@@ -37,6 +37,7 @@ jobs:
           node --check tools/test-ai-workflow.routing.js
           node --check tools/test-ai-workflow.dispatch.js
           node --check tools/test-ai-workflow.dispatch-recovery.js
+          node --check tools/test-ai-workflow.dispatch-contract.js
           node --check tools/test-ai-workflow.publish.js
           node --check tools/test-ai-workflow.secret-scan.js
           node --check tools/test-ai-workflow.guard-contract.js
@@ -50,6 +51,7 @@ jobs:
           node tools/test-ai-workflow.routing.js
           node tools/test-ai-workflow.dispatch.js
           node tools/test-ai-workflow.dispatch-recovery.js
+          node tools/test-ai-workflow.dispatch-contract.js
           node tools/test-ai-workflow.publish.js
           node tools/test-ai-workflow.secret-scan.js
           node --test tools/test-ai-workflow.owner-approval.js
