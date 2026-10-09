@@ -43,6 +43,17 @@ function isRunBranch(number, runId, branch) {
   return /^\d+$/.test(suffix) && Number(suffix) >= 2;
 }
 
+function completedRunBranch(number, runId, runAttempt, action, branch) {
+  const isRerun = Number(runAttempt || 1) > 1;
+  if (action === 'opened') {
+    return isRerun && (branch === branchName(number) || isRunBranch(number, runId, branch));
+  }
+  if (action === 'reopened') {
+    return isRunBranch(number, runId, branch) || (isRerun && branch === branchName(number));
+  }
+  return false;
+}
+
 function safeTitle(title) {
   return String(title || 'Untitled Issue')
     .replace(/[\r\n\t\x00-\x1f\x7f]/g, ' ')
@@ -158,14 +169,19 @@ async function maybeFile(github, repo, path, branch) {
   }
 }
 
-function planDigestFrom(file) {
+function parsePlan(file) {
   if (!file?.content) return null;
   try {
     const plan = JSON.parse(Buffer.from(file.content.replace(/\s/g, ''), 'base64').toString('utf8'));
-    return /^[0-9a-f]{64}$/.test(plan.title_body_sha256) ? plan.title_body_sha256 : null;
+    return plan && typeof plan === 'object' ? plan : null;
   } catch {
     return null;
   }
+}
+
+function planDigestFrom(file) {
+  const plan = parsePlan(file);
+  return /^[0-9a-f]{64}$/.test(plan?.title_body_sha256 || '') ? plan.title_body_sha256 : null;
 }
 
 async function ensurePlanFile(github, repo, branch, issue, route) {
@@ -197,7 +213,6 @@ async function syncLatestMain(github, repo, branch) {
   }
   for (let attempt = 0; attempt < 3; attempt++) {
     const sha = await mainHead(github, repo);
-    // GitHub returns 204 when the branch already contains this commit.
     await github.rest.repos.merge({
       ...repo, base: branch, head: sha,
       commit_message: `chore(ai): sync ${branch} with main`,
@@ -222,8 +237,6 @@ async function openPrForIssue(github, repo, number) {
 }
 
 async function chooseCleanAttemptBranch(github, repo, number, runId, runAttempt) {
-  // A rerun retains runId; a discarded implementation needs a new ref.
-  // Never reuse a ref that could contain unreviewed implementation commits.
   const base = branchName(number, runId);
   for (let offset = 0; offset < 10; offset++) {
     const candidate = offset === 0 && runAttempt === 1
@@ -233,7 +246,24 @@ async function chooseCleanAttemptBranch(github, repo, number, runId, runAttempt)
   throw new Error('No clean retry branch available; refusing to overwrite existing refs.');
 }
 
-async function chooseBranch(github, repo, number, runId) {
+async function recoverPlannedRetryBranch(github, repo, {number, runId, expectedDigest, branch, ref, plan, mainSha}) {
+  const data = parsePlan(plan);
+  const planPath = `.ai/dispatch/issue-${number}.json`;
+  if (!data || data.version !== 1 || data.source_issue !== number
+    || String(data.retry_run) !== String(runId)
+    || data.title_body_sha256 !== expectedDigest) return false;
+  const {data: commit} = await github.rest.repos.getCommit({...repo, ref: ref.object?.sha});
+  if (!Array.isArray(commit.parents) || commit.parents.length !== 1) return false;
+  const parent = commit.parents[0]?.sha;
+  if (!/^[0-9a-f]{40}$/.test(parent || '')) return false;
+  const {data: delta} = await github.rest.repos.compareCommits({...repo, base: parent, head: ref.object.sha});
+  const paths = changedPaths(delta.files || []);
+  if (delta.status !== 'ahead' || delta.ahead_by !== 1 || paths.length !== 1 || paths[0] !== planPath) return false;
+  const {data: ancestry} = await github.rest.repos.compareCommits({...repo, base: parent, head: mainSha});
+  return ['ahead', 'identical'].includes(ancestry.status);
+}
+
+async function chooseBranch(github, repo, number, runId, expectedDigest) {
   const initial = branchName(number);
   const ref = await maybeRef(github, repo, initial);
   if (!ref) return {branch: initial, create: true};
@@ -256,12 +286,15 @@ async function chooseBranch(github, repo, number, runId) {
     if (!nextPrs.length && !nextPlan && nextRef.object?.sha === mainSha) {
       return {branch: next, create: false};
     }
+    if (!nextPrs.length && nextPlan && await recoverPlannedRetryBranch(github, repo, {
+      number, runId, expectedDigest, branch: next, ref: nextRef, plan: nextPlan, mainSha,
+    })) {
+      return {branch: next, create: false};
+    }
     throw new Error('Retry branch already exists without a recoverable clean state.');
   }
   const file = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, initial);
   if (!file) {
-    // Recover only a branch that is still exactly main and has never had a PR.
-    // Do not reset or delete a branch that contains any independent commits.
     const mainSha = await mainHead(github, repo);
     const freshRef = await maybeRef(github, repo, initial);
     if (!prs.length && freshRef?.object?.sha === mainSha) {
@@ -269,8 +302,8 @@ async function chooseBranch(github, repo, number, runId) {
     }
     throw new Error('Dispatch branch exists without a matching plan or PR.');
   }
-  const data = JSON.parse(Buffer.from(file.content.replace(/\s/g, ''), 'base64').toString('utf8'));
-  if (data.source_issue !== number) throw new Error('Dispatch branch plan does not match Issue.');
+  const data = parsePlan(file);
+  if (data?.source_issue !== number) throw new Error('Dispatch branch plan does not match Issue.');
   return {branch: initial, create: false};
 }
 
@@ -293,13 +326,8 @@ async function dispatch({github, context, core}) {
   if (issue.state !== 'open' || issue.pull_request) return {run: false};
   const {data: repository} = await github.rest.repos.get(repo);
   if (repository.default_branch !== 'main') throw new Error('The dispatch contract requires main as the default branch.');
-  // A later unrelated label event may be the only surviving delivery after
-  // GitHub replaces a pending opened/edited run. Reconcile the live Issue,
-  // but never let that label event authorize a model job.
   const writer = action === 'labeled' && !retry ? false : await canWrite(github, repo, context.actor);
   const isRerun = Number(context.runAttempt || 1) > 1;
-  // A retry label is consumed by the first attempt. Only a writer's rerun
-  // of the same run ID with a matching draft plan may resume the model job.
   const retryPr = retry ? await openPrForIssue(github, repo, number) : null;
   const retryPlan = retryPr?.draft && (isRunBranch(number, context.runId, retryPr.head?.ref) || retryPr.head?.ref === branchName(number))
     ? await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, retryPr.head.ref)
@@ -309,19 +337,11 @@ async function dispatch({github, context, core}) {
   if (retry && (!writer || (!names(issue.labels).includes('dispatch:retry') && !retryResume))) {
     throw new Error('Only a repository writer may request implementation retry.');
   }
-  // A pending label is mutable task data. Only the verified retry event may
-  // discard earlier implementation work or return a ready PR to draft.
   const route = routeIssue({title: issue.title, body: issue.body});
   let pr = await openPrForIssue(github, repo, number);
   const hadPr = Boolean(pr);
-  // GitHub Actions re-runs preserve runId. A completed opened rerun must be
-  // explicit (runAttempt > 1); reopened delivery idempotency remains keyed by
-  // the retry branch's runId so duplicate deliveries stay harmless.
-  const completedSameRun = pr && !pr.draft && !retry && (
-    (action === 'opened' && isRerun && (pr.head?.ref === branchName(number)
-      || isRunBranch(number, context.runId, pr.head?.ref)))
-    || (action === 'reopened' && isRunBranch(number, context.runId, pr.head?.ref))
-  );
+  const completedSameRun = pr && !pr.draft && !retry
+    && completedRunBranch(number, context.runId, context.runAttempt, action, pr.head?.ref);
   if (completedSameRun) {
     const existingPlan = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, pr.head.ref);
     if (planDigestFrom(existingPlan) === issueDigest(issue)) {
@@ -337,10 +357,7 @@ async function dispatch({github, context, core}) {
     if (files.length >= 3000) throw new Error('Work PR file listing reached the GitHub cap.');
     const planPath = `.ai/dispatch/issue-${number}.json`;
     if (files.some(file => file.filename !== planPath)) {
-      // A previous implementation may have been rejected after its ref update.
-      // Start a clean branch so stale code cannot survive a later retry.
       discardedDirtyPr = true;
-      // Do not close the old PR until a clean replacement ref is validated.
       pr = null;
     }
   }
@@ -367,7 +384,7 @@ async function dispatch({github, context, core}) {
   } else {
     const choice = discardedDirtyPr
       ? await chooseCleanAttemptBranch(github, repo, number, context.runId, Number(context.runAttempt || 1))
-      : await chooseBranch(github, repo, number, context.runId);
+      : await chooseBranch(github, repo, number, context.runId, issueDigest(issue));
     branch = choice.branch;
     if (choice.create) {
       const sha = await mainHead(github, repo);
@@ -403,8 +420,6 @@ async function dispatch({github, context, core}) {
   await syncManagedLabels(github, repo, pr.number, pr.labels, route);
   if (retry && names(issue.labels).includes('dispatch:retry')) await removeLabel(github, repo, number, 'dispatch:retry');
 
-  // A mutable label is never authorization. GitHub's actor permission is
-  // checked through the API before any model receives an implementation job.
   const run = writer && route.primary !== null
     && (action === 'reopened' || retry || (action === 'opened' && (!hadPr || (isRerun && (pr.head?.ref === branchName(number) || discardedDirtyPr)))))
     && pr.draft === true;
@@ -421,7 +436,7 @@ async function dispatch({github, context, core}) {
 
 module.exports = {
   ROUTING_LABELS, AREA_LABELS, PLAN_START, PLAN_END,
-  names, changedPaths, marker, branchName, isRunBranch, safeTitle, issueDigest,
+  names, changedPaths, marker, branchName, isRunBranch, completedRunBranch, safeTitle, issueDigest,
   planFile, managedBody, replaceManagedBody, syncLatestMain,
-  isDispatchPr, dispatch,
+  isDispatchPr, parsePlan, recoverPlannedRetryBranch, chooseBranch, dispatch,
 };
