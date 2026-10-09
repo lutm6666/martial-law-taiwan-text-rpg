@@ -68,15 +68,17 @@ function issueDigest(issue) {
     .digest('hex');
 }
 
-function planFile(issue, route, branch = branchName(issue.number)) {
+function planFile(issue, route, branch = branchName(issue.number), retryRunOverride = null) {
   const retry = new RegExp(`^ai/issue-${issue.number}-r(\\d+)(?:-a\\d+)?$`).exec(branch);
+  const retryRun = retry ? retry[1] : retryRunOverride == null ? null : String(retryRunOverride);
+  if (retryRun !== null && !/^\d+$/.test(retryRun)) throw new Error('Invalid retry run provenance.');
   return JSON.stringify({
     version: 1,
     source_issue: issue.number,
     source_url: issue.html_url,
     title: safeTitle(issue.title),
     title_body_sha256: issueDigest(issue),
-    retry_run: retry ? retry[1] : null,
+    retry_run: retryRun,
     routing: route,
   }, null, 2) + '\n';
 }
@@ -184,10 +186,24 @@ function planDigestFrom(file) {
   return /^[0-9a-f]{64}$/.test(plan?.title_body_sha256 || '') ? plan.title_body_sha256 : null;
 }
 
-async function ensurePlanFile(github, repo, branch, issue, route) {
+function completedRunPlanMatches(number, runId, action, branch, file, expectedDigest) {
+  const plan = parsePlan(file);
+  if (!plan || plan.version !== 1 || plan.source_issue !== number
+    || plan.title_body_sha256 !== expectedDigest) return false;
+  if (action === 'reopened' && branch === branchName(number)) {
+    return String(plan.retry_run || '') === String(runId);
+  }
+  return true;
+}
+
+async function ensurePlanFile(github, repo, branch, issue, route, retryRunOverride = null) {
   const path = `.ai/dispatch/issue-${issue.number}.json`;
-  const wanted = planFile(issue, route, branch);
   const current = await maybeFile(github, repo, path, branch);
+  const currentPlan = parsePlan(current);
+  const preservedRetryRun = branch === branchName(issue.number) && retryRunOverride == null
+    ? currentPlan?.retry_run ?? null
+    : retryRunOverride;
+  const wanted = planFile(issue, route, branch, preservedRetryRun);
   if (current) {
     const actual = Buffer.from(current.content.replace(/\s/g, ''), 'base64').toString('utf8');
     if (actual === wanted) return false;
@@ -263,7 +279,7 @@ async function recoverPlannedRetryBranch(github, repo, {number, runId, expectedD
   return ['ahead', 'identical'].includes(ancestry.status);
 }
 
-async function chooseBranch(github, repo, number, runId, expectedDigest) {
+async function chooseBranch(github, repo, number, runId, expectedDigest, runAttempt = 1) {
   const initial = branchName(number);
   const ref = await maybeRef(github, repo, initial);
   if (!ref) return {branch: initial, create: true};
@@ -276,7 +292,11 @@ async function chooseBranch(github, repo, number, runId, expectedDigest) {
   if (prs.some(pr => pr.state === 'closed')) {
     const next = branchName(number, runId);
     const nextRef = await maybeRef(github, repo, next);
-    if (!nextRef) return {branch: next, create: true};
+    if (!nextRef) {
+      return Number(runAttempt || 1) > 1
+        ? chooseCleanAttemptBranch(github, repo, number, runId, Number(runAttempt || 1))
+        : {branch: next, create: true};
+    }
     const nextPrs = await github.paginate(github.rest.pulls.list, {
       ...repo, state: 'all', head: `${repo.owner}:${next}`, per_page: 100,
     });
@@ -290,6 +310,9 @@ async function chooseBranch(github, repo, number, runId, expectedDigest) {
       number, runId, expectedDigest, branch: next, ref: nextRef, plan: nextPlan, mainSha,
     })) {
       return {branch: next, create: false};
+    }
+    if (Number(runAttempt || 1) > 1) {
+      return chooseCleanAttemptBranch(github, repo, number, runId, Number(runAttempt || 1));
     }
     throw new Error('Retry branch already exists without a recoverable clean state.');
   }
@@ -344,7 +367,7 @@ async function dispatch({github, context, core}) {
     && completedRunBranch(number, context.runId, context.runAttempt, action, pr.head?.ref);
   if (completedSameRun) {
     const existingPlan = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, pr.head.ref);
-    if (planDigestFrom(existingPlan) === issueDigest(issue)) {
+    if (completedRunPlanMatches(number, context.runId, action, pr.head.ref, existingPlan, issueDigest(issue))) {
       core.info('Dispatch already processed for this workflow run; leaving the managed PR unchanged.');
       return {run: false, branch: pr.head.ref, pr: pr.number, alreadyProcessed: true};
     }
@@ -384,7 +407,7 @@ async function dispatch({github, context, core}) {
   } else {
     const choice = discardedDirtyPr
       ? await chooseCleanAttemptBranch(github, repo, number, context.runId, Number(context.runAttempt || 1))
-      : await chooseBranch(github, repo, number, context.runId, issueDigest(issue));
+      : await chooseBranch(github, repo, number, context.runId, issueDigest(issue), Number(context.runAttempt || 1));
     branch = choice.branch;
     if (choice.create) {
       const sha = await mainHead(github, repo);
@@ -397,7 +420,7 @@ async function dispatch({github, context, core}) {
   }
 
   await syncLatestMain(github, repo, branch);
-  await ensurePlanFile(github, repo, branch, issue, route);
+  await ensurePlanFile(github, repo, branch, issue, route, action === 'reopened' ? context.runId : null);
   await syncLatestMain(github, repo, branch);
 
   const body = pr ? replaceManagedBody(pr.body, issue, route) : managedBody(issue, route);
@@ -438,5 +461,5 @@ module.exports = {
   ROUTING_LABELS, AREA_LABELS, PLAN_START, PLAN_END,
   names, changedPaths, marker, branchName, isRunBranch, completedRunBranch, safeTitle, issueDigest,
   planFile, managedBody, replaceManagedBody, syncLatestMain,
-  isDispatchPr, parsePlan, recoverPlannedRetryBranch, chooseBranch, dispatch,
+  isDispatchPr, parsePlan, completedRunPlanMatches, recoverPlannedRetryBranch, chooseBranch, dispatch,
 };
