@@ -56,8 +56,10 @@ async function completedOpenedRerunIsIdempotent() {
           assert.equal(path, '.ai/dispatch/issue-42.json');
           assert.equal(ref, branch);
           const plan = {
+            version: 1,
             source_issue: 42,
             title_body_sha256: dispatchRuntime.issueDigest(issue),
+            retry_run: null,
             routing: {primary: 'codex'},
           };
           return {data: {type: 'file', content: Buffer.from(JSON.stringify(plan)).toString('base64')}};
