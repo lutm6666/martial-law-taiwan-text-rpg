@@ -22,6 +22,7 @@ jobs:
       authorized: ${{ steps.plan.outputs.authorized }}
       run: ${{ steps.plan.outputs.run }}
       digest: ${{ steps.plan.outputs.digest }}
+      implementation_mode: ${{ steps.plan.outputs.implementation_mode }}
     steps:
       - name: Checkout trusted default-branch dispatcher
         uses: actions/checkout@v4
@@ -47,15 +48,25 @@ jobs:
           permission-issues: write
       - name: Plan Issue and open draft work PR
         id: plan
+        env:
+          IMPLEMENTATION_MODE: ${{ vars.AI_DISPATCH_IMPLEMENTATION_MODE || 'work' }}
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            await require('./tools/ai-workflow.dispatch.js').dispatch({github, context, core});
+            const result = await require('./tools/ai-workflow.dispatch.js').dispatch({
+              github, context, core, implementationMode: process.env.IMPLEMENTATION_MODE,
+            });
+            if (result.pr && result.implementation_mode === 'work') {
+              await core.summary.addHeading('Ready for Work handoff')
+                .addLink(`Draft PR #${result.pr}`, `https://github.com/${context.repo.owner}/${context.repo.repo}/pull/${result.pr}`)
+                .addRaw('\nPlanning completed. Ask ChatGPT Work to implement the linked Issue in the existing PR branch. No Actions model job was started.\n')
+                .write();
+            }
 
   implement:
     needs: dispatch
-    if: needs.dispatch.outputs.run == 'true'
+    if: needs.dispatch.outputs.implementation_mode == 'actions' && needs.dispatch.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
@@ -218,7 +229,7 @@ jobs:
 
   scan:
     needs: [dispatch, implement]
-    if: needs.dispatch.outputs.run == 'true' && needs.implement.result == 'success'
+    if: needs.dispatch.outputs.implementation_mode == 'actions' && needs.dispatch.outputs.run == 'true' && needs.implement.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -242,7 +253,7 @@ jobs:
 
   publish:
     needs: [dispatch, implement, scan]
-    if: needs.dispatch.outputs.run == 'true' && needs.implement.result == 'success' && needs.scan.result == 'success'
+    if: needs.dispatch.outputs.implementation_mode == 'actions' && needs.dispatch.outputs.run == 'true' && needs.implement.result == 'success' && needs.scan.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -87,7 +87,7 @@ async function completedOpenedRerunIsIdempotent() {
     payload: {action: 'opened', issue: {number: 42}},
   };
   const core = {info() {}, setOutput() {}};
-  const result = await dispatchRuntime.dispatch({github, context, core});
+  const result = await dispatchRuntime.dispatch({github, context, core, implementationMode: 'actions'});
   assert.equal(result.run, false);
   assert.equal(result.alreadyProcessed, true);
   assert.equal(result.branch, branch);
