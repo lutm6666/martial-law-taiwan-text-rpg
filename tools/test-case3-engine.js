@@ -225,6 +225,17 @@ function deductionSaveRepair(){
  assert.strictEqual(repaired.deduction.ending,'evidence_boundary','complete answers should recompute ending');
 }
 
+function hypothesisSaveRepair(){
+ const s=E.fresh('damaged history');
+ s.hypotheses.H_SIDE_DOOR={text:'後來的想法',status:'revised',history:[null,[],12,{text:null},
+  {from:'active',to:'revised',text:'最初的想法'},
+  {from:'active',to:'unknown',text:'損壞紀錄'}]};
+ const repaired=E.normalize(s),h=repaired.hypotheses.H_SIDE_DOOR;
+ assert.strictEqual(h.history.length,1);
+ assert.strictEqual(h.history[0].text,'最初的想法');
+ assert.strictEqual(h.originalText,'最初的想法');
+}
+
 function saveIsolation(){
  storage['mist-taiwan-case-save-v4']='CASE1_SENTINEL';
  storage['mist-taiwan-rain-canon-v1']='CASE2_SENTINEL';
@@ -235,6 +246,7 @@ function saveIsolation(){
 }
 
 const results=[];
+results.push((hypothesisSaveRepair(),'PASS hypothesis nested save repair'));
 [['route A',routeA],['route B',routeB],['route C',routeC],['negative gates',negativeChecks],['narrative state',narrativeState],['deduction correct',deductionCorrect],['deduction error endings',deductionErrorEndings],['deduction tie break',deductionTieBreak],['deduction ignores withdrawn hypothesis',deductionIgnoresWithdrawnHypothesis],['deduction rejects unknown option',deductionRejectsUnknownOption],['deduction save repair',deductionSaveRepair],['save isolation',saveIsolation]].forEach(([name,fn])=>{
  fn();results.push('PASS '+name);
 });

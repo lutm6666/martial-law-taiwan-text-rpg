@@ -64,7 +64,12 @@ function normalize(raw){
   h.status=['active','revised','withdrawn'].indexOf(h.status)>=0?h.status:'active';
   h.revision=Number.isFinite(h.revision)?Math.max(0,h.revision):0;
   h.text=typeof h.text==='string'?h.text:C.hypotheses[k].text;
-  h.history=arr(h.history);
+  h.history=arr(h.history).filter(function(entry){
+   return entry&&typeof entry==='object'&&!Array.isArray(entry)
+    &&['active','revised','withdrawn'].indexOf(entry.from)>=0
+    &&['active','revised','withdrawn'].indexOf(entry.to)>=0
+    &&typeof entry.text==='string';
+  }).map(function(entry){return {from:entry.from,to:entry.to,text:entry.text}});
   h.originalText=typeof h.originalText==='string'?h.originalText:(h.history[0]&&h.history[0].text)||h.text;
   s.hypotheses[k]=h;
  });
