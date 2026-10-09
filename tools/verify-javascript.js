@@ -24,3 +24,7 @@ console.log(`All ${count} page scripts passed syntax checks.`);
 // Production routing is part of the page runtime contract. Keep this check here so
 // Project validation covers Case 1 → Case 2 → Case 3 without weakening CI policy.
 require('./test-case-routing.js');
+
+// Case 2 save migration and Canon-ending validation are production invariants.
+// Keep the malformed-save regression suite in the main validation entry point.
+require('./test-case2-save.js');
