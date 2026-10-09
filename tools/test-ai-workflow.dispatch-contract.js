@@ -139,10 +139,43 @@ assert.match(modelJob, /if-no-files-found: error\n          overwrite: true/,
 const uploadStep = modelJob.slice(modelJob.indexOf('      - name: Upload implementation patch'));
 assert.match(uploadStep, /NODE_OPTIONS: ''[\s\S]*?NODE_PATH: ''[\s\S]*?LD_PRELOAD: ''[\s\S]*?PATH: \/usr\/bin:\/bin/,
   'artifact action must not inherit model-written Node, loader, or executable search paths');
-for (const variable of ['HTTPS_PROXY', 'https_proxy', 'HTTP_PROXY', 'http_proxy', 'ALL_PROXY', 'all_proxy', 'NO_PROXY', 'no_proxy']) {
+for (const variable of ['HTTPS_PROXY', 'HTTP_PROXY', 'ALL_PROXY', 'NO_PROXY']) {
   assert.match(uploadStep, new RegExp('^          ' + variable + ": ''$", 'm'),
     'artifact action must clear model-injected proxy variable ' + variable);
 }
+// GitHub rejects case-insensitive duplicate keys even on Linux runners.
+function assertUniqueEnvKeys(yaml) {
+  let indent = -1;
+  let keys;
+  for (const [index, line] of yaml.split('\n').entries()) {
+    if (keys && line.trim() && line.search(/\S/) <= indent) keys = null;
+    const block = line.match(/^(\s*)env:\s*$/);
+    if (block) {
+      indent = block[1].length;
+      keys = new Set();
+      continue;
+    }
+    if (!keys) continue;
+    const entry = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*):/);
+    if (!entry) continue;
+    const key = entry[1].toUpperCase();
+    assert(!keys.has(key), 'duplicate workflow env key at line ' + (index + 1) + ': ' + entry[1]);
+    keys.add(key);
+  }
+}
+assert.throws(() => assertUniqueEnvKeys("env:\n  HTTPS_PROXY: ''\n  https_proxy: ''\n"),
+  /duplicate workflow env key/, 'the original activation failure must be rejected');
+assert.doesNotThrow(() => assertUniqueEnvKeys("env:\n  HTTPS_PROXY: ''\nsteps:\n  - env:\n      HTTPS_PROXY: ''\n"),
+  'independent env blocks may reuse a key');
+assertUniqueEnvKeys(dispatch);
+const packageStep = modelJob.slice(modelJob.indexOf('      - name: Package binary-capable implementation patch'),
+  modelJob.indexOf('      - name: Upload implementation patch'));
+assert.match(packageStep,
+  /printf '%s\\n' 'https_proxy=' 'http_proxy=' 'all_proxy=' 'no_proxy=' >> "\$GITHUB_ENV"/,
+  'the trusted packaging step must clear lowercase Linux proxies through the runner env file');
+assert.doesNotMatch(uploadStep, /^          (?:https_proxy|http_proxy|all_proxy|no_proxy):/m,
+  'lowercase proxies must not collide with uppercase workflow env keys');
+
 assert.match(uploadStep, /NODE_EXTRA_CA_CERTS: ''[\s\S]*?NODE_TLS_REJECT_UNAUTHORIZED: '1'/,
   'artifact action must not accept a model-provided CA or disabled TLS verification');
 for (const variable of ['OPENSSL_CONF', 'SSL_CERT_FILE', 'SSL_CERT_DIR']) {
