@@ -59,14 +59,14 @@ assets/v2/canon/
 
 - Claude 主責 UI、CSS、responsive、accessibility 與互動 polish。
 - Codex / ChatGPT 主責 Canon、engine、state、tests、CI、證據鏈與防劇透邏輯。
-- Issue `opened`／`reopened` 時，`AI Dispatch` 依標題與內容建立 routing plan、工作 branch 與引用來源 Issue 的 draft PR。具 repository 寫入權限的事件 actor 會自動啟動主責 AI 實作；公開 Issue 也會建 plan／PR，但須由 writer 使用 `dispatch:retry` 啟動模型。
-- UI／assets 優先交 Claude，Canon／engine／control 優先交 Codex，純 tests／validators／docs 規劃為 Tier 1。模型產生的 patch 經可信 publisher 驗證並同步最新 `main` 後，才更新工作 branch；AI 不直接 push `main`。
+- Issue `opened`／`reopened` 時，`AI Dispatch` 依標題與內容建立 routing plan、工作 branch 與引用來源 Issue 的 draft PR。預設採 Work 接手模式，只建立計畫與 draft PR；在 ChatGPT Work 提供 Issue／PR 連結後，由 Work 接手實作、測試及提交。`dispatch:retry` 只重新整理計畫，不啟動模型，也不丟棄已有 Work 實作。
+- UI／assets 優先交 Claude，Canon／engine／control 優先交 Codex，純 tests／validators／docs 規劃為 Tier 1。Work 在既有工作 branch 提交，完成驗證後才將 draft PR 標為 ready；AI 不直接 push `main`。選用 Actions 模式時，模型 patch 另經可信 scanner／publisher 處理。
 - PR 由 `AI Path Guard` 檢查檔案責任邊界，並由 `AI Cross Review` 要求另一個 agent 交叉審查。
 - `Project validation` 是合併前的共同 CI；Case 3 有變動時會自動加跑 schema、regression 與 headless Chrome smoke test。
 
 required checks 使用 `project-validate`、`guard`；請求留言不代表 agent 已接收或完成 review。
 
-自動實作需先由 owner 設定 dispatch GitHub App 的 `AI_DISPATCH_APP_CLIENT_ID`（variable）與 `AI_DISPATCH_APP_PRIVATE_KEY`（secret），授予 App Contents、Pull requests、Issues 的 write 權限，並依主責模型設定 `OPENAI_API_KEY` 或 `CLAUDE_CODE_OAUTH_TOKEN`。App 不授予 Workflows write；模型產生的 Actions workflow／local action 變更會停在 draft PR 與 patch artifact，待 owner 受控處理。缺少憑證會停止對應階段；owner exact-SHA approval 仍只用於 control／governance 變更。
+預設派工不需要模型 API 金鑰。owner 只需設定 dispatch GitHub App 的 `AI_DISPATCH_APP_CLIENT_ID`（variable）與 `AI_DISPATCH_APP_PRIVATE_KEY`（secret），授予 App Contents、Pull requests、Issues 的 write 權限。App 不授予 Workflows write，也不得取得 main ruleset bypass。只有 owner 明確把 variable `AI_DISPATCH_IMPLEMENTATION_MODE` 設為 `actions` 才啟用原有 Actions 模型實作，並另外需要 `OPENAI_API_KEY` 或 `CLAUDE_CODE_OAUTH_TOKEN`；API 使用另外計費。未設定該 variable（或設為 `work`）會保持 Work 接手模式。owner exact-SHA approval 仍只用於 control／governance 變更。
 
 詳細角色、branch 命名、SHA 綁定的 owner 核准與接收端限制見 `AI_WORKFLOW.md`。Agent 專用規則分別位於 `CLAUDE.md` 與 `AGENTS.md`。
 

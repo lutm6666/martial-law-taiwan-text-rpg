@@ -188,7 +188,7 @@ function harness(options = {}) {
     setOutput: (name, value) => outputs.set(name, value),
   };
   return {github, context, core, issue, calls, outputs, refs, files, prs, prFiles, state,
-    run: () => dispatch({github, context, core}),
+    run: () => dispatch({github, context, core, implementationMode: options.implementationMode ?? 'actions'}),
   };
 }
 
@@ -754,4 +754,62 @@ test('PR creation error is not reported as success', async () => {
   assert.equal(mock.outputs.has('pr'), false);
   assert.equal(mock.outputs.has('run'), false);
   assert.equal(callsNamed(mock, 'issues.addLabels').length, 0);
+});
+
+test('default dispatch plans a Work handoff without launching any model', async () => {
+  const mock = harness();
+  const result = await dispatch({github: mock.github, context: mock.context, core: mock.core});
+  assert.equal(result.authorized, true);
+  assert.equal(result.run, false);
+  assert.equal(result.implementation_mode, 'work');
+  assert.equal(mock.outputs.get('run'), 'false');
+  assert.equal(mock.outputs.get('implementation_mode'), 'work');
+  assert.equal(mock.prs[0].draft, true);
+  assert.match(mock.prs[0].body, /Work handoff: planning only/);
+  assert.match(mock.prs[0].body, /接手 https:\/\/github.com/);
+});
+
+test('Work retry and reopened events preserve existing implementation branch and PR', async () => {
+  for (const action of ['labeled', 'reopened']) {
+    const mock = harness({implementationMode: 'work'});
+    const first = await mock.run();
+    mock.prFiles.set(first.pr, [
+      {filename: '.ai/dispatch/issue-42.json'},
+      {filename: 'docs/work-implementation.md'},
+    ]);
+    mock.context.payload.action = action;
+    if (action === 'labeled') {
+      mock.context.payload.label = {name: 'dispatch:retry'};
+      mock.issue.labels.push({name: 'dispatch:retry'});
+    }
+    const next = await mock.run();
+    assert.equal(next.run, false);
+    assert.equal(next.pr, first.pr);
+    assert.equal(next.branch, first.branch);
+    assert.equal(mock.prs.length, 1);
+    assert.equal(mock.prs[0].state, 'open');
+    assert.equal(callsNamed(mock, 'git.createRef').length, 1);
+  }
+});
+
+test('invalid implementation modes fail before GitHub mutations', async () => {
+  const mock = harness({implementationMode: 'unexpected'});
+  await assert.rejects(mock.run(), /Invalid dispatch implementation mode/);
+  assert.equal(mock.calls.length, 0);
+});
+
+
+test('Work retry preserves a ready implementation and never queues Actions', async () => {
+  const mock = harness({implementationMode: 'work'});
+  const first = await mock.run();
+  mock.prs[0].draft = false;
+  mock.prFiles.set(first.pr, [{filename: '.ai/dispatch/issue-42.json'}, {filename: 'docs/work.md'}]);
+  mock.context.payload.action = 'labeled';
+  mock.context.payload.label = {name: 'dispatch:retry'};
+  mock.issue.labels.push({name: 'dispatch:retry'});
+  const result = await mock.run();
+  assert.equal(result.pr, first.pr);
+  assert.equal(result.run, false);
+  assert.equal(mock.prs[0].draft, false);
+  assert.equal(callsNamed(mock, 'graphql.convertToDraft').length, 0);
 });
