@@ -21,6 +21,8 @@
  function mobileLayout(label){
   if(!mobile)return;
   ok(doc.documentElement.scrollWidth<=game.innerWidth+1,label+' no horizontal overflow');
+  Array.from(doc.querySelectorAll('.c3-hypothesis-btn')).forEach(el=>ok(el.getBoundingClientRect().height>=44,label+' hypothesis tap target'));
+  Array.from(doc.querySelectorAll('[data-hypothesis-text]')).forEach(el=>ok(parseFloat(game.getComputedStyle(el).fontSize)>=16,label+' input avoids small-font focus zoom'));
   Array.from(doc.querySelectorAll('#case3Production button')).filter(el=>el.offsetParent!==null).forEach(el=>{
    var r=el.getBoundingClientRect();ok(r.left>=-1&&r.right<=game.innerWidth+1,label+' button inside viewport');
   });
@@ -49,6 +51,7 @@
    ok(!q('[data-hypothesis-create="H_XIULIAN"]'),'Xiulian hypothesis stays gated');
    click('[data-hypothesis-create="H_SIDE_DOOR"]');
    ok(!q('[data-hypothesis-review]'),'review waits for new evidence');
+   mobileLayout('hypothesis-created');
    click('[data-view="scene"]');
    click('[data-frame="personMovement"]');
    click('[data-frame="movingObject"]');
@@ -61,6 +64,7 @@
    ok(doc.body.textContent.includes('最初想法：側門可能代表刻意避開他人視線。'),'hypothesis keeps original text');
    click('[data-hypothesis-review="H_SIDE_DOOR"][data-decision="withdrawn"]');
    ok(doc.body.textContent.includes('已撤回'),'player can withdraw hypothesis');
+   mobileLayout('hypothesis-reviewed');
    go('supplier');action('supplier_trace');
    go('studio');action('studio_receiving');
    go('chen_home');action('chen_first');

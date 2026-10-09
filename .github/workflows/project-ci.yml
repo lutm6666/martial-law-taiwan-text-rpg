@@ -136,3 +136,10 @@ jobs:
             "$CHROME" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=10000 --dump-dom "http://127.0.0.1:8765/tools/case3-production-smoke.html$QUERY" > "/tmp/case3-production-$MODE.html"
             grep -Fq '<title>PASS Case3 Production Smoke</title>' "/tmp/case3-production-$MODE.html"
           done
+
+      - name: Case 3 WebKit desktop and iPhone emulation
+        if: steps.case3.outputs.changed == 'true'
+        run: |
+          npm install --prefix "$RUNNER_TEMP/case3-browser" --no-audit --no-fund playwright@1.62.1
+          node "$RUNNER_TEMP/case3-browser/node_modules/playwright/cli.js" install --with-deps webkit
+          NODE_PATH="$RUNNER_TEMP/case3-browser/node_modules" node tools/test-case3-webkit.js
