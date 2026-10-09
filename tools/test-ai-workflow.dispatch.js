@@ -839,6 +839,25 @@ test('closing then reopening a Work Issue restores its unmerged PR and implement
   assert(callsNamed(mock, 'repos.merge').every(call => call.base === first.branch));
 });
 
+test('Work retry restores a closed PR and preserves its implementation branch', async () => {
+  const mock = harness({implementationMode: 'work'});
+  const first = await mock.run();
+  mock.prFiles.set(first.pr, [{filename: '.ai/dispatch/issue-42.json'}, {filename: 'docs/work.md'}]);
+  mock.refs.get(first.branch).object.sha = sha('c');
+  mock.prs[0].state = 'closed';
+  mock.context.payload.action = 'labeled';
+  mock.context.payload.label = {name: 'dispatch:retry'};
+  mock.issue.labels.push({name: 'dispatch:retry'});
+  const result = await mock.run();
+  assert.equal(result.pr, first.pr);
+  assert.equal(result.branch, first.branch);
+  assert.equal(result.run, false);
+  assert.equal(mock.prs[0].state, 'open');
+  assert.equal(mock.prs.length, 1);
+  assert.equal(callsNamed(mock, 'git.createRef').length, 1);
+  assert(mock.prFiles.get(first.pr).some(file => file.filename === 'docs/work.md'));
+});
+
 test('reopening Work with a missing preserved branch fails without replacing its PR', async () => {
   const mock = harness({implementationMode: 'work'});
   const first = await mock.run();

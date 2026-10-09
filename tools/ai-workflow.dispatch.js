@@ -373,7 +373,7 @@ async function dispatch({github, context, core, implementationMode = 'work'}) {
   }
   const route = routeIssue({title: issue.title, body: issue.body});
   let pr = await openPrForIssue(github, repo, number);
-  if (!actionsImplementation && action === 'reopened' && !pr) {
+  if (!actionsImplementation && (action === 'reopened' || retry) && !pr) {
     const closed = await github.paginate(github.rest.pulls.list, {
       ...repo, state: 'closed', sort: 'updated', direction: 'desc', per_page: 100,
     });
