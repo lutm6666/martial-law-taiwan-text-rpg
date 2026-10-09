@@ -83,7 +83,7 @@ function planFile(issue, route, branch = branchName(issue.number), retryRunOverr
   }, null, 2) + '\n';
 }
 
-function managedBody(issue, route) {
+function managedBody(issue, route, implementationMode = 'work') {
   const title = safeTitle(issue.title).replace(/[\\[\]@<>]/g, character =>
     character === '@' ? '&#64;' : character === '<' ? '&lt;' : character === '>' ? '&gt;' : `\\${character}`);
   if (!/^https:\/\/github\.com\/[^/]+\/[^/]+\/issues\/\d+$/.test(issue.html_url || '')) {
@@ -94,6 +94,15 @@ function managedBody(issue, route) {
     marker(issue.number),
     '## Source Issue',
     `Refs #${issue.number} — [${title}](${source})`,
+    '',
+    '## Execution',
+    implementationMode === 'actions'
+      ? 'Actions model implementation is explicitly enabled; model credentials are required.'
+      : 'Work handoff: planning only. No model API credential is needed and no Actions model job will run.',
+    ...(implementationMode === 'work' ? [
+      `Ask ChatGPT Work: 接手 ${source} 與這個 draft PR，先讀取最新 Issue 與 routing plan，在既有工作分支實作、測試，再提交變更。`,
+      'This PR does not automatically start a Work session. Mark it ready only after implementation and validation; existing review/guard rules still apply.',
+    ] : []),
     '',
     '## Routing plan',
     `- Primary implementer: **${route.primary || 'needs scope review'}**`,
@@ -106,13 +115,13 @@ function managedBody(issue, route) {
   ].join('\n');
 }
 
-function replaceManagedBody(current, issue, route) {
+function replaceManagedBody(current, issue, route, implementationMode = 'work') {
   const start = marker(issue.number);
   const begin = String(current || '').indexOf(start);
   const end = String(current || '').indexOf(PLAN_END, begin);
   if (begin < 0 || end < 0) throw new Error('Existing PR has no managed routing section.');
   return String(current).slice(0, begin)
-    + managedBody(issue, route)
+    + managedBody(issue, route, implementationMode)
     + String(current).slice(end + PLAN_END.length);
 }
 
@@ -330,7 +339,7 @@ async function chooseBranch(github, repo, number, runId, expectedDigest, runAtte
   return {branch: initial, create: false};
 }
 
-async function dispatch({github, context, core}) {
+async function dispatch({github, context, core, implementationMode = 'work'}) {
   const repo = context.repo;
   const number = context.payload.issue?.number;
   if (!Number.isSafeInteger(number) || number < 1) throw new Error('Issue event is missing a valid number.');
@@ -347,6 +356,8 @@ async function dispatch({github, context, core}) {
   }
   if (action === 'closed') return {run: false};
   if (issue.state !== 'open' || issue.pull_request) return {run: false};
+  if (!['work', 'actions'].includes(implementationMode)) throw new Error('Invalid dispatch implementation mode.');
+  const actionsImplementation = implementationMode === 'actions';
   const {data: repository} = await github.rest.repos.get(repo);
   if (repository.default_branch !== 'main') throw new Error('The dispatch contract requires main as the default branch.');
   const writer = action === 'labeled' && !retry ? false : await canWrite(github, repo, context.actor);
@@ -362,18 +373,37 @@ async function dispatch({github, context, core}) {
   }
   const route = routeIssue({title: issue.title, body: issue.body});
   let pr = await openPrForIssue(github, repo, number);
+  if (!actionsImplementation && (action === 'reopened' || retry) && !pr) {
+    const closed = await github.paginate(github.rest.pulls.list, {
+      ...repo, state: 'closed', sort: 'updated', direction: 'desc', per_page: 100,
+    });
+    if (closed.length >= 3000) throw new Error('Closed PR listing reached the GitHub cap.');
+    const preserved = closed.find(candidate => candidate.state === 'closed'
+      && !candidate.merged_at && !candidate.merged
+      && isDispatchPr({...candidate, state: 'open'}, repo, number));
+    if (preserved) {
+      if (!(await maybeRef(github, repo, preserved.head.ref))) {
+        throw new Error('Preserved Work branch is missing; restore it before reopening dispatch.');
+      }
+      const reopened = await github.rest.pulls.update({...repo, pull_number: preserved.number, state: 'open'});
+      pr = reopened.data;
+      if (!isDispatchPr(pr, repo, number)) throw new Error('Could not reopen the preserved Work PR.');
+    }
+  }
   const hadPr = Boolean(pr);
   const completedSameRun = pr && !pr.draft && !retry
     && completedRunBranch(number, context.runId, context.runAttempt, action, pr.head?.ref);
   if (completedSameRun) {
     const existingPlan = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, pr.head.ref);
-    if (completedRunPlanMatches(number, context.runId, action, pr.head.ref, existingPlan, issueDigest(issue))) {
+    const currentInstructions = actionsImplementation && !pr.body.includes('Work handoff: planning only')
+      || replaceManagedBody(pr.body, issue, route, implementationMode) === pr.body;
+    if (currentInstructions && completedRunPlanMatches(number, context.runId, action, pr.head.ref, existingPlan, issueDigest(issue))) {
       core.info('Dispatch already processed for this workflow run; leaving the managed PR unchanged.');
       return {run: false, branch: pr.head.ref, pr: pr.number, alreadyProcessed: true};
     }
   }
   let discardedDirtyPr = false;
-  if (pr && ((retry && !retryResume) || action === 'reopened' || (isRerun && action === 'opened') || retryResume)) {
+  if (actionsImplementation && pr && ((retry && !retryResume) || action === 'reopened' || (isRerun && action === 'opened') || retryResume)) {
     const files = await github.paginate(github.rest.pulls.listFiles, {
       ...repo, pull_number: pr.number, per_page: 100,
     });
@@ -389,7 +419,7 @@ async function dispatch({github, context, core}) {
     branch = pr.head.ref;
     if (!pr.draft) {
       const currentPlan = await maybeFile(github, repo, `.ai/dispatch/issue-${number}.json`, branch);
-      if (retry || action === 'reopened' || planDigestFrom(currentPlan) !== issueDigest(issue)) {
+      if ((actionsImplementation && retry) || action === 'reopened' || planDigestFrom(currentPlan) !== issueDigest(issue)) {
         if (!pr.node_id) throw new Error('Ready PR is missing its GitHub node ID.');
         const result = await github.graphql(`
           mutation($pullRequestId: ID!) {
@@ -423,7 +453,7 @@ async function dispatch({github, context, core}) {
   await ensurePlanFile(github, repo, branch, issue, route, action === 'reopened' ? context.runId : null);
   await syncLatestMain(github, repo, branch);
 
-  const body = pr ? replaceManagedBody(pr.body, issue, route) : managedBody(issue, route);
+  const body = pr ? replaceManagedBody(pr.body, issue, route, implementationMode) : managedBody(issue, route, implementationMode);
   if (pr) {
     if (body !== pr.body) {
       const result = await github.rest.pulls.update({...repo, pull_number: pr.number, body});
@@ -443,14 +473,14 @@ async function dispatch({github, context, core}) {
   await syncManagedLabels(github, repo, pr.number, pr.labels, route);
   if (retry && names(issue.labels).includes('dispatch:retry')) await removeLabel(github, repo, number, 'dispatch:retry');
 
-  const run = writer && route.primary !== null
+  const run = actionsImplementation && writer && route.primary !== null
     && (action === 'reopened' || retry || (action === 'opened' && (!hadPr || (isRerun && (pr.head?.ref === branchName(number) || discardedDirtyPr)))))
     && pr.draft === true;
   const result = {
     branch, pr: pr.number, agent: route.primary || '', authorized: writer,
-    run, route, digest: issueDigest(issue),
+    run, route, digest: issueDigest(issue), implementation_mode: implementationMode,
   };
-  for (const key of ['branch', 'pr', 'agent', 'authorized', 'run', 'digest']) {
+  for (const key of ['branch', 'pr', 'agent', 'authorized', 'run', 'digest', 'implementation_mode']) {
     core.setOutput(key, String(result[key]));
   }
   core.info(`Issue #${number}: ${route.agent}, Tier ${route.tier}, PR #${pr.number}, implementation=${run}`);

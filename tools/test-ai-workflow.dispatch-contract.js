@@ -57,12 +57,17 @@ assert.match(dispatchJob, /ref: \$\{\{ github\.sha \}\}[\s\S]*?persist-credentia
   'Issue dispatch must execute only the trusted default-branch code');
 assert.match(dispatchJob, /ai-workflow\.dispatch\.js'\)\.dispatch/,
   'Issue dispatch must use the dedicated trusted runtime');
-for (const output of ['branch', 'pr', 'agent', 'authorized', 'run', 'digest']) {
+for (const output of ['branch', 'pr', 'agent', 'authorized', 'run', 'digest', 'implementation_mode']) {
   assert.match(dispatchJob, new RegExp('^      ' + output + ': \\$\\{\\{ steps\\.plan\\.outputs\\.' + output + ' \\}\\}$', 'm'),
     'dispatch must expose ' + output + ' for the implementation and publisher jobs');
 }
 assert(dispatchJob.indexOf('Require dispatch GitHub App credentials') < dispatchJob.indexOf('Create narrowly scoped dispatch token'),
   'missing App credentials must fail before dispatch can create a branch or PR');
+assert.match(dispatchJob, /vars\.AI_DISPATCH_IMPLEMENTATION_MODE \|\| 'work'/,
+  'an unset implementation mode must select Work handoff');
+assert.match(dispatchJob, /implementationMode: process\.env\.IMPLEMENTATION_MODE/,
+  'mode must be passed from trusted repository configuration, never Issue text');
+assert.match(dispatchJob, /Ready for Work handoff/, 'planning must report its handoff in the run summary');
 assert.match(dispatchJob, /vars\.AI_DISPATCH_APP_CLIENT_ID/);
 assert.match(dispatchJob, /secrets\.AI_DISPATCH_APP_PRIVATE_KEY/);
 assert.match(dispatchJob, /actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/,
@@ -80,7 +85,7 @@ assert.doesNotMatch(dispatch, /permission-workflows: write/,
 assert.match(dispatchJob, /github-token: \$\{\{ steps\.app-token\.outputs\.token \}\}/,
   'branch and PR mutations must use the App token so downstream PR events run');
 
-assert.match(modelJob, /if: needs\.dispatch\.outputs\.run == 'true'/,
+assert.match(modelJob, /if: needs\.dispatch\.outputs\.implementation_mode == 'actions' && needs\.dispatch\.outputs\.run == 'true'/,
   'only a writer-authorized Issue with a selected agent may reach the model');
 assert.match(modelJob, /permissions:\n      contents: read\n      issues: read/,
   'the model job must have a read-only GITHUB_TOKEN');
