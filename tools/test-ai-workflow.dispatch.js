@@ -813,3 +813,37 @@ test('Work retry preserves a ready implementation and never queues Actions', asy
   assert.equal(mock.prs[0].draft, false);
   assert.equal(callsNamed(mock, 'graphql.convertToDraft').length, 0);
 });
+
+
+test('closing then reopening a Work Issue restores its unmerged PR and implementation head', async () => {
+  const mock = harness({implementationMode: 'work'});
+  const first = await mock.run();
+  mock.prFiles.set(first.pr, [{filename: '.ai/dispatch/issue-42.json'}, {filename: 'docs/work.md'}]);
+  mock.refs.get(first.branch).object.sha = sha('c');
+  mock.issue.state = 'closed';
+  mock.context.payload.action = 'closed';
+  await mock.run();
+  assert.equal(mock.prs[0].state, 'closed');
+  mock.issue.state = 'open';
+  mock.context.payload.action = 'reopened';
+  const result = await mock.run();
+  assert.equal(result.pr, first.pr);
+  assert.equal(result.branch, first.branch);
+  assert.equal(result.run, false);
+  assert.equal(mock.prs[0].state, 'open');
+  assert.equal(mock.prs.length, 1);
+  assert.equal(callsNamed(mock, 'git.createRef').length, 1);
+  assert(mock.prFiles.get(first.pr).some(file => file.filename === 'docs/work.md'));
+  assert(callsNamed(mock, 'repos.merge').every(call => call.base === first.branch));
+});
+
+test('reopening Work with a missing preserved branch fails without replacing its PR', async () => {
+  const mock = harness({implementationMode: 'work'});
+  const first = await mock.run();
+  mock.prs[0].state = 'closed';
+  mock.refs.delete(first.branch);
+  mock.context.payload.action = 'reopened';
+  await assert.rejects(mock.run(), /Preserved Work branch is missing/);
+  assert.equal(mock.prs.length, 1);
+  assert.equal(callsNamed(mock, 'git.createRef').length, 1);
+});

@@ -373,6 +373,23 @@ async function dispatch({github, context, core, implementationMode = 'work'}) {
   }
   const route = routeIssue({title: issue.title, body: issue.body});
   let pr = await openPrForIssue(github, repo, number);
+  if (!actionsImplementation && action === 'reopened' && !pr) {
+    const closed = await github.paginate(github.rest.pulls.list, {
+      ...repo, state: 'closed', sort: 'updated', direction: 'desc', per_page: 100,
+    });
+    if (closed.length >= 3000) throw new Error('Closed PR listing reached the GitHub cap.');
+    const preserved = closed.find(candidate => candidate.state === 'closed'
+      && !candidate.merged_at && !candidate.merged
+      && isDispatchPr({...candidate, state: 'open'}, repo, number));
+    if (preserved) {
+      if (!(await maybeRef(github, repo, preserved.head.ref))) {
+        throw new Error('Preserved Work branch is missing; restore it before reopening dispatch.');
+      }
+      const reopened = await github.rest.pulls.update({...repo, pull_number: preserved.number, state: 'open'});
+      pr = reopened.data;
+      if (!isDispatchPr(pr, repo, number)) throw new Error('Could not reopen the preserved Work PR.');
+    }
+  }
   const hadPr = Boolean(pr);
   const completedSameRun = actionsImplementation && pr && !pr.draft && !retry
     && completedRunBranch(number, context.runId, context.runAttempt, action, pr.head?.ref);
