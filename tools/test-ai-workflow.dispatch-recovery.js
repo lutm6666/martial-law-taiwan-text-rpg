@@ -15,7 +15,7 @@ const planPath = '.ai/dispatch/issue-42.json';
 function plannedRetryHarness({extraFile = false, planDigest = digest, retryRun = '1234'} = {}) {
   const initialRef = {object: {sha: S('a')}};
   const retryRef = {object: {sha: S('c')}};
-  const mainRef = {object: {sha: S('m')}};
+  const mainRef = {object: {sha: S('f')}};
   const plan = {
     version: 1,
     source_issue: 42,
@@ -55,7 +55,7 @@ function plannedRetryHarness({extraFile = false, planDigest = digest, retryRun =
               files: [{filename: planPath}, ...(extraFile ? [{filename: 'case3-film-ui.js'}] : [])],
             }};
           }
-          if (args.base === S('b') && args.head === S('m')) return {data: {status: 'ahead'}};
+          if (args.base === S('b') && args.head === S('f')) return {data: {status: 'ahead'}};
           throw new Error(`unexpected compare ${args.base}...${args.head}`);
         },
       },
