@@ -8,7 +8,7 @@
  var mobile=new URLSearchParams(location.search).get('mobile')==='1';
  var frame=document.getElementById('game');
  if(mobile)frame.style.width='390px';
- var out=[],errors=[],doc,game,storage,firstSave='{"probe":"case1"}',secondSave='{"probe":"case2"}';
+ var out=[],errors=[],doc,game,storage,firstSave=JSON.stringify({caseId:'case1',schema:7,name:'閱讀測試',location:'tea',evidence:['archive_pages','consent_note','waste_route','zhou_motive','wrapped_scrap','postal_stub'],people:['achuan','zhou'],flags:{openingSeen:true},focus:4,deductionStep:0}),secondSave='{"probe":"case2"}';
  // This fixture is run in a disposable test origin/profile.
  localStorage.clear();
  localStorage.setItem('mist-taiwan-case-save-v4',firstSave);
@@ -16,8 +16,23 @@
  function ok(cond,msg){if(!cond)throw new Error(msg);out.push('PASS '+msg)}
  function q(sel){return doc.querySelector(sel)}
  function click(sel){var el=q(sel);if(!el)throw new Error('missing '+sel);el.click();return el}
- function action(id){return click('[data-action="'+id+'"]')}
- function go(id){click('[data-view="map"]');return click('[data-go="'+id+'"]')}
+ function action(id){game.scrollTo(0,300);var b=click('[data-action="'+id+'"]');ok(game.scrollY===0,'new action starts at reading origin: '+id);return b}
+ function go(id){click('[data-view="map"]');game.scrollTo(0,70);var mapY=game.scrollY;var b=click('[data-go="'+id+'"]');ok(game.scrollY===0,'new location starts at reading origin: '+id);click('[data-view="map"]');ok(Math.abs(game.scrollY-mapY)<=2,'travel retains map reading position: '+id);click('[data-view="scene"]');return b}
+ function readingRoundTrip(win,d,nav,recordValue,deductionValue,label){
+  function press(value){var b=d.querySelector(nav+'[data-'+(nav.indexOf('data-tab')>=0?'tab':'view')+'="'+value+'"]');if(!b)throw new Error('missing reading tab '+value);b.click();return b}
+  press(deductionValue);win.scrollTo(0,120);var questionY=win.scrollY;
+  press(recordValue);win.scrollTo(0,700);var recordsY=win.scrollY;
+  ok(recordsY>100,label+' has a scrollable acquired record list');
+  press(deductionValue);
+  ok(Math.abs(win.scrollY-questionY)<=2,label+' restores question reading position');
+  press(recordValue);
+  ok(Math.abs(win.scrollY-recordsY)<=2,label+' restores record reading position');
+  ok(d.documentElement.scrollWidth<=win.innerWidth+1,label+' records do not overflow horizontally');
+  win.scrollTo(0,d.documentElement.scrollHeight);
+  var cards=d.querySelectorAll(label==='Case 1'?'#evidenceGrid .evidence-card':label==='Case 2'?'.c2-record':'.c3-record');
+  var bottom=cards[cards.length-1].getBoundingClientRect().bottom,navTop=d.querySelector(nav).closest('nav').getBoundingClientRect().top;
+  ok(bottom<=navTop+1,label+' final record clears fixed navigation');
+ }
  function mobileLayout(label){
   if(!mobile)return;
   ok(doc.documentElement.scrollWidth<=game.innerWidth+1,label+' no horizontal overflow');
@@ -88,6 +103,15 @@
    ok(!!q('[data-start-deduction]'),'deduction gate unlocks');
    mobileLayout('deduction-ready');
    click('[data-start-deduction]');
+   click('[data-view="records"]');click('[data-record-filter="E"]');
+   readingRoundTrip(game,doc,'.c3-tabs [data-view]','records','deduction','Case 3');
+   ok(doc.activeElement===q('[data-view="records"]'),'Case 3 restored tab keeps keyboard focus');
+   ok(q('[data-view="scene"]').disabled&&parseFloat(game.getComputedStyle(q('[data-view="scene"]')).opacity)<.6,'Case 3 paused navigation visibly disabled');
+   ok(doc.body.textContent.includes('查證後按「推理」回到原題'),'Case 3 record page explains paused navigation');
+   var evidenceY=game.scrollY;click('[data-record-filter="C"]');game.scrollTo(0,60);var conclusionY=game.scrollY;
+   click('[data-record-filter="E"]');ok(Math.abs(game.scrollY-evidenceY)<=2,'Case 3 record category restores its own position');
+   click('[data-record-filter="C"]');ok(Math.abs(game.scrollY-conclusionY)<=2,'Case 3 conclusion category restores its own position');
+   click('[data-record-filter="E"]');
    click('[data-view="records"]');
    ok(!!q('.c3-record-tabs'),'deduction allows reviewing acquired records');
    click('[data-view="deduction"]');
@@ -120,6 +144,19 @@
   click('#case1OpeningNext');
   ok(Array.from(doc.querySelectorAll('#gameScreen .tabs button')).map(x=>x.textContent).join('｜')==='調查｜地圖｜紀錄｜推理','Case 1 common four tabs');
   ok(game.getComputedStyle(q('#gameScreen .tabs')).position==='fixed','Case 1 navigation fixed');
+  storage.setItem('mist-taiwan-case-save-v4',firstSave);click('#loadBtn');
+  click('[data-tab="deduction"]');
+  var inference=Array.from(doc.querySelectorAll('#deductionBox button')).find(b=>b.textContent.includes('混入廢紙捆'));inference.click();
+  ok(q('#deductionBox h2').textContent==='提出證物','Case 1 correct inference opens evidence stage');
+  readingRoundTrip(game,doc,'.tab-btn[data-tab]','record','deduction','Case 1');
+  click('[data-tab="deduction"]');
+  ok(q('#deductionBox h2').textContent==='提出證物','Case 1 record review retains evidence stage');
+  var evidenceButtons=Array.from(doc.querySelectorAll('#deductionBox button'));
+  evidenceButtons.find(b=>b.textContent.includes('三頁失落筆記')).click();
+  ok(q('#deductionBox h2').textContent==='提出證物'&&!!q('#deductionBox .feedback'),'Case 1 wrong evidence stays at stage with feedback');
+  evidenceButtons=Array.from(doc.querySelectorAll('#deductionBox button'));
+  evidenceButtons.find(b=>b.textContent.includes('廢紙去向')).click();
+  ok(q('#deductionBox h2').textContent.includes('第二問'),'Case 1 correct evidence advances one question');
   storage.setItem('mist-taiwan-case-save-v4',firstSave);
   var probe=document.createElement('iframe');probe.title='Case 2 entry probe';document.body.appendChild(probe);
   await new Promise(resolve=>{probe.onload=resolve;probe.src='../_site/index.html'});
@@ -132,6 +169,22 @@
   ok(pg.getComputedStyle(pd.querySelector('.c2-tabs')).position==='fixed','Case 2 navigation fixed');
   pd.querySelector('[data-view="deduction"]').click();
   ok(!pd.querySelector('#c2StartDeduction')&&pd.body.textContent.includes('尚未具備結案條件'),'Case 2 deduction gate remains locked');
+  pd.querySelector('[data-view="scene"]').click();
+  pd.querySelector('[data-action="inspect_footprints"]').click();
+  pd.querySelector('[data-action="inspect_yue_mark"]').click();
+  pd.querySelector('[data-view="map"]').click();pg.scrollTo(0,70);var rainMapY=pg.scrollY;
+  pd.querySelector('.c2-map [data-go]:not(:disabled)').click();
+  ok(pg.scrollY===0,'Case 2 travel starts a fresh scene');
+  pd.querySelector('[data-view="map"]').click();
+  ok(Math.abs(pg.scrollY-rainMapY)<=2,'Case 2 travel retains map reading position');
+  // Seed an independently validated deduction save in this disposable profile.
+  storage.setItem('mist-taiwan-rain-canon-v1',JSON.stringify({caseId:pg.CASE2_RAIN_CANON.id,name:'閱讀測試',loc:'home',visited:{home:true},evidence:Object.keys(pg.CASE2_RAIN_CANON.evidence),people:[],flags:{qiulan_revealed:true,last_seen_account:true,landlord_admitted_edit:true,opening_seen:true},done:{},phase:'deduction',deduction:0,answers:[],focus:4,finished:false}));
+  pg.Case2RainCanon.start();
+  ok(!!pd.querySelector('[data-opt]'),'Case 2 resumes seeded deduction');
+  readingRoundTrip(pg,pd,'.c2-tabs [data-view]','records','deduction','Case 2');
+  ok(pd.querySelector('[data-view="scene"]').disabled&&parseFloat(pg.getComputedStyle(pd.querySelector('[data-view="scene"]')).opacity)<.6,'Case 2 paused navigation visibly disabled');
+  ok(pd.body.textContent.includes('查證後按「推理」回到原題'),'Case 2 record page explains paused navigation');
+  ok(pd.activeElement===pd.querySelector('[data-view="records"]'),'Case 2 restored tab keeps keyboard focus');
   storage.setItem('mist-taiwan-rain-canon-v1',secondSave);probe.remove();
   // Start Case 3 through the original title entry (the fixture uses element.click).
   q('#casePickerSelect').value='case3';click('#casePickerGo');

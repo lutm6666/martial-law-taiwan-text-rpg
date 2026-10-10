@@ -153,8 +153,8 @@ function loadRainRuntime(done){
 
  function loadEngine(){
   if(window.Case2RainCanon){flushLoaded();return}
-  loadScript('case2-rain-canon-engine.js?v=17',function(ok){
-   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=17');return}
+  loadScript('case2-rain-canon-engine.js?v=18',function(ok){
+   if(!ok||!window.Case2RainCanon){reportLoadError('case2-rain-canon-engine.js?v=18');return}
    flushLoaded();
   });
  }
@@ -191,7 +191,7 @@ function loadCase3Runtime(done){
   {src:'case3-film-canon.js?v=4',ready:function(){return !!window.CASE3_FILM_CANON}},
   {src:'case3-art-manifest.js?v=1',ready:function(){return !!window.CASE3_ART_MANIFEST}},
   {src:'case3-film-engine.js?v=3',ready:function(){return !!window.Case3FilmEngine}},
-  {src:'case3-film-ui.js?v=4',ready:function(){return !!window.Case3FilmUI}}
+  {src:'case3-film-ui.js?v=5',ready:function(){return !!window.Case3FilmUI}}
  ];
  function next(i){
   if(i>=steps.length){flushCase3Loaded();return}
