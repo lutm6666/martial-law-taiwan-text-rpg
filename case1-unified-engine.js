@@ -55,10 +55,10 @@ var locations={
 };
 
 var deduction=[
- {q:'第一問：阿川拆下來試排的三頁，最可能怎麼離開印刷行？',opts:[['steal','有人趁周老闆不注意偷走'],['waste','收桌時混進廢紙捆，由跑腿少年帶到市場'],['achuan','阿川自己把三頁交給陌生人']],correct:'waste',need:'waste_route',teach:'阿川先把三頁從原冊取下，周老闆又承認收桌時沒有逐張核對；後面的市場紙角和找回頁面把這條路繼續接了下去。'},
- {q:'第二問：周老闆為什麼一開始避談那捆廢紙？',opts:[['cover','他知道有人偷紙，正在替對方遮掩'],['risk','他怕寫著人名的紙從自己店裡流出去惹麻煩'],['forget','他其實完全不記得阿川來過']],correct:'risk',need:'zhou_motive',teach:'想想他真正停頓的是「阿川來過」還是「紙上寫了什麼」。'},
- {q:'第三問：市場裡那名郵務人員當天在找什麼？',opts:[['tracker','阿川遺失的訪談筆記'],['rumor','市場裡傳聞的可疑文件'],['postal','另一條巷子的陳姓收件人']],correct:'postal',need:'postal_stub',teach:'把市場裡的轉述和便條上的姓氏、巷址放在一起。'},
- {q:'第四問：哪一件東西能把找回的紙和原冊直接接回去？',opts:[['ledger','借物簿'],['pages','找回的三頁筆記'],['runner','跑腿少年的說法']],correct:'pages',need:'archive_pages',teach:'頁碼、筆跡和裂口都在同一件物證上。'}
+ {q:'第一問：阿川拆下來試排的三頁，最可能怎麼離開印刷行？',opts:[['steal','收桌時被旁人拿走，由來店的客人帶到市場'],['waste','收桌時混入廢紙捆，由跑腿少年帶到市場'],['achuan','試排後交給來訪的人，由那人轉帶到市場']],correct:'waste',need:'waste_route',teach:'回查三頁離開原冊之後，各人看過紙張的地點與時間。'},
+ {q:'第二問：周老闆為什麼一開始避談那捆廢紙？',opts:[['cover','他怕拿紙的人被追究，想替對方隱去經過'],['risk','他怕帶人名的紙流出店外，會讓店裡惹上麻煩'],['forget','他怕記錯收桌的經過，不願提供不準確的說法']],correct:'risk',need:'zhou_motive',teach:'回查周老闆前後兩次說法，分清他的顧慮與你的推測。'},
+ {q:'第三問：市場裡那名郵務人員當天在找什麼？',opts:[['tracker','阿川遺失的筆記，依頁上的人名詢問攤商'],['rumor','市場傳聞的文件，依紙張流向詢問攤商'],['postal','另一條巷子的收件人，依陳姓與地址尋人']],correct:'postal',need:'postal_stub',teach:'回查市場中的轉述與郵務人員留下的紀錄。'},
+ {q:'第四問：哪一件東西能把找回的紙和原冊直接接回去？',opts:[['ledger','借物簿上的借用日期與登記'],['pages','找回三頁的頁碼、筆跡與裂口'],['runner','跑腿少年說的取紙與送紙經過']],correct:'pages',need:'archive_pages',teach:'分清紀錄能證明紙張經過哪裡，還是能確認紙張本身。'}
 ];
 
 function fresh(name){return{name:(name||'林默').trim()||'林默',caseId:'case1',schema:7,location:'tea',timePhase:0,unlocked:['tea'],visited:['tea'],evidence:[],people:[],done:[],flags:{openingSeen:false,actionResults:{},visualSeen:{},mistakes:0,deductionReady:false,postmanRumor:false},focus:MAX_FOCUS,deductionStep:0,finished:false,failed:false}}
