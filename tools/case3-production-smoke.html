@@ -169,6 +169,9 @@
   ok(pg.getComputedStyle(pd.querySelector('.c2-tabs')).position==='fixed','Case 2 navigation fixed');
   pd.querySelector('[data-view="deduction"]').click();
   ok(!pd.querySelector('#c2StartDeduction')&&pd.body.textContent.includes('尚未具備結案條件'),'Case 2 deduction gate remains locked');
+  pd.querySelector('[data-view="scene"]').click();
+  pd.querySelector('[data-action="inspect_footprints"]').click();
+  pd.querySelector('[data-action="inspect_yue_mark"]').click();
   pd.querySelector('[data-view="map"]').click();pg.scrollTo(0,70);var rainMapY=pg.scrollY;
   pd.querySelector('.c2-map [data-go]:not(:disabled)').click();
   ok(pg.scrollY===0,'Case 2 travel starts a fresh scene');
