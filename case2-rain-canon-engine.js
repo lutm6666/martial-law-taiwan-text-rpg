@@ -120,6 +120,7 @@ function revisitText(id){
 }
 function enterLocation(id){
  if(!locationUnlocked(id)||id===s.loc)return;
+ readingPositions[activeView]=window.scrollY||0;
  var from=s.loc,firstVisit=!s.visited[id];
  s.flags.lastAction='';
  s.feedback=firstVisit?'':revisitText(id);

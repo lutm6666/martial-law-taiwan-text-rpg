@@ -292,6 +292,7 @@ function bind(){
  }});
  $all('[data-record-filter]').forEach(function(b){b.onclick=function(){changeReading('records',b.getAttribute('data-record-filter'))}});
  $all('[data-go]').forEach(function(b){b.onclick=function(){
+  readingPositions[readingKey()]=window.scrollY||0;
   var r=E.travel(state,b.getAttribute('data-go'));if(r.ok){state=r.state;view='scene';notice='';readingPositions.scene=0;render();window.scrollTo(0,0)}else{saveNotice('目前還沒有足夠理由前往這個地點。');render()}
  }});
  $all('[data-action]').forEach(function(b){b.onclick=function(){

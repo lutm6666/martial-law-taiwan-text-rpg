@@ -17,7 +17,7 @@
  function q(sel){return doc.querySelector(sel)}
  function click(sel){var el=q(sel);if(!el)throw new Error('missing '+sel);el.click();return el}
  function action(id){game.scrollTo(0,300);var b=click('[data-action="'+id+'"]');ok(game.scrollY===0,'new action starts at reading origin: '+id);return b}
- function go(id){click('[data-view="map"]');var b=click('[data-go="'+id+'"]');ok(game.scrollY===0,'new location starts at reading origin: '+id);return b}
+ function go(id){click('[data-view="map"]');game.scrollTo(0,70);var mapY=game.scrollY;var b=click('[data-go="'+id+'"]');ok(game.scrollY===0,'new location starts at reading origin: '+id);click('[data-view="map"]');ok(Math.abs(game.scrollY-mapY)<=2,'travel retains map reading position: '+id);click('[data-view="scene"]');return b}
  function readingRoundTrip(win,d,nav,recordValue,deductionValue,label){
   function press(value){var b=d.querySelector(nav+'[data-'+(nav.indexOf('data-tab')>=0?'tab':'view')+'="'+value+'"]');if(!b)throw new Error('missing reading tab '+value);b.click();return b}
   press(deductionValue);win.scrollTo(0,120);var questionY=win.scrollY;
@@ -169,6 +169,11 @@
   ok(pg.getComputedStyle(pd.querySelector('.c2-tabs')).position==='fixed','Case 2 navigation fixed');
   pd.querySelector('[data-view="deduction"]').click();
   ok(!pd.querySelector('#c2StartDeduction')&&pd.body.textContent.includes('尚未具備結案條件'),'Case 2 deduction gate remains locked');
+  pd.querySelector('[data-view="map"]').click();pg.scrollTo(0,70);var rainMapY=pg.scrollY;
+  pd.querySelector('.c2-map [data-go]:not(:disabled)').click();
+  ok(pg.scrollY===0,'Case 2 travel starts a fresh scene');
+  pd.querySelector('[data-view="map"]').click();
+  ok(Math.abs(pg.scrollY-rainMapY)<=2,'Case 2 travel retains map reading position');
   // Seed an independently validated deduction save in this disposable profile.
   storage.setItem('mist-taiwan-rain-canon-v1',JSON.stringify({caseId:pg.CASE2_RAIN_CANON.id,name:'閱讀測試',loc:'home',visited:{home:true},evidence:Object.keys(pg.CASE2_RAIN_CANON.evidence),people:[],flags:{qiulan_revealed:true,last_seen_account:true,landlord_admitted_edit:true,opening_seen:true},done:{},phase:'deduction',deduction:0,answers:[],focus:4,finished:false}));
   pg.Case2RainCanon.start();
