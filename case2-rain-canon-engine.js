@@ -70,7 +70,7 @@ function injectStyle(){
  if($('case2CanonStyle'))return;
  var st=document.createElement('style');st.id='case2CanonStyle';st.textContent='\
 #v2Rain{padding-bottom:96px}.c2-head{padding:14px 15px;margin-bottom:12px}.c2-head h2{margin:0 0 5px;font-size:1rem}.c2-meta{font-size:.72rem;color:#9b988b;line-height:1.55}.c2-scene{overflow:hidden;padding:0}.c2-art-wrap{position:relative;background:#111}.c2-art{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;filter:saturate(.82) contrast(1.04)}.c2-art-fallback{display:none;aspect-ratio:3/2;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#29261f,#151612);color:#aaa392;text-align:center}.c2-body{padding:17px}.c2-body h2{margin:4px 0 10px}.c2-body p{line-height:1.8}.c2-scene-intro{line-height:1.95}.c2-scene-intro p{margin:0 0 .95em}.c2-scene-intro p:last-child{margin-bottom:0}.c2-actions{display:grid;gap:9px;margin-top:12px}.c2-btn,.c2-map button,.c2-option{border:1px solid #3d4036;background:#1b1d18;color:#ece8dc;border-radius:13px;padding:12px;text-align:left}.c2-btn strong,.c2-map strong{display:block}.c2-btn small,.c2-map small{display:block;color:#969386;margin-top:4px;line-height:1.48}.c2-btn.done{opacity:.58}.c2-btn:disabled{opacity:.35}.c2-note{margin-top:12px;padding:11px 12px;border-left:3px solid #8d7853;background:#211e18;line-height:1.68;color:#c8c1b1}.c2-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:13px 0}.c2-tabs button{border:1px solid #3c3e35;background:#181a16;color:#aaa69a;border-radius:11px;padding:9px}.c2-tabs button.active{background:#302d21;color:#eee4ce;border-color:#8f7a4d}.c2-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.c2-map button.current{border-color:#9b8754;background:#292719}.c2-map button:disabled{opacity:.32}.c2-record{margin-top:9px;padding:11px;border:1px solid #35382f;border-radius:11px;background:#171914}.c2-record strong{display:block}.c2-record small{display:block;margin-top:4px;color:#9c998d;line-height:1.58}.c2-record img{width:100%;margin-top:9px;border-radius:9px;display:block;max-height:none;height:auto;object-fit:contain}.c2-deduction,.c2-ending{padding:18px}.c2-deduction h2,.c2-ending h2{line-height:1.45}.c2-option{display:block;width:100%;margin-top:9px;line-height:1.58}.c2-dots{display:flex;gap:5px;margin:8px 0 12px}.c2-dots i{width:10px;height:10px;border-radius:50%;background:#44473e}.c2-dots i.on{background:#c7b16f}.c2-warning{font-size:.78rem;color:#c99789;margin-top:10px}.c2-story{margin-top:14px;padding:16px 16px 15px;border-left:3px solid #8d7853;background:rgba(182,155,95,.08);border-radius:0 12px 12px 0;line-height:1.9}.c2-story-title{margin-bottom:10px;font-size:.75rem;font-weight:700;letter-spacing:.08em;color:#cdbb8d}.c2-story p{margin:0 0 .9em}.c2-story p:last-child{margin-bottom:0}.c2-dialogue{font-weight:650;color:#f1e4bf}.c2-ending-lead{font-size:1rem;line-height:1.9}.c2-ending-lead p{margin:.7em 0}.c2-opening{padding:22px 20px}.c2-opening h2{margin:5px 0 16px;font-size:1.65rem}.c2-opening-text{font-size:1.02rem;line-height:2}.c2-opening-text p{margin:0 0 1.15em}.c2-opening-text p:last-child{margin-bottom:0}.c2-opening .primary{margin-top:20px}.paper .c2-story{background:rgba(86,66,31,.07);border-left-color:#8f7745;color:#332d21}.paper .c2-story-title{color:#715c34}.paper .c2-dialogue{color:#3a2d16}.c2-summary{display:grid;gap:9px;margin:14px 0}.c2-summary div{padding:11px;border:1px solid rgba(65,54,32,.22);border-radius:10px;line-height:1.62}.c2-kicker{font-size:.68rem;letter-spacing:.12em;color:#9a917c}.c2-home-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}@media(min-width:640px){.c2-actions{grid-template-columns:1fr 1fr}.c2-map{grid-template-columns:repeat(3,1fr)}}';
- document.head.appendChild(st);
+ st.textContent+='.case-opening{padding:22px 20px}.case-opening h2{margin:5px 0 16px;font-size:1.65rem}.opening-text{font-size:1.02rem;line-height:2}.opening-text p{margin:0 0 1.15em}.opening-text p:last-child{margin-bottom:0}.paper .eyebrow{color:#715c34}.c2-tabs,.c3-tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin:0;background:#272921;padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-right));border-top:1px solid #3b3d34}.c2-tabs button,.c3-tabs button{border:0;background:transparent;color:#89877d;padding:10px 5px;border-radius:10px;min-height:44px}.c2-tabs button.active,.c3-tabs button.active{background:#36382e;color:#f2ecdc}.c3-scene-art img{height:auto;aspect-ratio:3/2}.c3-shell{max-width:760px}.case-meta{align-items:center}.c2-scene,.c3-scene{border-radius:18px}@media(min-width:640px){.c2-tabs,.c3-tabs{left:50%;right:auto;width:760px;max-width:100%;transform:translateX(-50%)}}';document.head.appendChild(st);
 }
 
 function mount(){
@@ -140,7 +140,7 @@ function phaseLabel(){
  return '第三個雨夜';
 }
 
-function renderHeader(){return '<article class="c2-head card"><h2>'+esc(s.name)+'｜案件二・雨夜敲門</h2><div class="c2-meta">1958・臺北</div><span class="c2-kicker">'+esc(phaseLabel())+'</span></article>'}
+function renderHeader(){return '<article class="case-status card"><h2>'+esc(s.name)+'｜案件二・雨夜敲門</h2><div class="case-meta">1958・臺北｜推理專注 '+s.focus+'/'+MAX_FOCUS+'</div><span class="c2-kicker">'+esc(phaseLabel())+'</span></article>'}
 function imageHtml(src,alt){return '<div class="c2-art-wrap"><img class="c2-art" src="'+esc(src)+'" alt="'+esc(alt)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="c2-art-fallback">'+esc(alt)+'<br><small>圖片載入失敗，請重新整理頁面後再試。</small></div></div>'}
 function narrativeHtml(text){
  var marked=String(text||'').replace(/。(?!」)/g,'。\n\n');
@@ -159,7 +159,7 @@ function shouldShowOpening(){
 }
 function renderOpening(){
  var o=DATA.opening||{};
- var html='<article class="c2-opening card"><p class="c2-kicker">'+esc(o.kicker||'案件二・雨夜敲門')+'</p><h2>'+esc(o.title||'第三個雨夜')+'</h2><div class="c2-opening-text">'+sceneIntroHtml(o.text||'')+'</div><button id="c2OpeningNext" class="primary" type="button">開始調查</button></article>';
+ var html='<article class="case-opening card paper"><p class="eyebrow">'+esc(o.kicker||'案件二・雨夜敲門')+'</p><h2>'+esc(o.title||'第三個雨夜')+'</h2><div class="opening-text">'+sceneIntroHtml(o.text||'')+'</div><button id="c2OpeningNext" class="primary" type="button">開始調查</button></article>';
  $('v2RainMain').innerHTML=html;
  var next=$('c2OpeningNext');
  if(next)next.onclick=function(){s.flags.opening_seen=true;save();render()};
@@ -248,9 +248,16 @@ function actionHint(id,a){
  return m[id]||'調查';
 }
 
-function navHtml(active){return '<div class="c2-tabs"><button data-view="scene" class="'+(active==='scene'?'active':'')+'">調查</button><button data-view="map" class="'+(active==='map'?'active':'')+'">地圖</button><button data-view="records" class="'+(active==='records'?'active':'')+'">紀錄 '+s.evidence.length+'/12</button></div>'}
+function navHtml(active){return '<nav aria-label="案件導覽" class="tabs c2-tabs">'+[['scene','調查'],['map','地圖'],['records','紀錄'],['deduction','推理']].map(function(t){return '<button type="button" data-view="'+t[0]+'" '+(s.phase==='deduction'&&(t[0]==='scene'||t[0]==='map')?'disabled':'')+' aria-pressed="'+(active===t[0])+'" class="tab-btn '+(active===t[0]?'active':'')+'">'+t[1]+'</button>'}).join('')+'</nav>'}
+function renderDeductionGate(){
+ var ready=finalReady();
+ $('v2RainMain').innerHTML=renderHeader()+'<article class="card c2-body"><p class="c2-kicker">最終推理</p><h2>'+(ready?'核心證據鏈已完成':'尚未具備結案條件')+'</h2><p>'+(ready?'把一路記下來的物件、時間和說法排在一起，選出目前證據能支持的解釋。':'繼續調查目前的地點，帶著新線索回訪，再核對留下來的紀錄。')+'</p>'+(ready?'<button id="c2StartDeduction" class="primary" type="button">開始最終推理</button>':'')+'</article>'+navHtml('deduction');
+ bindCommon();bindDeductionStart();
+}
+function bindDeductionStart(){var d=$('c2StartDeduction');if(d)d.onclick=function(){s.phase='deduction';s.deduction=0;s.feedback='';save();render()}}
+
 function bindCommon(){Array.prototype.forEach.call(document.querySelectorAll('[data-view]'),function(b){b.onclick=function(){renderView(b.getAttribute('data-view'))}})}
-function renderView(view){if(view==='map')return renderMap();if(view==='records')return renderRecords();renderInvestigation()}
+function renderView(view){if(s.phase==='deduction'&&view!=='records')return renderDeduction();if(view==='deduction')return renderDeductionGate();if(view==='map')return renderMap();if(view==='records')return renderRecords();renderInvestigation()}
 
 function renderMap(){
  var html=renderHeader()+'<article class="card c2-body"><p class="c2-kicker">調查地圖</p><h2>前往地點</h2><div class="c2-map">';
@@ -261,7 +268,7 @@ function renderMap(){
  html+='</article>'+navHtml('map');
  $('v2RainMain').innerHTML=html;bindCommon();
  Array.prototype.forEach.call(document.querySelectorAll('[data-go]'),function(b){b.onclick=function(){enterLocation(b.getAttribute('data-go'))}});
- var d=$('c2StartDeduction');if(d)d.onclick=function(){s.phase='deduction';s.deduction=0;s.feedback='';save();render()};
+ bindDeductionStart();
 }
 
 function evidenceImage(e){return '<img src="'+esc(e.image)+'" alt="'+esc(e.name)+'" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">'}
@@ -278,9 +285,9 @@ function renderDeduction(){
  var d=DATA.deductions[s.deduction];if(!d){return finishCorrect()}
  var html=renderHeader()+'<article class="c2-deduction card"><p class="c2-kicker">'+esc(d.stage||'最終推理')+'｜'+(s.deduction+1)+' / '+DATA.deductions.length+'</p><h2>'+esc(d.q)+'</h2>'+focusDots();
  if(s.feedback)html+='<div class="c2-note">'+esc(s.feedback)+'</div>';
- html+='<div class="c2-warning">每一步推論都會影響剩餘的推理專注。</div>';
- d.options.forEach(function(o){html+='<button class="c2-option" data-opt="'+esc(o.id)+'">'+esc(o.text)+'</button>'});html+='</article>';
- $('v2RainMain').innerHTML=html;
+ html+='<div class="c2-warning">推理期間可查看紀錄，再回到本題；調查與地圖暫停使用。選錯會消耗一點專注並留在原題。</div>';
+ d.options.forEach(function(o){html+='<button class="c2-option" data-opt="'+esc(o.id)+'">'+esc(o.text)+'</button>'});html+='</article>'+navHtml('deduction');
+ $('v2RainMain').innerHTML=html;bindCommon();
  Array.prototype.forEach.call(document.querySelectorAll('[data-opt]'),function(b){b.onclick=function(){answerDeduction(b.getAttribute('data-opt'))}});
 }
 function answerFailureType(answer){

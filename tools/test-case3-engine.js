@@ -170,20 +170,53 @@ function deductionCorrect(){
 
 function deductionErrorEndings(){
  ['image_literalism','overcorrection','forced_origin'].forEach(type=>{
-  let s=routeA();
-  s=answerBy(s,q=>q.options.find(o=>o.errorType===type));
-  assert.strictEqual(s.deduction.ending,type,'wrong ending classifier for '+type);
+  const s=routeA();assert(E.startDeduction(s).ok);
+  const q=C.deductions[0],option=q.options.find(o=>o.errorType===type);
+  for(let i=0;i<4;i++){
+   assert(E.answerDeduction(s,option.id).ok);
+   assert.strictEqual(s.deduction.index,0,'wrong answer skipped question');
+   assert.strictEqual(s.deduction.focus,3-i);
+  }
+  assert.strictEqual(s.phase,'done');assert.strictEqual(s.deduction.ending,type);
+  assert.strictEqual(E.answerDeduction(s,option.id).reason,'not_deduction');
+  const loaded=E.normalize(JSON.parse(JSON.stringify(s)));
+  assert.strictEqual(loaded.phase,'done');assert.strictEqual(loaded.deduction.ending,type);
  });
 }
-
 function deductionTieBreak(){
- let s=routeA(),start=E.startDeduction(s);assert(start.ok);s=start.state;
- const order=['image_literalism','overcorrection','forced_origin','image_literalism','overcorrection','forced_origin'];
- C.deductions.forEach((q,i)=>{
-  let option=q.options.find(o=>o.errorType===order[i]);assert(option);
-  let r=E.answerDeduction(s,option.id);assert(r.ok);s=r.state;
+ const s=routeA();assert(E.startDeduction(s).ok);
+ ['image_literalism','forced_origin','image_literalism','forced_origin'].forEach(type=>{
+  const q=C.deductions[s.deduction.index];assert(E.answerDeduction(s,q.options.find(o=>o.errorType===type).id).ok);
  });
- assert.strictEqual(s.deduction.ending,'forced_origin','tied error counts should use the last selected tied error type');
+ assert.strictEqual(s.deduction.ending,'forced_origin');
+}
+function retryAndLegacySaves(){
+ const s=routeA();assert(E.startDeduction(s).ok);
+ const first=C.deductions[0];assert(E.answerDeduction(s,first.options.find(o=>!o.ok).id).ok);
+ let loaded=E.normalize(JSON.parse(JSON.stringify(s)));
+ assert.strictEqual(loaded.deduction.index,0);assert.strictEqual(loaded.deduction.focus,3);
+ loaded.deduction.answers[0].ok=true;loaded.deduction.answers[0].errorType=null;
+ loaded=E.normalize(loaded);
+ assert.strictEqual(loaded.deduction.focus,3,'saved ok/errorType must be recomputed from canon');
+ C.deductions.forEach(q=>assert(E.answerDeduction(loaded,q.options.find(o=>o.ok).id).ok));
+ assert.strictEqual(loaded.deduction.ending,'evidence_boundary','corrected errors must allow success');
+ loaded=E.normalize(JSON.parse(JSON.stringify(loaded)));
+ assert.strictEqual(loaded.deduction.ending,'evidence_boundary');assert.strictEqual(loaded.deduction.focus,3);
+ const legacy=routeA();legacy.phase='done';legacy.deduction={index:6,answers:C.deductions.map(q=>{
+  const o=q.options.find(o=>o.errorType==='forced_origin');return {q:q.id,a:o.id};
+ }),ending:'forced_origin'};
+ loaded=E.normalize(JSON.parse(JSON.stringify(legacy)));
+ assert.strictEqual(loaded.phase,'done');assert.strictEqual(loaded.deduction.ending,'forced_origin');
+ assert.strictEqual(loaded.deduction.mode,'legacy');
+ assert.strictEqual(E.normalize(JSON.parse(JSON.stringify(loaded))).deduction.ending,'forced_origin');
+ legacy.phase='deduction';legacy.deduction.answers=legacy.deduction.answers.slice(0,2);
+ loaded=E.normalize(legacy);assert.strictEqual(loaded.deduction.mode,'retry');
+ assert.strictEqual(loaded.deduction.index,0);assert.strictEqual(loaded.deduction.focus,3);
+ loaded.deduction.focus=99;loaded.deduction.index=99;
+ loaded.deduction.answers.push({q:C.deductions[5].id,a:C.deductions[5].options.find(o=>o.ok).id});
+ loaded=E.normalize(loaded);assert.strictEqual(loaded.deduction.index,0);assert.strictEqual(loaded.deduction.focus,3);
+ const fresh=E.normalize(E.fresh('opening'));assert.strictEqual(fresh.flags.openingSeen,false);
+ assert.strictEqual(E.normalize(routeA()).flags.openingSeen,true);
 }
 
 function deductionIgnoresWithdrawnHypothesis(){
@@ -245,7 +278,21 @@ function saveIsolation(){
  assert(storage[C.saveKey],'Case 3 save missing');
 }
 
+function validatorFailClosed(){
+ const {spawnSync}=require('child_process');
+ for(const [from,to,message] of [
+  ['maxFocus:4,','maxFocus:5,','four-focus retry rule'],
+  ["text:'九月二十二日","text:'秀蓮九月二十二日",'opening must not reveal']
+ ]){
+  const code="const fs=require('fs'),read=fs.readFileSync;fs.readFileSync=function(p,...args){const s=read.call(fs,p,...args);return String(p).endsWith('case3-film-canon.js')?s.replace("+JSON.stringify(from)+","+JSON.stringify(to)+"):s};require('./tools/validate-case3.js');";
+  const result=spawnSync(process.execPath,['-e',code],{cwd:root,encoding:'utf8'});
+  assert.strictEqual(result.status,1,'invalid opening/rule must fail validation');
+  assert(result.stderr.includes(message),result.stderr);
+ }
+}
 const results=[];
+results.push((validatorFailClosed(),'PASS validator rejects invalid focus and opening spoilers'));
+results.push((retryAndLegacySaves(),'PASS retry and legacy save migration'));
 results.push((hypothesisSaveRepair(),'PASS hypothesis nested save repair'));
 [['route A',routeA],['route B',routeB],['route C',routeC],['negative gates',negativeChecks],['narrative state',narrativeState],['deduction correct',deductionCorrect],['deduction error endings',deductionErrorEndings],['deduction tie break',deductionTieBreak],['deduction ignores withdrawn hypothesis',deductionIgnoresWithdrawnHypothesis],['deduction rejects unknown option',deductionRejectsUnknownOption],['deduction save repair',deductionSaveRepair],['save isolation',saveIsolation]].forEach(([name,fn])=>{
  fn();results.push('PASS '+name);

@@ -31,6 +31,14 @@
  function runFlow(){
   try{
    ok(!!q('#case3ProductionRoot'),'production mount');
+   ok(!!q('[data-opening-next]')&&!q('[data-action]'),'opening shown before investigation');
+   mobileLayout('prologue');
+   click('[data-opening-next]');
+   ok(Array.from(doc.querySelectorAll('.c3-tabs button')).map(x=>x.textContent).join('｜')==='調查｜地圖｜紀錄｜推理','Case 3 uses common four tabs');
+   ok(game.getComputedStyle(q('.c3-tabs')).position==='fixed','Case 3 navigation fixed');
+   click('[data-view="deduction"]');
+   ok(!q('[data-start-deduction]')&&!doc.body.textContent.includes('秀蓮最終詢問'),'locked deduction does not reveal later leads');
+   click('[data-view="scene"]');
    ok(!!q('[data-action="studio_opening"]'),'opening action visible');
    mobileLayout('opening');
    action('studio_opening');
@@ -80,6 +88,12 @@
    ok(!!q('[data-start-deduction]'),'deduction gate unlocks');
    mobileLayout('deduction-ready');
    click('[data-start-deduction]');
+   click('[data-view="records"]');
+   ok(!!q('.c3-record-tabs'),'deduction allows reviewing acquired records');
+   click('[data-view="deduction"]');
+   ok(!!q('[data-deduction-option="q1_b"]'),'return to deduction retains question');
+   click('[data-deduction-option="q1_a"]');
+   ok(!!q('[data-deduction-option="q1_b"]')&&doc.body.textContent.includes('3/4'),'wrong answer stays on same question and costs focus');
    ['q1_b','q2_a','q3_b','q4_a','q5_a','q6_a'].forEach(function(id){click('[data-deduction-option="'+id+'"]')});
    ok(q('.c3-ending-name')&&q('.c3-ending-name').textContent.indexOf('證據邊界')>=0,'correct ending renders');
    ok(doc.body.textContent.indexOf('照片本身不能證明紙袋內容或秘密活動')>=0,'ending preserves image evidence boundary');
@@ -99,8 +113,29 @@
   game=frame.contentWindow;doc=frame.contentDocument;storage=game.localStorage;
   game.addEventListener('error',event=>errors.push(event.message||'resource load error'),true);
   await waitFor(()=>q('#casePickerSelect'));
+  // Keep entry probes in separate disposable frames. Repeated reloads in a
+  // single fixture consume Chrome's virtual-time budget before lazy scripts settle.
+  click('#startBtn');
+  ok(!!q('#case1OpeningNext')&&!q('#gameScreen:not(.hidden)'),'Case 1 prologue before investigation');
+  click('#case1OpeningNext');
+  ok(Array.from(doc.querySelectorAll('#gameScreen .tabs button')).map(x=>x.textContent).join('｜')==='調查｜地圖｜紀錄｜推理','Case 1 common four tabs');
+  ok(game.getComputedStyle(q('#gameScreen .tabs')).position==='fixed','Case 1 navigation fixed');
+  storage.setItem('mist-taiwan-case-save-v4',firstSave);
+  var probe=document.createElement('iframe');probe.title='Case 2 entry probe';document.body.appendChild(probe);
+  await new Promise(resolve=>{probe.onload=resolve;probe.src='../_site/index.html'});
+  var pd=probe.contentDocument,pg=probe.contentWindow;
+  await waitFor(()=>pd.querySelector('#casePickerSelect'));
+  pd.querySelector('#casePickerSelect').value='case2';pd.querySelector('#casePickerGo').click();
+  await waitFor(()=>pd.querySelector('#c2OpeningNext'));
+  ok(!!pd.querySelector('.case-opening.paper'),'Case 2 shares opening format');pd.querySelector('#c2OpeningNext').click();
+  ok(Array.from(pd.querySelectorAll('.c2-tabs button')).map(x=>x.textContent).join('｜')==='調查｜地圖｜紀錄｜推理','Case 2 common four tabs');
+  ok(pg.getComputedStyle(pd.querySelector('.c2-tabs')).position==='fixed','Case 2 navigation fixed');
+  pd.querySelector('[data-view="deduction"]').click();
+  ok(!pd.querySelector('#c2StartDeduction')&&pd.body.textContent.includes('尚未具備結案條件'),'Case 2 deduction gate remains locked');
+  storage.setItem('mist-taiwan-rain-canon-v1',secondSave);probe.remove();
+  // Start Case 3 through the original title entry (the fixture uses element.click).
   q('#casePickerSelect').value='case3';click('#casePickerGo');
-  await waitFor(()=>q('[data-action="studio_opening"]'));
+  await waitFor(()=>q('[data-opening-next]'));
   var result=runFlow();
   if(!result.ok)throw new Error(result.text);
   // Reload through the real entry point and confirm the finished save resumes.

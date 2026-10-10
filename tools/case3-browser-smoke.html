@@ -35,6 +35,8 @@
   try{
    localStorage.removeItem(CASE3_FILM_CANON.saveKey);
    ok(Case3FilmUI.mount('root',{playerName:'Smoke',reset:true})===true,'mount');
+   ok(!!q('[data-opening-next]')&&!q('[data-action]'),'opening shown before investigation');
+   click('[data-opening-next]');
    ok(!!q('[data-action="studio_opening"]'),'opening action visible');
    mobileLayout('opening');
    action('studio_opening');
@@ -68,6 +70,12 @@
    ok(!!q('[data-start-deduction]'),'deduction gate unlocks');
    mobileLayout('deduction-ready');
    click('[data-start-deduction]');
+   click('[data-view="records"]');
+   ok(!!q('.c3-record-tabs'),'deduction allows reviewing acquired records');
+   click('[data-view="deduction"]');
+   ok(!!q('[data-deduction-option="q1_b"]'),'return to deduction retains question');
+   click('[data-deduction-option="q1_a"]');
+   ok(!!q('[data-deduction-option="q1_b"]')&&document.body.textContent.includes('3/4'),'wrong answer stays on same question and costs focus');
    ['q1_b','q2_a','q3_b','q4_a','q5_a','q6_a'].forEach(function(id){click('[data-deduction-option="'+id+'"]')});
    ok(q('.c3-ending-name')&&q('.c3-ending-name').textContent.indexOf('證據邊界')>=0,'correct ending renders');
    ok(document.body.textContent.indexOf('照片本身不能證明紙袋內容或秘密活動')>=0,'ending preserves image evidence boundary');
