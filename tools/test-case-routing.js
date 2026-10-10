@@ -12,7 +12,10 @@ const index=read('index.html');
 const router=read('case2-engine.js');
 
 assert(index.includes('<script src="case1-unified-engine.js?v=14"></script>'),'index must still load Case 1 runtime');
-assert(index.includes('<script src="case2-engine.js?v=42"></script>'),'index must still load production case router');
+assert(index.includes('<script src="case2-engine.js?v=43"></script>'),'index must still load production case router');
+assert(router.includes('case2-rain-canon.js?v=16'),'Case 2 must load current Canon data');
+assert(router.includes('.c2-map button:disabled:not(.current){display:none!important}'),'Case 2 map must hide only locked locations');
+assert(router.includes('.c2-map button.current:disabled{opacity:1}'),'Case 2 map must keep current location readable');
 assert(router.includes('case2-rain-canon-engine.js?v=17'),'Case 2 must load the updated save/Canon runtime');
 assert(router.includes('<option value="case3">第三案｜第十三張底片</option>'),'case picker must expose Case 3');
 assert(router.includes("if(choice==='case3'){startCase3();return}"),'case picker must route Case 3');

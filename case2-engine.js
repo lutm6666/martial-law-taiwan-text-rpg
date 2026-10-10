@@ -54,7 +54,7 @@ function installProgressiveVisibility(){
  if($('case2ProgressiveVisibilityStyle'))return;
  var style=document.createElement('style');
  style.id='case2ProgressiveVisibilityStyle';
- style.textContent='.c2-btn:disabled:not(.done),.c2-map button:disabled{display:none!important}';
+ style.textContent='.c2-btn:disabled:not(.done),.c2-map button:disabled:not(.current){display:none!important}.c2-map button.current:disabled{opacity:1}';
  document.head.appendChild(style);
 }
 function installCasePickerStyle(){
@@ -160,7 +160,7 @@ function loadRainRuntime(done){
  }
 
  if(window.CASE2_RAIN_CANON){loadEngine();return}
- loadScript('case2-rain-canon.js?v=15',function(ok){
+ loadScript('case2-rain-canon.js?v=16',function(ok){
   if(!ok||!window.CASE2_RAIN_CANON){reportLoadError('case2-rain-canon.js?v=15');return}
   loadEngine();
  });
