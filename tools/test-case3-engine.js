@@ -195,6 +195,9 @@ function retryAndLegacySaves(){
  const first=C.deductions[0];assert(E.answerDeduction(s,first.options.find(o=>!o.ok).id).ok);
  let loaded=E.normalize(JSON.parse(JSON.stringify(s)));
  assert.strictEqual(loaded.deduction.index,0);assert.strictEqual(loaded.deduction.focus,3);
+ loaded.deduction.answers[0].ok=true;loaded.deduction.answers[0].errorType=null;
+ loaded=E.normalize(loaded);
+ assert.strictEqual(loaded.deduction.focus,3,'saved ok/errorType must be recomputed from canon');
  C.deductions.forEach(q=>assert(E.answerDeduction(loaded,q.options.find(o=>o.ok).id).ok));
  assert.strictEqual(loaded.deduction.ending,'evidence_boundary','corrected errors must allow success');
  loaded=E.normalize(JSON.parse(JSON.stringify(loaded)));

@@ -159,7 +159,7 @@ function shouldShowOpening(){
 }
 function renderOpening(){
  var o=DATA.opening||{};
- var html='<article class="case-opening card paper"><p class="c2-kicker">'+esc(o.kicker||'案件二・雨夜敲門')+'</p><h2>'+esc(o.title||'第三個雨夜')+'</h2><div class="opening-text">'+sceneIntroHtml(o.text||'')+'</div><button id="c2OpeningNext" class="primary" type="button">開始調查</button></article>';
+ var html='<article class="case-opening card paper"><p class="eyebrow">'+esc(o.kicker||'案件二・雨夜敲門')+'</p><h2>'+esc(o.title||'第三個雨夜')+'</h2><div class="opening-text">'+sceneIntroHtml(o.text||'')+'</div><button id="c2OpeningNext" class="primary" type="button">開始調查</button></article>';
  $('v2RainMain').innerHTML=html;
  var next=$('c2OpeningNext');
  if(next)next.onclick=function(){s.flags.opening_seen=true;save();render()};
@@ -285,7 +285,7 @@ function renderDeduction(){
  var d=DATA.deductions[s.deduction];if(!d){return finishCorrect()}
  var html=renderHeader()+'<article class="c2-deduction card"><p class="c2-kicker">'+esc(d.stage||'最終推理')+'｜'+(s.deduction+1)+' / '+DATA.deductions.length+'</p><h2>'+esc(d.q)+'</h2>'+focusDots();
  if(s.feedback)html+='<div class="c2-note">'+esc(s.feedback)+'</div>';
- html+='<div class="c2-warning">每一步推論都會影響剩餘的推理專注。</div>';
+ html+='<div class="c2-warning">推理期間可查看紀錄，再回到本題；調查與地圖暫停使用。選錯會消耗一點專注並留在原題。</div>';
  d.options.forEach(function(o){html+='<button class="c2-option" data-opt="'+esc(o.id)+'">'+esc(o.text)+'</button>'});html+='</article>'+navHtml('deduction');
  $('v2RainMain').innerHTML=html;bindCommon();
  Array.prototype.forEach.call(document.querySelectorAll('[data-opt]'),function(b){b.onclick=function(){answerDeduction(b.getAttribute('data-opt'))}});

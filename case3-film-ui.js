@@ -221,7 +221,7 @@ function renderDeduction(){
   var html='<article class="c3-card"><div class="c3-kicker">最終推理｜'+(state.deduction.index+1)+' / '+C.deductions.length+'</div><h2>'+esc(q.question)+'</h2>'+deductionProgress();
   html+='<p class="c3-empty">選擇目前證據能支持到的最強說法，不要把推測升格成事實，也不要因為找到較普通的背景就抹掉仍然未知的部分。</p>';
   (q.options||[]).forEach(function(o){html+='<button type="button" class="c3-option" data-deduction-option="'+esc(o.id)+'">'+esc(o.text)+'</button>'});
-  html+='<p class="failure-warning">選錯推論會消耗推理專注，並留在原題；專注耗盡時結案。</p></article>';return html;
+  html+='<p class="failure-warning">推理期間可查看紀錄，再回到本題；調查與地圖暫停使用。選錯推論會消耗一點專注並留在原題，專注耗盡時結案。</p></article>';return html;
  }
  var ready=C.predicates.canStartDeduction(state);
  if(!ready)return '<article class="c3-card"><div class="c3-kicker">最終推理</div><h2>尚未具備結案條件</h2><p>繼續調查目前的地點，帶著新線索回訪，再核對留下來的紀錄。</p></article>';
