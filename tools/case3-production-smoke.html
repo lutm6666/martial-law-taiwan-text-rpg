@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RUNNING Case3 Production Smoke</title></head>
+<body><pre id="result">RUNNING</pre><iframe id="game" title="Production game" style="width:100%;height:844px;border:0"></iframe>
+<script>
+(async function(){
+ 'use strict';
+ var mobile=new URLSearchParams(location.search).get('mobile')==='1';
+ var frame=document.getElementById('game');
+ if(mobile)frame.style.width='390px';
+ var out=[],errors=[],doc,game,storage,firstSave='{"probe":"case1"}',secondSave='{"probe":"case2"}';
+ // This fixture is run in a disposable test origin/profile.
+ localStorage.clear();
+ localStorage.setItem('mist-taiwan-case-save-v4',firstSave);
+ localStorage.setItem('mist-taiwan-rain-canon-v1',secondSave);
+ function ok(cond,msg){if(!cond)throw new Error(msg);out.push('PASS '+msg)}
+ function q(sel){return doc.querySelector(sel)}
+ function click(sel){var el=q(sel);if(!el)throw new Error('missing '+sel);el.click();return el}
+ function action(id){return click('[data-action="'+id+'"]')}
+ function go(id){click('[data-view="map"]');return click('[data-go="'+id+'"]')}
+ function mobileLayout(label){
+  if(!mobile)return;
+  ok(doc.documentElement.scrollWidth<=game.innerWidth+1,label+' no horizontal overflow');
+  Array.from(doc.querySelectorAll('.c3-hypothesis-btn')).forEach(el=>ok(el.getBoundingClientRect().height>=44,label+' hypothesis tap target'));
+  Array.from(doc.querySelectorAll('[data-hypothesis-text]')).forEach(el=>ok(parseFloat(game.getComputedStyle(el).fontSize)>=16,label+' input avoids small-font focus zoom'));
+  Array.from(doc.querySelectorAll('#case3Production button')).filter(el=>el.offsetParent!==null).forEach(el=>{
+   var r=el.getBoundingClientRect();ok(r.left>=-1&&r.right<=game.innerWidth+1,label+' button inside viewport');
+  });
+ }
+ async function waitFor(fn){for(var i=0;i<100;i++){if(fn())return;await new Promise(r=>setTimeout(r,50))}throw new Error('production load timed out')}
+ function runFlow(){
+  try{
+   ok(!!q('#case3ProductionRoot'),'production mount');
+   ok(!!q('[data-action="studio_opening"]'),'opening action visible');
+   mobileLayout('opening');
+   action('studio_opening');
+   ok(!q('.c3-intro')&&!!q('.c3-story'),'result replaces scene introduction');
+   mobileLayout('post-opening');
+   go('newsstand');
+   ok(!!q('.c3-intro')&&!q('.c3-story'),'travel restores location introduction');
+   ok(!q('[data-action="newsstand_xiulian"]'),'newsstand follow-up gated before photo');
+   action('newsstand_visit');
+   ok(!!q('[data-action="newsstand_xiulian"]'),'newsstand follow-up unlocks after photo');
+   action('newsstand_xiulian');
+   go('studio');action('studio_b084_ledger');
+   go('darkroom');action('darkroom_workflow');
+   go('alley');action('alley_frames');
+   mobileLayout('frame-analysis');
+   ok(!q('img[src="assets/case3/frames/frame-13.webp"]'),'F13 art hidden before verification');
+   click('[data-view="records"]');click('[data-record-filter="H"]');
+   ok(!q('[data-hypothesis-create="H_XIULIAN"]'),'Xiulian hypothesis stays gated');
+   click('[data-hypothesis-create="H_SIDE_DOOR"]');
+   ok(!q('[data-hypothesis-review]'),'review waits for new evidence');
+   mobileLayout('hypothesis-created');
+   click('[data-view="scene"]');
+   click('[data-frame="personMovement"]');
+   click('[data-frame="movingObject"]');
+   click('[data-frame="fixedBackground"]');
+   ok(doc.body.textContent.indexOf('相關調查結論已寫入紀錄')>=0,'frame comparison completes');
+   mobileLayout('frame-analysis-complete');
+   click('[data-view="records"]');click('[data-record-filter="H"]');
+   q('[data-hypothesis-text="H_SIDE_DOOR"]').value='側門本身不能證明秘密行動。';
+   click('[data-hypothesis-review="H_SIDE_DOOR"][data-decision="revised"]');
+   ok(doc.body.textContent.includes('最初想法：側門可能代表刻意避開他人視線。'),'hypothesis keeps original text');
+   click('[data-hypothesis-review="H_SIDE_DOOR"][data-decision="withdrawn"]');
+   ok(doc.body.textContent.includes('已撤回'),'player can withdraw hypothesis');
+   mobileLayout('hypothesis-reviewed');
+   go('supplier');action('supplier_trace');
+   go('studio');action('studio_receiving');
+   go('chen_home');action('chen_first');
+   go('studio');action('studio_duty');action('studio_loose_procedure');action('studio_loose_search');
+   ok(doc.body.textContent.indexOf('舊零片中的單格負片')>=0,'E10 remains neutral before verification');
+   action('studio_verify_e10');
+   click('[data-view="records"]');click('[data-record-filter="E"]');
+   ok(doc.body.textContent.indexOf('A-217 第 13 格原片')>=0,'E10 renames after verification');
+   ok(doc.querySelectorAll('.c3-evidence-art').length>0,'evidence art renders in records');
+   mobileLayout('evidence-records');
+   go('chen_home');action('chen_final');
+   click('[data-view="deduction"]');
+   ok(!!q('[data-start-deduction]'),'deduction gate unlocks');
+   mobileLayout('deduction-ready');
+   click('[data-start-deduction]');
+   ['q1_b','q2_a','q3_b','q4_a','q5_a','q6_a'].forEach(function(id){click('[data-deduction-option="'+id+'"]')});
+   ok(q('.c3-ending-name')&&q('.c3-ending-name').textContent.indexOf('證據邊界')>=0,'correct ending renders');
+   ok(doc.body.textContent.indexOf('照片本身不能證明紙袋內容或秘密活動')>=0,'ending preserves image evidence boundary');
+   ok(doc.body.textContent.indexOf('不足以指定唯一的傳言源頭')>=0,'ending preserves rumor-source uncertainty');
+   mobileLayout('ending');
+   ok(storage.getItem('mist-taiwan-case-save-v4')===firstSave,'Case 1 save unchanged');
+   ok(storage.getItem('mist-taiwan-rain-canon-v1')===secondSave,'Case 2 save unchanged');
+   ok(errors.length===0,'no browser JavaScript errors');
+   return {ok:true,text:out.join('\n')};
+  }catch(e){
+   return {ok:false,text:out.join('\n')+'\nFAIL '+e.message+'\n'+errors.join('\n')};
+  }
+ }
+
+ try{
+  await new Promise(resolve=>{frame.onload=resolve;frame.src='../_site/index.html'});
+  game=frame.contentWindow;doc=frame.contentDocument;storage=game.localStorage;
+  game.addEventListener('error',event=>errors.push(event.message||'resource load error'),true);
+  await waitFor(()=>q('#casePickerSelect'));
+  q('#casePickerSelect').value='case3';click('#casePickerGo');
+  await waitFor(()=>q('[data-action="studio_opening"]'));
+  var result=runFlow();
+  if(!result.ok)throw new Error(result.text);
+  // Reload through the real entry point and confirm the finished save resumes.
+  await new Promise(resolve=>{frame.onload=resolve;game.location.reload()});
+  game=frame.contentWindow;doc=frame.contentDocument;
+  await waitFor(()=>q('#casePickerSelect'));
+  q('#casePickerSelect').value='case3';click('#casePickerGo');
+  await waitFor(()=>q('.c3-ending-name'));
+  ok(q('.c3-ending-name').textContent.includes('證據邊界'),'production reload resumes correct ending');
+  ok(!!q('#c3Home'),'ending exposes return to title');
+  document.getElementById('result').textContent=out.join('\n');
+  document.title='PASS Case3 Production Smoke';
+ }catch(error){document.getElementById('result').textContent=out.join('\n')+'\nFAIL '+error.message;document.title='FAIL Case3 Production Smoke'}
+})();
+</script></body></html>

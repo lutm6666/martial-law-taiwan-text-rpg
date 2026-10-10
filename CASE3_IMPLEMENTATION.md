@@ -1,6 +1,6 @@
 # 第三案實作規格｜第十三張底片
 
-狀態：核心資料模型、狀態引擎與獨立 UI 已建立並通過自動驗證；核准美術已完成來源盤點，UI 現由 `case3-art-manifest.js` 控制 scene／frame／evidence 圖片接入。只有 manifest 標記 `ready` 且實體檔存在的資產才會顯示。第三案仍未接入正式案件選單，也不改動 Case 1／2 runtime。
+狀態：核心資料模型、狀態引擎與獨立 UI 已建立並通過自動驗證；核准美術已完成來源盤點，UI 現由 `case3-art-manifest.js` 控制 scene／frame／evidence 圖片接入。只有 manifest 標記 `ready` 且實體檔存在的資產才會顯示。第三案已接入正式案件選單與第二案正確結案入口，Pages 建置包含四個 Case 3 腳本與全部 21 張核准圖片；獨立 preview 保留供開發驗證。
 
 ## 1. Runtime 邊界
 
@@ -9,9 +9,9 @@
 建議檔案：
 - `case3-film-canon.js`：純資料、規則與題目定義。
 - `case3-film-engine.js`：狀態、渲染、互動與存檔。
-- 後續正式接入時才修改 `case2-engine.js` 的案件選擇器／第二案結案入口。
+- `case2-engine.js`：正式案件選擇器、第二案正確結案入口與 Case 3 延遲載入。
 
-`case3-film-canon.js` 與 `case3-film-engine.js` 已建立；目前仍保持獨立，不由正式網站載入。任何接入案件選單的變更必須等自動驗證與 UI 原型完成後再做。
+`case3-film-canon.js` 與 `case3-film-engine.js` 已建立；由正式案件路由依序延遲載入。共用入口不讀寫 Case 3 以外的存檔。
 
 ### Save namespace
 `mist-taiwan-case3-film-v1`

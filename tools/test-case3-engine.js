@@ -96,11 +96,22 @@ function negativeChecks(){
  assert(!C.predicates.canTracePackage(s),'package tracing available too early');
  // Fresh state must not contain hypotheses until the player creates one.
  let n=E.fresh('H');assert.deepStrictEqual(Object.keys(n.hypotheses),[]);
+ assert.strictEqual(E.observeFrame(n,'personMovement').reason,'requirements');
  assert(!E.availableActions(s).some(a=>a.label==='查看店務紀錄'),'duty record leaked before Xiulian lead');
- let r=E.createHypothesis(n,'H_SIDE_DOOR');assert(r.ok);
+ let r=E.createHypothesis(n,'H_SIDE_DOOR');assert(!r.ok&&r.reason==='requirements');
+ n=opening(n);n=go(n,'alley');n=act(n,'alley_frames');
+ r=E.createHypothesis(n,'H_SIDE_DOOR');assert(r.ok);
  assert(n.hypotheses.H_SIDE_DOOR,'player-created hypothesis missing');
+ r=E.reviewHypothesis(n,'H_SIDE_DOOR','withdrawn');assert(!r.ok&&r.reason==='requirements');
+ n=frames(n);
+ r=E.reviewHypothesis(n,'H_SIDE_DOOR','revised','側門的位置本身不能證明秘密行動。');assert(r.ok);
+ assert.strictEqual(n.hypotheses.H_SIDE_DOOR.originalText,C.hypotheses.H_SIDE_DOOR.text);
+ assert.strictEqual(n.hypotheses.H_SIDE_DOOR.history[0].text,C.hypotheses.H_SIDE_DOOR.text);
  r=E.reviewHypothesis(n,'H_SIDE_DOOR','withdrawn');assert(r.ok);
  assert.strictEqual(n.hypotheses.H_SIDE_DOOR.status,'withdrawn');
+ n.phase='deduction';
+ assert.strictEqual(E.observeFrame(n,'movingObject').reason,'phase');
+ assert.strictEqual(E.reviewHypothesis(n,'H_SIDE_DOOR','active').reason,'phase');
 
  let x=opening(E.fresh('X'));
  x=go(x,'newsstand');x=act(x,'newsstand_visit');
@@ -214,6 +225,17 @@ function deductionSaveRepair(){
  assert.strictEqual(repaired.deduction.ending,'evidence_boundary','complete answers should recompute ending');
 }
 
+function hypothesisSaveRepair(){
+ const s=E.fresh('damaged history');
+ s.hypotheses.H_SIDE_DOOR={text:'後來的想法',status:'revised',history:[null,[],12,{text:null},
+  {from:'active',to:'revised',text:'最初的想法'},
+  {from:'active',to:'unknown',text:'損壞紀錄'}]};
+ const repaired=E.normalize(s),h=repaired.hypotheses.H_SIDE_DOOR;
+ assert.strictEqual(h.history.length,1);
+ assert.strictEqual(h.history[0].text,'最初的想法');
+ assert.strictEqual(h.originalText,'最初的想法');
+}
+
 function saveIsolation(){
  storage['mist-taiwan-case-save-v4']='CASE1_SENTINEL';
  storage['mist-taiwan-rain-canon-v1']='CASE2_SENTINEL';
@@ -224,6 +246,7 @@ function saveIsolation(){
 }
 
 const results=[];
+results.push((hypothesisSaveRepair(),'PASS hypothesis nested save repair'));
 [['route A',routeA],['route B',routeB],['route C',routeC],['negative gates',negativeChecks],['narrative state',narrativeState],['deduction correct',deductionCorrect],['deduction error endings',deductionErrorEndings],['deduction tie break',deductionTieBreak],['deduction ignores withdrawn hypothesis',deductionIgnoresWithdrawnHypothesis],['deduction rejects unknown option',deductionRejectsUnknownOption],['deduction save repair',deductionSaveRepair],['save isolation',saveIsolation]].forEach(([name,fn])=>{
  fn();results.push('PASS '+name);
 });

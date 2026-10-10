@@ -64,7 +64,13 @@ function normalize(raw){
   h.status=['active','revised','withdrawn'].indexOf(h.status)>=0?h.status:'active';
   h.revision=Number.isFinite(h.revision)?Math.max(0,h.revision):0;
   h.text=typeof h.text==='string'?h.text:C.hypotheses[k].text;
-  h.history=arr(h.history);
+  h.history=arr(h.history).filter(function(entry){
+   return entry&&typeof entry==='object'&&!Array.isArray(entry)
+    &&['active','revised','withdrawn'].indexOf(entry.from)>=0
+    &&['active','revised','withdrawn'].indexOf(entry.to)>=0
+    &&typeof entry.text==='string';
+  }).map(function(entry){return {from:entry.from,to:entry.to,text:entry.text}});
+  h.originalText=typeof h.originalText==='string'?h.originalText:(h.history[0]&&h.history[0].text)||h.text;
   s.hypotheses[k]=h;
  });
  s.actionsDone=obj(s.actionsDone);s.observations=obj(s.observations);
@@ -188,6 +194,8 @@ function runAction(s,id){
 }
 
 function observeFrame(s,category){
+ if(s.phase!=='investigate')return {ok:false,reason:'phase',state:s};
+ if(s.loc!=='alley'||!s.flags.frameCompareOpen)return {ok:false,reason:'requirements',state:s};
  if(!C.frameAnalysis.categories[category])return {ok:false,reason:'unknown_category',state:s};
  s.frameAnalysis[category]=true;s.observations['frame:'+category]=true;
  var ready=C.frameAnalysis.completeRequires.every(function(k){return s.frameAnalysis[k]});
@@ -200,13 +208,17 @@ function observeFrame(s,category){
 
 function createHypothesis(s,id){
  if(!C.hypotheses[id])return {ok:false,reason:'unknown_hypothesis',state:s};
+ if(s.phase!=='investigate')return {ok:false,reason:'phase',state:s};
+ if(!predicate(s,C.hypotheses[id].requires))return {ok:false,reason:'requirements',state:s};
  if(s.hypotheses[id])return {ok:false,reason:'exists',state:s};
- s.hypotheses[id]={status:'active',revision:0,text:C.hypotheses[id].text,createdAt:s.loc,history:[]};
+ s.hypotheses[id]={status:'active',revision:0,text:C.hypotheses[id].text,originalText:C.hypotheses[id].text,createdAt:s.loc,history:[]};
  save(s);return {ok:true,state:s};
 }
 function reviewHypothesis(s,id,decision,text){
  var h=s.hypotheses[id];
  if(!h)return {ok:false,reason:'not_created',state:s};
+ if(s.phase!=='investigate')return {ok:false,reason:'phase',state:s};
+ if(!C.hypotheses[id]||!predicate(s,C.hypotheses[id].reviewRequires))return {ok:false,reason:'requirements',state:s};
  if(['active','revised','withdrawn'].indexOf(decision)<0)return {ok:false,reason:'bad_decision',state:s};
  h.history.push({from:h.status,to:decision,text:h.text});
  h.status=decision;

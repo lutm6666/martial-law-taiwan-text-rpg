@@ -77,12 +77,18 @@ var C = {
   },
 
   hypotheses:{
-    H_SIDE_DOOR:{text:'側門可能代表刻意避開他人視線。'},
-    H_CIRCULATION_LINK:{text:'第 13 格原片的缺失，可能與 B-084 後來的流傳有關。'},
-    H_XIULIAN:{text:'秀蓮可能與第 13 格離開 A-217 有關。'}
+    H_SIDE_DOOR:{text:'側門可能代表刻意避開他人視線。',requires:'canHypothesizeSideDoor',reviewRequires:'canReviewSideDoor',relatedConclusions:['C05','C10']},
+    H_CIRCULATION_LINK:{text:'第 13 格原片的缺失，可能與 B-084 後來的流傳有關。',requires:'canHypothesizeCirculation',reviewRequires:'canReviewCirculation',relatedConclusions:['C07','C14']},
+    H_XIULIAN:{text:'秀蓮可能與第 13 格離開 A-217 有關。',requires:'canHypothesizeXiulian',reviewRequires:'canReviewXiulian',relatedConclusions:['C13','C14']}
   },
 
   predicates:{
+    canHypothesizeSideDoor:function(s){return !!s.actionsDone.alley_frames},
+    canHypothesizeCirculation:function(s){return s.evidence.indexOf('E05')>=0},
+    canHypothesizeXiulian:function(s){return s.conclusions.indexOf('C13')>=0},
+    canReviewSideDoor:function(s){return s.conclusions.indexOf('C05')>=0},
+    canReviewCirculation:function(s){return s.conclusions.indexOf('C07')>=0},
+    canReviewXiulian:function(s){return s.flags.e10Verified&&s.flags.xiulianAdmission},
     canFindB084Ledger:function(s){return !!(s.keys&&s.keys.b084)},
     canTracePackage:function(s){return !!(s.frameAnalysis&&s.frameAnalysis.continuityComplete&&s.keys&&s.keys.packageMarkPartial)},
     canCheckReceivingLedger:function(s){return !!(s.keys&&s.keys.m317)},

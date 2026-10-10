@@ -34,6 +34,8 @@ jobs:
           node --check case2-rain-canon.js
           node --check case2-rain-canon-engine.js
           node tools/verify-javascript.js
+          node tools/validate-case3.js
+          node tools/test-case3-engine.js
 
       - name: Verify canonical assets
         run: |
@@ -47,17 +49,7 @@ jobs:
           test "$(find assets/v2/canon -maxdepth 1 -type f -name '0[1-7]_*.png' | wc -l)" -eq 7
 
       - name: Prepare production site
-        run: |
-          rm -rf _site
-          mkdir -p _site/assets/v2
-          cp index.html _site/
-          cp .nojekyll _site/
-          cp case1-unified-engine.js _site/
-          cp case2-engine.js _site/
-          cp case2-rain-canon.js _site/
-          cp case2-rain-canon-engine.js _site/
-          cp -R assets/case1 _site/assets/case1
-          cp -R assets/v2/canon _site/assets/v2/canon
+        run: node tools/test-pages-bundle.js
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
