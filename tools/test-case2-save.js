@@ -78,6 +78,6 @@ assert.equal(s.caseId,data.id);
 assert.equal(s.finished,false);
 
 const css=read('case2-rain-canon-engine.js');
-assert(css.includes('.c2-record img{width:100%;margin-top:9px;border-radius:9px;display:block;max-height:none;height:auto;object-fit:contain}'),
+assert(css.includes('.c2-record img{width:100%;margin-top:9px;border-radius:9px;display:block;max-height:none;height:auto;aspect-ratio:3/2;object-fit:contain}'),
  'evidence image must preserve the complete frame');
 console.log('PASS Case 2 save/Canon normalization (10 scenarios)');
