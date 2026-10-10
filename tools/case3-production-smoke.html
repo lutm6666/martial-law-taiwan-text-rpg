@@ -109,27 +109,27 @@
   game=frame.contentWindow;doc=frame.contentDocument;storage=game.localStorage;
   game.addEventListener('error',event=>errors.push(event.message||'resource load error'),true);
   await waitFor(()=>q('#casePickerSelect'));
-  // Exercise all three entry paths through the real title page before Case 3.
+  // Keep entry probes in separate disposable frames. Repeated reloads in a
+  // single fixture consume Chrome's virtual-time budget before lazy scripts settle.
   click('#startBtn');
   ok(!!q('#case1OpeningNext')&&!q('#gameScreen:not(.hidden)'),'Case 1 prologue before investigation');
   click('#case1OpeningNext');
   ok(Array.from(doc.querySelectorAll('#gameScreen .tabs button')).map(x=>x.textContent).join('｜')==='調查｜地圖｜紀錄｜推理','Case 1 common four tabs');
   ok(game.getComputedStyle(q('#gameScreen .tabs')).position==='fixed','Case 1 navigation fixed');
   storage.setItem('mist-taiwan-case-save-v4',firstSave);
-  await new Promise(resolve=>{frame.onload=resolve;game.location.reload()});
-  game=frame.contentWindow;doc=frame.contentDocument;
-  await waitFor(()=>q('#casePickerSelect'));
-  q('#casePickerSelect').value='case2';click('#casePickerGo');
-  await waitFor(()=>q('#c2OpeningNext'));
-  ok(!!q('.case-opening.paper'),'Case 2 shares opening format');click('#c2OpeningNext');
-  ok(Array.from(doc.querySelectorAll('.c2-tabs button')).map(x=>x.textContent).join('｜')==='調查｜地圖｜紀錄｜推理','Case 2 common four tabs');
-  ok(game.getComputedStyle(q('.c2-tabs')).position==='fixed','Case 2 navigation fixed');
-  click('[data-view="deduction"]');
-  ok(!q('#c2StartDeduction')&&doc.body.textContent.includes('尚未具備結案條件'),'Case 2 deduction gate remains locked');
-  storage.setItem('mist-taiwan-rain-canon-v1',secondSave);
-  await new Promise(resolve=>{frame.onload=resolve;game.location.reload()});
-  game=frame.contentWindow;doc=frame.contentDocument;
-  await waitFor(()=>q('#casePickerSelect'));
+  var probe=document.createElement('iframe');probe.title='Case 2 entry probe';document.body.appendChild(probe);
+  await new Promise(resolve=>{probe.onload=resolve;probe.src='../_site/index.html'});
+  var pd=probe.contentDocument,pg=probe.contentWindow;
+  await waitFor(()=>pd.querySelector('#casePickerSelect'));
+  pd.querySelector('#casePickerSelect').value='case2';pd.querySelector('#casePickerGo').click();
+  await waitFor(()=>pd.querySelector('#c2OpeningNext'));
+  ok(!!pd.querySelector('.case-opening.paper'),'Case 2 shares opening format');pd.querySelector('#c2OpeningNext').click();
+  ok(Array.from(pd.querySelectorAll('.c2-tabs button')).map(x=>x.textContent).join('｜')==='調查｜地圖｜紀錄｜推理','Case 2 common four tabs');
+  ok(pg.getComputedStyle(pd.querySelector('.c2-tabs')).position==='fixed','Case 2 navigation fixed');
+  pd.querySelector('[data-view="deduction"]').click();
+  ok(!pd.querySelector('#c2StartDeduction')&&pd.body.textContent.includes('尚未具備結案條件'),'Case 2 deduction gate remains locked');
+  storage.setItem('mist-taiwan-rain-canon-v1',secondSave);probe.remove();
+  // Start Case 3 through the original title entry (the fixture uses element.click).
   q('#casePickerSelect').value='case3';click('#casePickerGo');
   await waitFor(()=>q('[data-opening-next]'));
   var result=runFlow();
