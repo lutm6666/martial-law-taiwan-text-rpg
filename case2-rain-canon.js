@@ -93,35 +93,35 @@ window.CASE2_RAIN_CANON={
 
   deductions:[
     {id:'who_knocked',stage:'人物辨認',q:'前三晚反覆敲201房門的人，最能確認是誰？',requires:['e06'],correct:'qiulan',hint:'先分開「長得像誰」和「誰親口承認自己來過」。',options:[
-      {id:'yueqin',text:'許月琴',failureType:'falseAccusation'},
-      {id:'qiulan',text:'許秋蘭'},
-      {id:'ghost',text:'只能判定為無法確認身分的異常存在',failureType:'weak'}
+      {id:'yueqin',text:'許月琴，敲門節奏與姐妹的舊約定相同。',failureType:'falseAccusation'},
+      {id:'qiulan',text:'許秋蘭，敲門節奏與她說的來訪經過相符。'},
+      {id:'ghost',text:'身分未明，敲門聲與雨夜的屋況有關。',failureType:'weak'}
     ],explain:'照片顯示秋蘭與月琴外貌相近，而秋蘭本人也承認前幾晚都是她來敲門；三下、停一拍、再兩下，還是姊妹從小約好的敲門方式。'},
     {id:'moveout',stage:'紀錄可信度',q:'租冊上的「1955年5月搬離」應該怎麼看？',requires:['e03','e05'],correct:'no',hint:'把原始筆跡、六月十七日賒帳和房東後來的承認放在一起看。',options:[
-      {id:'yes',text:'可以直接採信，五月就是她實際搬離的時間',failureType:'overreach'},
-      {id:'no',text:'這是事後補寫的日期，不能當作可靠搬離時間'},
-      {id:'unknown',text:'既然日期被改過，連她是否曾住201都無法判斷',failureType:'overreach'}
+      {id:'yes',text:'五月是搬離時間，六月的賒帳是搬走後回訪。',failureType:'overreach'},
+      {id:'no',text:'五月是後補日期，六月的賒帳不支持以它定案。'},
+      {id:'unknown',text:'五月是後補日期，租住201的其他紀錄也失去依據。',failureType:'overreach'}
     ],explain:'租冊的五月搬離是後補字跡，六月十七日的賒帳又證明許月琴當時仍在附近出現；黃先生也承認那行月份是自己事後補寫，而且沒有可靠的五月搬離日。可以否定五月日期的可靠性，卻不能因此否定其他已被獨立證實的租住紀錄。'},
     {id:'timeline',stage:'時間線重建',q:'依目前能確認的紀錄，哪一組時間順序最穩妥？',requires:['e03','e05','e06'],correct:'ordered',hint:'只排入有獨立來源支撐的時間點，不要把被否定的五月日期重新塞回去。',options:[
-      {id:'ordered',text:'1953年入住201 → 1955年6月17日仍在附近留下賒帳 → 1958年秋蘭依匿名紙條來201尋物'},
-      {id:'may_move',text:'1953年入住201 → 1955年5月確定搬離 → 1955年6月17日才第一次到永和行',failureType:'overreach'},
-      {id:'returning',text:'1955年6月17日才入住201 → 1958年由許月琴本人回來敲門',failureType:'falseAccusation'}
+      {id:'ordered',text:'1953年入住201 → 1955年6月17日在附近賒帳 → 1958年秋蘭來201尋物'},
+      {id:'may_move',text:'1953年入住201 → 1955年5月搬離201 → 1958年秋蘭來201尋物',failureType:'overreach'},
+      {id:'returning',text:'1953年留下租冊姓名 → 1955年6月17日入住201 → 1958年月琴回201敲門',failureType:'falseAccusation'}
     ],explain:'能直接排進時間線的是1953年的入住、1955年6月17日仍在附近留下的賒帳，以及1958年秋蘭來201尋找姐姐遺物；「五月搬離」本身已被證明不可靠。'},
     {id:'belongings',stage:'物品保管鏈',q:'張文德紙條與屋頂帆布袋，能直接連成哪一條事實？',requires:['e07','e09'],correct:'kept',hint:'紙條能說明的是「東西在哪裡、有人要保留它」，不是袋內內容或月琴去向。',options:[
-      {id:'kept',text:'有人刻意把許月琴的物品留在樓上保管'},
-      {id:'crime',text:'帆布袋裡一定藏有犯罪證據',failureType:'overreach'},
-      {id:'whereabouts',text:'張文德一定知道許月琴最後去了哪裡',failureType:'overreach'}
+      {id:'kept',text:'許月琴的物品被留在樓上，紙條指向帆布袋的保管位置。'},
+      {id:'crime',text:'許月琴的物品被留在樓上，紙條指向帆布袋中的涉案文件。',failureType:'overreach'},
+      {id:'whereabouts',text:'許月琴的物品被留在樓上，紙條指向張文德掌握的最後去向。',failureType:'overreach'}
     ],explain:'紙條說「東西還在樓上」，帆布袋又有許月琴姓名標籤。兩者能接出物品被刻意保留的事實，卻不能推出袋內內容或月琴最後去向。'},
     {id:'sealed_letter',stage:'證據邊界',q:'未拆封信件本身，最穩妥能證明什麼？',requires:['e12'],correct:'sealed',hint:'只使用你實際看得到的信封狀態，不要替封口裡的內容作證。',options:[
-      {id:'sealed',text:'只能證明這封信直到現在仍保持封口完整'},
-      {id:'knows',text:'能證明許月琴知道信中內容',failureType:'overreach'},
-      {id:'politics',text:'能證明信件涉及政治活動',failureType:'overreach'}
+      {id:'sealed',text:'信封的封口仍完整，這封信尚未被拆開。'},
+      {id:'knows',text:'信封留在月琴物品中，她已知道信的內容。',failureType:'overreach'},
+      {id:'politics',text:'信封留在月琴物品中，內容涉及政治活動。',failureType:'overreach'}
     ],explain:'信封至今未拆，能直接確認的只有封口狀態。內容是什麼、月琴是否知道內容，以及它是否涉及政治活動，都不能從封著的信推出。'},
     {id:'cause',stage:'最終結論',q:'把全部線索放在一起後，對許月琴的失蹤能下到哪一步結論？',requires:['e07','e11','e12'],correct:'unknown',hint:'最後一題不是選最像故事的答案，而是判斷證據究竟允許你說到哪裡。',options:[
-      {id:'politics',text:'可以確定她因參與地下政治組織而失蹤',failureType:'overreach'},
-      {id:'intel',text:'可以確定她因替人傳遞情報而失蹤',failureType:'overreach'},
-      {id:'landlord',text:'可以確定是房東陷害她',failureType:'falseAccusation'},
-      {id:'unknown',text:'只能確認失蹤前後的部分事實，原因仍不能確定'}
+      {id:'politics',text:'陌生男子與密封信相互呼應，她因參與地下組織而失蹤。',failureType:'overreach'},
+      {id:'intel',text:'陌生男子與匿名紙條相互呼應，她因替人傳遞情報而失蹤。',failureType:'overreach'},
+      {id:'landlord',text:'後補租冊與留下遺物相互呼應，她的失蹤是房東安排的。',failureType:'falseAccusation'},
+      {id:'unknown',text:'同行見聞與留下遺物可接起部分經過，她失蹤的原因仍待查明。'}
     ],explain:'陳太太能確認的只有：她最後一次看見月琴時，月琴正和兩名陌生男子同行。她沒有看見拉扯，也無法判斷是否自願；紙條、明信片和密封信同樣沒有交代之後發生了什麼。能確認的事實與仍然未知的部分，必須分開留下。'}
   ],
 

@@ -11,8 +11,8 @@ function assert(ok,msg){if(!ok)throw new Error(msg)}
 const index=read('index.html');
 const router=read('case2-engine.js');
 
-assert(index.includes('<script src="case1-unified-engine.js?v=13"></script>'),'index must still load Case 1 runtime');
-assert(index.includes('<script src="case2-engine.js?v=41"></script>'),'index must still load production case router');
+assert(index.includes('<script src="case1-unified-engine.js?v=14"></script>'),'index must still load Case 1 runtime');
+assert(index.includes('<script src="case2-engine.js?v=42"></script>'),'index must still load production case router');
 assert(router.includes('case2-rain-canon-engine.js?v=17'),'Case 2 must load the updated save/Canon runtime');
 assert(router.includes('<option value="case3">第三案｜第十三張底片</option>'),'case picker must expose Case 3');
 assert(router.includes("if(choice==='case3'){startCase3();return}"),'case picker must route Case 3');
@@ -22,7 +22,7 @@ assert(router.includes("window.Case3FilmUI.mount('case3ProductionRoot',{playerNa
 assert(!router.includes('case3-preview.html'),'production routing must not depend on the standalone preview page');
 
 const ordered=[
- 'case3-film-canon.js?v=3',
+ 'case3-film-canon.js?v=4',
  'case3-art-manifest.js?v=1',
  'case3-film-engine.js?v=3',
  'case3-film-ui.js?v=4'

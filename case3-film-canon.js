@@ -244,10 +244,10 @@ var C = {
       question:'第 13 格原片發生了什麼？',
       explain:'時間線能確定第 13 格先正常進入 A-217，9 月 19 日仍可用來製作 B-084；它是在那之後才離開目前保存的底片組。',
       options:[
-        {id:'q1_a',text:'第 13 格原本就不存在，接觸印樣上的影像應是後來補上的。',ok:false,errorType:'overcorrection',feedback:'這個說法否定了接觸印樣與 B-084 工作紀錄共同支持的存在時間。'},
-        {id:'q1_b',text:'第 13 格正常形成，接觸印樣製作時存在，9 月 19 日又曾以原片製作 B-084；之後才從 A-217 被取下。',ok:true,errorType:null,feedback:'這個說法只使用已被時間線支持的部分。'},
-        {id:'q1_c',text:'第 13 格既然後來不見了，就表示照片拍到的事情一定需要被掩蓋。',ok:false,errorType:'image_literalism',feedback:'「後來缺片」不能反過來證明照片中的行為本身具有特殊目的。'},
-        {id:'q1_d',text:'一定有人先散布了錯誤說法，才會有人去取下第 13 格。',ok:false,errorType:'forced_origin',feedback:'目前資料不能把缺片行為追溯成一條已知且唯一的傳言源頭。'}
+        {id:'q1_a',text:'第 13 格是在沖洗時留下的空格；印樣與 B-084 使用的是另行補入的影像。',ok:false,errorType:'overcorrection',feedback:'這個說法否定了接觸印樣與 B-084 工作紀錄共同支持的存在時間。'},
+        {id:'q1_b',text:'第 13 格在製作印樣及 B-084 時仍在；之後才被取下，放進舊零片中。',ok:true,errorType:null,feedback:'這個說法只使用已被時間線支持的部分。'},
+        {id:'q1_c',text:'第 13 格先拍下需要隱藏的交接；後來取下原片，是為了掩蓋那次交接。',ok:false,errorType:'image_literalism',feedback:'「後來缺片」不能反過來證明照片中的行為本身具有特殊目的。'},
+        {id:'q1_d',text:'第 13 格先被人說成可疑影像；最早提出這個說法的人，後來安排了取片。',ok:false,errorType:'forced_origin',feedback:'目前資料不能把缺片行為追溯成一條已知且唯一的傳言源頭。'}
       ]
     },
     {
@@ -255,10 +255,10 @@ var C = {
       question:'第 13 格與 11～15 是什麼關係？',
       explain:'人物、移動物體與固定背景三類觀察彼此相容，因此現有證據一致支持連續序列；這不等於宣稱任何形式的影像處理在物理上絕不可能。',
       options:[
-        {id:'q2_a',text:'三類畫面特徵彼此連續，現有證據一致支持第 13 格屬於這組連續拍攝影像。',ok:true,errorType:null,feedback:'這個表述保留了證據強度，也沒有把「一致支持」誇大成絕對不可能造假。'},
-        {id:'q2_b',text:'既然畫面連續，就能百分之百證明這卷底片從來沒有被任何方式處理過。',ok:false,errorType:'overcorrection',feedback:'畫面連續性支持序列關係，但不是實驗室等級的「排除所有處理可能」。'},
-        {id:'q2_c',text:'第 13 格看起來最關鍵，所以它比前後影格更能單獨說明整起事件。',ok:false,errorType:'image_literalism',feedback:'把單格抽離序列，正是這起案件容易產生過度解讀的地方。'},
-        {id:'q2_d',text:'要解釋這組影格，必須先找出第一個說它可疑的人。',ok:false,errorType:'forced_origin',feedback:'影格是否連續可以直接從影像本身分析，不需要先指定一個傳言起點。'}
+        {id:'q2_a',text:'人物、腳踏車和背景的變化相接，第 13 格可接回這組連續拍攝的影像。',ok:true,errorType:null,feedback:'這個表述保留了證據強度，也沒有把「一致支持」誇大成絕對不可能造假。'},
+        {id:'q2_b',text:'人物、腳踏車和背景的變化相接，這組底片也就排除了後續影像處理。',ok:false,errorType:'overcorrection',feedback:'畫面連續性支持序列關係，但不是實驗室等級的「排除所有處理可能」。'},
+        {id:'q2_c',text:'第 13 格呈現交接的關鍵瞬間，單獨看這一格已能交代事件的完整經過。',ok:false,errorType:'image_literalism',feedback:'把單格抽離序列，正是這起案件容易產生過度解讀的地方。'},
+        {id:'q2_d',text:'第 13 格的序列位置取決於傳言起點，先查最早看圖的人才能確認前後關係。',ok:false,errorType:'forced_origin',feedback:'影格是否連續可以直接從影像本身分析，不需要先指定一個傳言起點。'}
       ]
     },
     {
@@ -266,10 +266,10 @@ var C = {
       question:'單看 12～14 格的影像序列，可以支持什麼？',
       explain:'只看影像序列，可以支持「一只紙袋由一名男子轉到另一名男子手中」；人物姓名、包件編號與業務背景都來自影像以外的資料。',
       options:[
-        {id:'q3_a',text:'洪明義把 M-317 照相材料交給陳啟明。',ok:false,errorType:'image_literalism',feedback:'姓名、M-317 與貨物背景都不是單看 12～14 格能得到的資訊。'},
-        {id:'q3_b',text:'一名男子將一只紙袋交到另一名男子手中。',ok:true,errorType:null,feedback:'這是影像序列本身能支持的最強描述。'},
-        {id:'q3_c',text:'只能說兩名男子站得很近，完全不能支持紙袋有發生轉手。',ok:false,errorType:'overcorrection',feedback:'前後影格中手部與紙袋位置的連續變化，已經比「只是站得近」多提供了一步支持。'},
-        {id:'q3_d',text:'這段影像最重要的是找出誰先把它說成可疑交易。',ok:false,errorType:'forced_origin',feedback:'這題只問影像本身；傳言如何出現是另一條證據問題。'}
+        {id:'q3_a',text:'一名送件人把照相材料交給店員，影格記下了這批貨品的收貨過程。',ok:false,errorType:'image_literalism',feedback:'姓名、M-317 與貨物背景都不是單看 12～14 格能得到的資訊。'},
+        {id:'q3_b',text:'一名男子把紙袋交給另一名男子，影格記下了紙袋與手部位置的變化。',ok:true,errorType:null,feedback:'這是影像序列本身能支持的最強描述。'},
+        {id:'q3_c',text:'兩名男子在側門前短暫靠近，影格記下的位置變化還不足以確認轉手。',ok:false,errorType:'overcorrection',feedback:'前後影格中手部與紙袋位置的連續變化，已經比「只是站得近」多提供了一步支持。'},
+        {id:'q3_d',text:'兩名男子的交接引起第一輪議論，影格記下了後來傳言開始的那一刻。',ok:false,errorType:'forced_origin',feedback:'這題只問影像本身；傳言如何出現是另一條證據問題。'}
       ]
     },
     {
@@ -277,10 +277,10 @@ var C = {
       question:'M-317 相關資料增加了什麼資訊？',
       explain:'材料行配送簿與明光收貨簿是兩套獨立來源，能提供與照片中的紙袋轉交相符的日常業務背景；但它們不會讓照片本身突然看見袋內內容。',
       options:[
-        {id:'q4_a',text:'兩套獨立業務紀錄提供一個與照片中的紙袋轉交相符的日常收貨背景。',ok:true,errorType:null,feedback:'這把外部紀錄放在它應有的位置：補足背景，而不是改寫照片本身。'},
-        {id:'q4_b',text:'既然查到 M-317，就能直接證明照片中的紙袋裡裝的就是帳上那批物品。',ok:false,errorType:'image_literalism',feedback:'紀錄與影像相互吻合，仍不等於肉眼看見袋內內容。'},
-        {id:'q4_c',text:'既然有正常業務紀錄，就能排除這次交接存在任何其他意義的可能。',ok:false,errorType:'overcorrection',feedback:'日常業務背景得到支持，不等於所有其他未證明可能都被絕對排除。'},
-        {id:'q4_d',text:'真正關鍵是配送簿能不能指出最早散播照片說法的人。',ok:false,errorType:'forced_origin',feedback:'配送與收貨紀錄處理的是包件背景，不是傳言源頭。'}
+        {id:'q4_a',text:'配送簿與收貨簿的編號、日期相接，為畫面中的交接提供了日常收貨背景。',ok:true,errorType:null,feedback:'這把外部紀錄放在它應有的位置：補足背景，而不是改寫照片本身。'},
+        {id:'q4_b',text:'配送簿與收貨簿的編號、日期相接，也確認了畫面中紙袋內的實際物品。',ok:false,errorType:'image_literalism',feedback:'紀錄與影像相互吻合，仍不等於肉眼看見袋內內容。'},
+        {id:'q4_c',text:'配送簿與收貨簿的編號、日期相接，這次交接因此可以排除其他活動背景。',ok:false,errorType:'overcorrection',feedback:'日常業務背景得到支持，不等於所有其他未證明可能都被絕對排除。'},
+        {id:'q4_d',text:'配送簿與收貨簿的經手人相接，可以循這條人員鏈確定照片傳言的起點。',ok:false,errorType:'forced_origin',feedback:'配送與收貨紀錄處理的是包件背景，不是傳言源頭。'}
       ]
     },
     {
@@ -288,10 +288,10 @@ var C = {
       question:'關於第 13 格被取下，目前證據能支持到哪一步？',
       explain:'秀蓮有接觸機會；找到的第 13 格原片與她獨立說出的藏匿位置相符；她也承認自己取下原片。這些能支持行為事實。她所說的恐懼與動機則仍屬人物自述。',
       options:[
-        {id:'q5_a',text:'秀蓮承認取下原片，藏匿細節也和實際發現相符；她所說的動機仍應和行為事實分開記錄。',ok:true,errorType:null,feedback:'這個答案把可核對的行為與只能由本人陳述的內在動機分開。'},
-        {id:'q5_b',text:'她既然承認剪片，就證明她知道照片拍到的是秘密活動。',ok:false,errorType:'image_literalism',feedback:'承認剪片能證明她的行為，不能替照片內容增加原本不存在的證明力。'},
-        {id:'q5_c',text:'既然原片最後找回來了，就表示秀蓮的剪片行為其實沒有調查意義。',ok:false,errorType:'overcorrection',feedback:'原片是否找回，和「誰在何時把它從 A-217 取下」是兩個不同問題。'},
-        {id:'q5_d',text:'她的承認也證明她就是整條傳言最早的來源。',ok:false,errorType:'forced_origin',feedback:'現有證據沒有建立她是第一個提出或散播那些解讀的人。'}
+        {id:'q5_a',text:'秀蓮的承認與藏片位置相符，能支持她取片；她說的動機另作自述記錄。',ok:true,errorType:null,feedback:'這個答案把可核對的行為與只能由本人陳述的內在動機分開。'},
+        {id:'q5_b',text:'秀蓮的承認與藏片位置相符，能支持她取片，也支持她知道交接涉及秘密。',ok:false,errorType:'image_literalism',feedback:'承認剪片能證明她的行為，不能替照片內容增加原本不存在的證明力。'},
+        {id:'q5_c',text:'秀蓮的承認與找回原片相符，缺片只是暫時保管變動，取片無須另作追查。',ok:false,errorType:'overcorrection',feedback:'原片是否找回，和「誰在何時把它從 A-217 取下」是兩個不同問題。'},
+        {id:'q5_d',text:'秀蓮的承認與看圖經歷相符，能將取片及最早散播照片說法都歸到她身上。',ok:false,errorType:'forced_origin',feedback:'現有證據沒有建立她是第一個提出或散播那些解讀的人。'}
       ]
     },
     {
@@ -299,10 +299,10 @@ var C = {
       question:'目前證據允許我們對整起事件下什麼結論？',
       explain:'這起事件同時存在「真實影像」「外部背景」「後來的解讀」與「剪片行為」。把這幾層分開，才能避免把真照片變成真故事，也避免找到日常背景後又把所有未知都抹掉。',
       options:[
-        {id:'q6_a',text:'第 13 格是真實影像，也記錄一次紙袋轉交；獨立業務資料提供相符的日常背景，但照片本身不能證明紙袋內容或秘密活動。秀蓮之後取下原片，使缺片本身又容易被讀成有人正在掩蓋什麼；目前仍無法指定唯一的傳言源頭。',ok:true,errorType:null,feedback:'這個結論把影像、外部紀錄、人物行為與未知部分分開保存。'},
-        {id:'q6_b',text:'照片是真的，所以外界對這次交接的嚴重解讀大致也是真的。',ok:false,errorType:'image_literalism',feedback:'真實照片只能證明它實際記錄到的畫面，不能自動證明旁人補上的故事。'},
-        {id:'q6_c',text:'業務紀錄顯示這像一般收貨，因此整起事件已經完全沒有任何未知之處。',ok:false,errorType:'overcorrection',feedback:'業務背景得到支持，但傳言如何形成、每個人的主觀動機等仍有未被完整證明的部分。'},
-        {id:'q6_d',text:'要結案就必須指出一個人是最早且故意散播錯誤解讀的源頭。',ok:false,errorType:'forced_origin',feedback:'目前資料不足以重建唯一、完整且帶有意圖判斷的傳言源頭鏈。'}
+        {id:'q6_a',text:'影像記下紙袋轉交，業務紀錄補足收貨背景；秀蓮取下原片，傳言起點仍未查明。',ok:true,errorType:null,feedback:'這個結論把影像、外部紀錄、人物行為與未知部分分開保存。'},
+        {id:'q6_b',text:'影像記下紙袋轉交，缺片呼應隱密活動的說法；秀蓮取下原片，外界解讀得到印證。',ok:false,errorType:'image_literalism',feedback:'真實照片只能證明它實際記錄到的畫面，不能自動證明旁人補上的故事。'},
+        {id:'q6_c',text:'影像記下紙袋轉交，業務紀錄已釐清整起事件；秀蓮取下原片，其餘疑問也可結束。',ok:false,errorType:'overcorrection',feedback:'業務背景得到支持，但傳言如何形成、每個人的主觀動機等仍有未被完整證明的部分。'},
+        {id:'q6_d',text:'影像記下紙袋轉交，看圖與取片經歷接成一線；秀蓮取下原片，也可定為傳言起點。',ok:false,errorType:'forced_origin',feedback:'目前資料不足以重建唯一、完整且帶有意圖判斷的傳言源頭鏈。'}
       ]
     }
   ],
