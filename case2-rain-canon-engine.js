@@ -126,7 +126,7 @@ function enterLocation(id){
  if(id==='home'&&from!=='home')s.flags.returned_home=true;
  s.loc=id;s.visited[id]=true;
  if(id==='home')maybeQiulanReveal();
- save();render();
+ save();render();readingPositions.scene=0;window.scrollTo(0,0);
 }
 
 function doAction(id){
@@ -138,7 +138,7 @@ function doAction(id){
  setFlags(a.set);
  s.flags.lastAction=id;
  s.feedback=a.text||'';
- save();render();
+ save();render();readingPositions.scene=0;window.scrollTo(0,0);
 }
 
 function phaseLabel(){
@@ -262,7 +262,7 @@ function renderDeductionGate(){
  $('v2RainMain').innerHTML=renderHeader()+'<article class="card c2-body"><p class="c2-kicker">最終推理</p><h2>'+(ready?'核心證據鏈已完成':'尚未具備結案條件')+'</h2><p>'+(ready?'把一路記下來的物件、時間和說法排在一起，選出目前證據能支持的解釋。':'繼續調查目前的地點，帶著新線索回訪，再核對留下來的紀錄。')+'</p>'+(ready?'<button id="c2StartDeduction" class="primary" type="button">開始最終推理</button>':'')+'</article>'+navHtml('deduction');
  bindCommon();bindDeductionStart();
 }
-function bindDeductionStart(){var d=$('c2StartDeduction');if(d)d.onclick=function(){readingPositions.deduction=0;s.phase='deduction';s.deduction=0;s.feedback='';save();render()}}
+function bindDeductionStart(){var d=$('c2StartDeduction');if(d)d.onclick=function(){readingPositions.deduction=0;s.phase='deduction';s.deduction=0;s.feedback='';save();render();window.scrollTo(0,0)}}
 
 function bindCommon(){Array.prototype.forEach.call(document.querySelectorAll('[data-view]'),function(b){b.onclick=function(){changeView(b.getAttribute('data-view'))}})}
 function renderView(view){if(s.phase==='deduction'&&view!=='records')return renderDeduction();if(view==='deduction')return renderDeductionGate();if(view==='map')return renderMap();if(view==='records')return renderRecords();renderInvestigation()}
@@ -313,7 +313,7 @@ function dominantFailureEnding(lastType){
 function answerDeduction(id){
  var d=DATA.deductions[s.deduction],opt=null;for(var i=0;i<d.options.length;i++){if(d.options[i].id===id){opt=d.options[i];break}}
  var ok=id===d.correct,failType=ok?'':((opt&&opt.failureType)||'overreach');s.answers.push({q:d.id,a:id,ok:ok,failureType:failType});
- if(ok){s.feedback='上一題成立｜'+d.explain;s.deduction++;save();render();return}
+ if(ok){s.feedback='上一題成立｜'+d.explain;s.deduction++;readingPositions.deduction=0;save();render();window.scrollTo(0,0);return}
  s.focus--;
  if(s.focus<=0){s.ending=dominantFailureEnding(failType);s.finished=true;s.phase='done';save();render();return}
  s.feedback='這個說法還跨過了一步證據。提示：'+(d.hint||'重新檢查直接證據與推測之間的界線。');save();render();

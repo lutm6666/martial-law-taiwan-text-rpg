@@ -16,8 +16,8 @@
  function ok(cond,msg){if(!cond)throw new Error(msg);out.push('PASS '+msg)}
  function q(sel){return doc.querySelector(sel)}
  function click(sel){var el=q(sel);if(!el)throw new Error('missing '+sel);el.click();return el}
- function action(id){return click('[data-action="'+id+'"]')}
- function go(id){click('[data-view="map"]');return click('[data-go="'+id+'"]')}
+ function action(id){game.scrollTo(0,300);var b=click('[data-action="'+id+'"]');ok(game.scrollY===0,'new action starts at reading origin: '+id);return b}
+ function go(id){click('[data-view="map"]');var b=click('[data-go="'+id+'"]');ok(game.scrollY===0,'new location starts at reading origin: '+id);return b}
  function readingRoundTrip(win,d,nav,recordValue,deductionValue,label){
   function press(value){var b=d.querySelector(nav+'[data-'+(nav.indexOf('data-tab')>=0?'tab':'view')+'="'+value+'"]');if(!b)throw new Error('missing reading tab '+value);b.click();return b}
   press(deductionValue);win.scrollTo(0,120);var questionY=win.scrollY;

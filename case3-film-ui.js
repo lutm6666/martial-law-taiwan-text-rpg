@@ -281,23 +281,23 @@ function bind(){
  var startDeduction=$('[data-start-deduction]');if(startDeduction)startDeduction.onclick=function(){
   var r=E.startDeduction(state);
   if(!r.ok){notice='目前還缺少結案所需的關鍵證據鏈。';render();return}
-  state=r.state;readingPositions.deduction=0;view='deduction';notice='最終推理開始。每一題都只選擇目前證據能支持到的程度。';render();
+  state=r.state;readingPositions.deduction=0;view='deduction';notice='最終推理開始。每一題都只選擇目前證據能支持到的程度。';render();window.scrollTo(0,0);
  };
  $all('[data-deduction-option]').forEach(function(b){b.onclick=function(){
   var r=E.answerDeduction(state,b.getAttribute('data-deduction-option'));
   if(!r.ok){notice='這個選項目前無法提交。';render();return}
-  state=r.state;
+  state=r.state;if(r.option.ok)readingPositions.deduction=0;
   notice=(r.option.ok?'這一步成立｜':'推理專注 -1；請重新核對這一題｜')+(r.option.feedback||r.question.explain||'');
-  render();
+  render();if(r.option.ok)window.scrollTo(0,0);
  }});
  $all('[data-record-filter]').forEach(function(b){b.onclick=function(){changeReading('records',b.getAttribute('data-record-filter'))}});
  $all('[data-go]').forEach(function(b){b.onclick=function(){
-  var r=E.travel(state,b.getAttribute('data-go'));if(r.ok){state=r.state;view='scene';notice='';render()}else{saveNotice('目前還沒有足夠理由前往這個地點。');render()}
+  var r=E.travel(state,b.getAttribute('data-go'));if(r.ok){state=r.state;view='scene';notice='';readingPositions.scene=0;render();window.scrollTo(0,0)}else{saveNotice('目前還沒有足夠理由前往這個地點。');render()}
  }});
  $all('[data-action]').forEach(function(b){b.onclick=function(){
   var before=E.snapshot(state),r=E.runAction(state,b.getAttribute('data-action'));
   if(!r.ok){saveNotice('這個動作目前無法執行。');render();return}
-  state=r.state;saveNotice(changedNotice(before));render();
+  state=r.state;saveNotice(changedNotice(before));readingPositions.scene=0;render();window.scrollTo(0,0);
  }});
  $all('[data-frame]').forEach(function(b){b.onclick=function(){
   var before=E.snapshot(state),r=E.observeFrame(state,b.getAttribute('data-frame'));
