@@ -88,6 +88,10 @@
    ok(!!q('[data-start-deduction]'),'deduction gate unlocks');
    mobileLayout('deduction-ready');
    click('[data-start-deduction]');
+   click('[data-view="records"]');
+   ok(!!q('.c3-record-tabs'),'deduction allows reviewing acquired records');
+   click('[data-view="deduction"]');
+   ok(!!q('[data-deduction-option="q1_b"]'),'return to deduction retains question');
    click('[data-deduction-option="q1_a"]');
    ok(!!q('[data-deduction-option="q1_b"]')&&doc.body.textContent.includes('3/4'),'wrong answer stays on same question and costs focus');
    ['q1_b','q2_a','q3_b','q4_a','q5_a','q6_a'].forEach(function(id){click('[data-deduction-option="'+id+'"]')});

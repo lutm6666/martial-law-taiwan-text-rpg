@@ -50,7 +50,7 @@ console.log('PASS production case routing');
 
 // Loading old investigations must bypass the new first-case opening.
 const firstContext={window:{}};vm.createContext(firstContext);
-vm.runInContext(read('case1-unified-engine.js').replace('init();','window.Case1SaveTest={fresh:fresh,normalize:normalize};'),firstContext);
+vm.runInContext(read('case1-unified-engine.js').replace(/init\(\);\s*\}\)\(\);\s*$/, 'window.Case1SaveTest={fresh:fresh,normalize:normalize};})();'),firstContext);
 const first=firstContext.window.Case1SaveTest;
 assert(first.fresh('new').flags.openingSeen===false,'new Case 1 starts with a prologue');
 let old=first.fresh('old');old.evidence=['missing_index'];delete old.flags.openingSeen;

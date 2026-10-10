@@ -25,7 +25,7 @@ function imageHtml(path,alt,cls){return path?'<img class="'+esc(cls||'c3-art-img
 function ensureStyle(){
  if(document.getElementById('case3FilmStyle'))return;
  var st=document.createElement('style');st.id='case3FilmStyle';st.textContent='.c3-shell{--c3-bg:#10110e;--c3-panel:#191b16;--c3-ink:#ece8dc;--c3-muted:#9d9a8e;--c3-line:#3a3d33;--c3-accent:#b69b5f;color:var(--c3-ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;max-width:760px;margin:0 auto;padding:16px 16px 94px}.c3-card{background:linear-gradient(180deg,#1e211a,#181a16);border:1px solid #34372e;border-radius:17px;padding:16px;box-shadow:0 12px 30px rgba(0,0,0,.2)}.c3-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.c3-kicker{font-size:.68rem;letter-spacing:.12em;color:#9a917c}.c3-head h1{font-size:1.35rem;margin:4px 0}.c3-chip{border:1px solid #56594c;border-radius:999px;padding:6px 10px;font-size:.68rem;color:#c6c1b2;background:#171914;white-space:nowrap}.c3-sub{color:#99968a;font-size:.76rem;line-height:1.55}.c3-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:12px 0}.c3-tabs button,.c3-record-tabs button{border:1px solid #3a3d33;background:#181a16;color:#a6a397;border-radius:11px;padding:10px}.c3-tabs button.active,.c3-record-tabs button.active{background:#302d21;border-color:#8c7b50;color:#eee4ce}.c3-scene h2,.c3-card h2{margin:4px 0 10px}.c3-scene p{line-height:1.82;color:#d5d0c4}.c3-scene-art{margin:0 0 14px;border:1px solid #35382f;border-radius:14px;overflow:hidden;background:#11130f}.c3-scene-art img{display:block;width:100%;height:clamp(190px,42vw,360px);object-fit:cover}.c3-evidence-art{display:block;width:100%;margin:0 0 10px;border-radius:9px;aspect-ratio:3/2;object-fit:contain;background:#11130f}.c3-frame img{display:block;width:100%;height:100%;object-fit:contain}.c3-frame-label{font-size:.72rem;color:#aaa799;padding:2px 5px}.c3-frame.has-art .c3-frame-label{position:absolute;left:5px;bottom:5px;border-radius:5px;background:rgba(10,11,9,.78);color:#eee8d8}.c3-story{margin-top:12px;padding:13px 14px;border-left:3px solid #8d7853;background:rgba(182,155,95,.07);border-radius:0 12px 12px 0}.c3-story-title{font-size:.7rem;letter-spacing:.08em;color:#c5b482;font-weight:700;margin-bottom:7px}.c3-story p{margin:0;line-height:1.82;color:#ddd6c6}.c3-actions,.c3-map,.c3-record-list{display:grid;gap:9px;margin-top:12px}.c3-action,.c3-map button,.c3-frame-btn,.c3-hypothesis-btn{border:1px solid #3d4036;background:#1b1d18;color:#ece8dc;border-radius:13px;padding:12px;text-align:left}.c3-action strong,.c3-map strong,.c3-frame-btn strong{display:block}.c3-action small,.c3-map small,.c3-frame-btn small{display:block;color:#969386;margin-top:5px;line-height:1.5}.c3-hypothesis-btn{min-height:44px;min-width:44px}.c3-action:disabled,.c3-map button:disabled,.c3-frame-btn:disabled{opacity:.42}.c3-map button.current{border-color:#9b8754;background:#292719}.c3-note{margin-top:12px;padding:11px 12px;border-left:3px solid #8d7853;background:#211e18;line-height:1.65;color:#c8c1b1}.c3-empty{color:#908d82;line-height:1.65}.c3-record-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}.c3-record{border:1px solid #35382f;border-radius:12px;padding:12px;background:#171914}.c3-record strong{display:block}.c3-record small{display:block;color:#9d9a8f;line-height:1.62;margin-top:5px}.c3-tag{display:inline-block;margin-top:8px;border:1px solid #4a4c42;border-radius:999px;padding:3px 7px;font-size:.66rem;color:#aaa79b}.c3-frame-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:13px 0}.c3-frame{position:relative;overflow:hidden;aspect-ratio:3/2;border:1px solid #4a4b42;border-radius:8px;background:linear-gradient(145deg,#272a23,#11130f);display:flex;align-items:center;justify-content:center;color:#aaa799;font-weight:700}.c3-frame:nth-child(3){border-style:dashed;border-color:#8f7a4d}.c3-frame-grid{display:grid;gap:8px}.c3-frame-btn.done{border-color:#756b4b;background:#242318}.c3-status-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.c3-status{padding:10px;border:1px solid #34372f;border-radius:10px;background:#151713}.c3-status small{display:block;color:#8f8c80}.c3-status strong{display:block;margin-top:3px}.c3-option{display:block;width:100%;margin-top:9px;border:1px solid #3d4036;background:#1b1d18;color:#ece8dc;border-radius:13px;padding:12px;text-align:left;line-height:1.65}.c3-progress{display:flex;gap:5px;margin:12px 0}.c3-progress i{display:block;height:6px;flex:1;border-radius:999px;background:#3d4036}.c3-progress i.done{background:#b69b5f}.c3-ending{padding:19px}.c3-ending h2{line-height:1.45}.c3-ending p{line-height:1.85;color:#d9d2c2}.c3-ending-name{display:inline-block;border:1px solid #8c7b50;border-radius:999px;padding:5px 9px;color:#d8c590;font-size:.72rem;margin-bottom:8px}.c3-reset{width:100%;margin-top:14px;border:1px solid #484a40;background:transparent;color:#aaa79b;border-radius:12px;padding:11px}.c3-ready{border-left-color:#b69b5f}.c3-locked{opacity:.66}.c3-footer{margin-top:14px;color:#77786f;font-size:.7rem;line-height:1.55}@media(min-width:640px){.c3-actions,.c3-map{grid-template-columns:1fr 1fr}.c3-frame-grid{grid-template-columns:repeat(3,1fr)}}';
- st.textContent+='.case-opening{padding:22px 20px}.case-opening h2{margin:5px 0 16px;font-size:1.65rem}.opening-text{font-size:1.02rem;line-height:2}.opening-text p{margin:0 0 1.15em}.opening-text p:last-child{margin-bottom:0}.paper .eyebrow{color:#715c34}.c2-tabs,.c3-tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin:0;background:#272921;padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-right));border-top:1px solid #3b3d34}.c2-tabs button,.c3-tabs button{border:0;background:transparent;color:#89877d;padding:10px 5px;border-radius:10px;min-height:44px}.c2-tabs button.active,.c3-tabs button.active{background:#36382e;color:#f2ecdc}.c3-scene-art img{height:auto;aspect-ratio:3/2}.c3-shell{max-width:none}.case-meta{align-items:center}.c2-scene,.c3-scene{border-radius:18px}@media(min-width:640px){.c2-tabs,.c3-tabs{left:50%;right:auto;width:760px;max-width:100%;transform:translateX(-50%)}}';document.head.appendChild(st);
+ st.textContent+='.case-opening{padding:22px 20px}.case-opening h2{margin:5px 0 16px;font-size:1.65rem}.opening-text{font-size:1.02rem;line-height:2}.opening-text p{margin:0 0 1.15em}.opening-text p:last-child{margin-bottom:0}.paper .eyebrow{color:#715c34}.c2-tabs,.c3-tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin:0;background:#272921;padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-right));border-top:1px solid #3b3d34}.c2-tabs button,.c3-tabs button{border:0;background:transparent;color:#89877d;padding:10px 5px;border-radius:10px;min-height:44px}.c2-tabs button.active,.c3-tabs button.active{background:#36382e;color:#f2ecdc}.c3-scene-art img{height:auto;aspect-ratio:3/2}.c3-shell{max-width:760px}.case-meta{align-items:center}.c2-scene,.c3-scene{border-radius:18px}@media(min-width:640px){.c2-tabs,.c3-tabs{left:50%;right:auto;width:760px;max-width:100%;transform:translateX(-50%)}}';document.head.appendChild(st);
 }
 
 function getState(name){
@@ -44,7 +44,7 @@ function tabHtml(){
   tabBtn('scene','調查')+tabBtn('map','地圖')+tabBtn('records','紀錄')+tabBtn('deduction','推理')+
  '</nav>';
 }
-function tabBtn(id,label){return '<button type="button" data-view="'+id+'" aria-pressed="'+(view===id?'true':'false')+'" class="tab-btn '+(view===id?'active':'')+'">'+label+'</button>'}
+function tabBtn(id,label){return '<button type="button" data-view="'+id+'" '+(state.phase==='deduction'&&(id==='scene'||id==='map')?'disabled':'')+' aria-pressed="'+(view===id?'true':'false')+'" class="tab-btn '+(view===id?'active':'')+'">'+label+'</button>'}
 
 function render(){
  if(!root||!state)return;
@@ -57,7 +57,7 @@ function render(){
   html+=renderEnding();
  }else if(state.phase==='deduction'){
   if(notice)html+='<div class="c3-note">'+esc(notice)+'</div>';
-  html+=renderDeduction();
+  html+=view==='records'?renderRecords():renderDeduction();
  }else{
   if(notice)html+='<div class="c3-note">'+esc(notice)+'</div>';
   if(view==='map')html+=renderMap();
@@ -65,7 +65,7 @@ function render(){
   else if(view==='deduction')html+=renderDeduction();
   else html+=renderScene();
  }
- if(state.phase==='investigate')html+=tabHtml();
+ if(state.phase!=='done')html+=tabHtml();
  html+='<button type="button" class="secondary c3-reset" data-reset>重新調查第三案</button><div class="c3-footer">各案存檔彼此獨立；返回標題後可由案件選擇繼續調查。</div></div>';
  root.innerHTML=html;
  bind();
@@ -270,7 +270,7 @@ function bind(){
  var startDeduction=$('[data-start-deduction]');if(startDeduction)startDeduction.onclick=function(){
   var r=E.startDeduction(state);
   if(!r.ok){notice='目前還缺少結案所需的關鍵證據鏈。';render();return}
-  state=r.state;notice='最終推理開始。每一題都只選擇目前證據能支持到的程度。';render();
+  state=r.state;view='deduction';notice='最終推理開始。每一題都只選擇目前證據能支持到的程度。';render();
  };
  $all('[data-deduction-option]').forEach(function(b){b.onclick=function(){
   var r=E.answerDeduction(state,b.getAttribute('data-deduction-option'));
@@ -302,7 +302,7 @@ function mount(target,options){
  var opts=options||{};
  state=getState(opts.playerName||'林默');
  if(opts.reset===true)state=E.reset(opts.playerName||'林默');
- view='scene';recordFilter='E';notice='';
+ view=state.phase==='deduction'?'deduction':'scene';recordFilter='E';notice='';
  render();return true;
 }
 function getSnapshot(){return state?E.snapshot(state):null}

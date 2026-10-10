@@ -275,7 +275,20 @@ function saveIsolation(){
  assert(storage[C.saveKey],'Case 3 save missing');
 }
 
+function validatorFailClosed(){
+ const {spawnSync}=require('child_process');
+ for(const [from,to,message] of [
+  ['maxFocus:4,','maxFocus:5,','four-focus retry rule'],
+  ["text:'九月二十二日","text:'秀蓮九月二十二日",'opening must not reveal']
+ ]){
+  const code="const fs=require('fs'),read=fs.readFileSync;fs.readFileSync=function(p,...args){const s=read.call(fs,p,...args);return String(p).endsWith('case3-film-canon.js')?s.replace("+JSON.stringify(from)+","+JSON.stringify(to)+"):s};require('./tools/validate-case3.js');";
+  const result=spawnSync(process.execPath,['-e',code],{cwd:root,encoding:'utf8'});
+  assert.strictEqual(result.status,1,'invalid opening/rule must fail validation');
+  assert(result.stderr.includes(message),result.stderr);
+ }
+}
 const results=[];
+results.push((validatorFailClosed(),'PASS validator rejects invalid focus and opening spoilers'));
 results.push((retryAndLegacySaves(),'PASS retry and legacy save migration'));
 results.push((hypothesisSaveRepair(),'PASS hypothesis nested save repair'));
 [['route A',routeA],['route B',routeB],['route C',routeC],['negative gates',negativeChecks],['narrative state',narrativeState],['deduction correct',deductionCorrect],['deduction error endings',deductionErrorEndings],['deduction tie break',deductionTieBreak],['deduction ignores withdrawn hypothesis',deductionIgnoresWithdrawnHypothesis],['deduction rejects unknown option',deductionRejectsUnknownOption],['deduction save repair',deductionSaveRepair],['save isolation',saveIsolation]].forEach(([name,fn])=>{
