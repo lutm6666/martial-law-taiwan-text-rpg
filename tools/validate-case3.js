@@ -265,6 +265,9 @@ if(errors.length){
   console.error('FAIL Case 3 validation: '+errors.length+' issue(s)');
   process.exit(1);
 }
+expect(C.maxFocus===4,'Case 3 must share the four-focus retry rule');
+expect(C.opening&&C.opening.title&&C.opening.text,'Case 3 requires an opening narrative');
+expect(!/秀蓮|剪下|藏匿|M-317/.test(C.opening.text),'opening must not reveal later identity or findings');
 console.log('PASS Case 3 schema/reference validation');
 console.log('PASS Case 3 narrative completeness');
 console.log('PASS Case 3 deduction option schema');

@@ -5,6 +5,7 @@ var C=global.CASE3_FILM_CANON;
 if(!C){console.error('CASE3_FILM_CANON is required before case3-film-engine.js');return}
 
 var KEY=C.saveKey;
+var MAX_FOCUS=C.maxFocus;
 
 function fresh(name){
  return {
@@ -15,11 +16,11 @@ function fresh(name){
   frameAnalysis:{personMovement:false,movingObject:false,fixedBackground:false,continuityComplete:false,handoffSupported:false},
   keys:{b084:false,packageMarkPartial:false,m317:false},
   flags:{
-   b084SeenOutsideStudio:false,b084LedgerMatched:false,xiulianSawPhoto:false,
+   openingSeen:false,b084SeenOutsideStudio:false,b084LedgerMatched:false,xiulianSawPhoto:false,
    strongerInterpretationKnown:false,xiulianAccessWindowKnown:false,
    looseFilmProcedureKnown:false,frameCompareOpen:false,e10Found:false,e10Verified:false,xiulianAdmission:false
   },
-  deduction:{index:0,answers:[],ending:null}
+  deduction:{mode:'retry',index:0,answers:[],focus:MAX_FOCUS,ending:null}
  };
 }
 function arr(v){return Array.isArray(v)?v:[]}
@@ -78,18 +79,32 @@ function normalize(raw){
  ['personMovement','movingObject','fixedBackground','continuityComplete','handoffSupported'].forEach(function(k){s.frameAnalysis[k]=!!s.frameAnalysis[k]});
  s.keys=Object.assign(base.keys,obj(s.keys));Object.keys(base.keys).forEach(function(k){s.keys[k]=!!s.keys[k]});
  s.flags=Object.assign(base.flags,obj(s.flags));Object.keys(base.flags).forEach(function(k){s.flags[k]=!!s.flags[k]});
- s.deduction=Object.assign(base.deduction,obj(s.deduction));
- s.deduction.answers=sanitizeDeductionAnswers(s.deduction.answers);
- s.deduction.index=Math.max(0,Math.min(C.deductions.length,s.deduction.answers.length));
- s.deduction.ending=C.endings[s.deduction.ending]?s.deduction.ending:null;
- if(s.deduction.answers.length>=C.deductions.length){
-  s.deduction.ending=classifyEnding(s.deduction.answers);
-  s.phase='done';
+ var rawDeduction=obj(s.deduction),legacy=rawDeduction.mode!=='retry';
+ var answers=sanitizeDeductionAnswers(rawDeduction.answers);
+ s.deduction=Object.assign(base.deduction,rawDeduction);
+ // Completed pre-retry saves keep their original ending; partial saves replay
+ // only the reachable prefix, so an incorrect answer cannot skip a question.
+ if(legacy&&answers.length===C.deductions.length&&answers.every(function(a,i){return a.q===C.deductions[i].id})){
+  s.deduction.mode='legacy';s.deduction.answers=answers;
+  s.deduction.index=C.deductions.length;s.deduction.focus=MAX_FOCUS;
+  s.deduction.ending=classifyEnding(answers);s.phase='done';
  }else{
-  s.deduction.ending=null;
-  if(s.deduction.answers.length>0)s.phase='deduction';
-  else if(s.phase==='done')s.phase=C.predicates.canStartDeduction(s)?'deduction':'investigate';
+  var step=0,mistakes=0,valid=[];
+  answers.forEach(function(a){
+   if(step>=C.deductions.length||mistakes>=MAX_FOCUS||a.q!==C.deductions[step].id)return;
+   valid.push(a);if(a.ok)step++;else mistakes++;
+  });
+  s.deduction.mode='retry';s.deduction.answers=valid;
+  s.deduction.index=step;s.deduction.focus=MAX_FOCUS-mistakes;s.deduction.ending=null;
+  if(step===C.deductions.length||mistakes===MAX_FOCUS){
+   s.deduction.ending=step===C.deductions.length?'evidence_boundary':classifyEnding(valid);
+   s.phase='done';
+  }else if(valid.length||s.phase==='deduction'||s.phase==='done'){
+   s.phase=C.predicates.canStartDeduction(s)?'deduction':'investigate';
+  }
  }
+ // Existing investigations must not be interrupted by the new opening.
+ if(s.evidence.length||Object.keys(s.actionsDone).length||s.phase!=='investigate')s.flags.openingSeen=true;
  derive(s);
  return s;
 }
@@ -243,7 +258,7 @@ function testimonyView(s,id){
 function startDeduction(s){
  if(s.phase!=='investigate')return {ok:false,reason:'phase',state:s};
  if(!C.predicates.canStartDeduction(s))return {ok:false,reason:'requirements',state:s};
- s.phase='deduction';s.deduction.index=0;s.deduction.answers=[];s.deduction.ending=null;save(s);
+ s.phase='deduction';s.deduction={mode:'retry',index:0,answers:[],focus:MAX_FOCUS,ending:null};save(s);
  return {ok:true,state:s};
 }
 function classifyEnding(answers){
@@ -266,9 +281,10 @@ function answerDeduction(s,answer){
  if(!option)return {ok:false,reason:'unknown_option',state:s};
  var record={q:q.id,a:option.id,ok:option.ok===true,errorType:option.ok?null:option.errorType};
  s.deduction.answers.push(record);
- s.deduction.index++;
- if(s.deduction.index>=C.deductions.length){
-  s.deduction.ending=classifyEnding(s.deduction.answers);
+ if(option.ok)s.deduction.index++;
+ else s.deduction.focus=Math.max(0,s.deduction.focus-1);
+ if(s.deduction.index>=C.deductions.length||s.deduction.focus===0){
+  s.deduction.ending=s.deduction.index>=C.deductions.length?'evidence_boundary':classifyEnding(s.deduction.answers);
   s.phase='done';
  }
  save(s);
@@ -277,7 +293,7 @@ function answerDeduction(s,answer){
 
 function snapshot(s){
  return {
-  loc:s.loc,phase:s.phase,lastAction:s.lastAction,unlocked:s.unlocked.slice(),evidence:s.evidence.slice(),
+  playerName:s.playerName,loc:s.loc,phase:s.phase,lastAction:s.lastAction,deduction:JSON.parse(JSON.stringify(s.deduction)),unlocked:s.unlocked.slice(),evidence:s.evidence.slice(),
   conclusions:s.conclusions.slice(),testimonies:s.testimonies.slice(),
   frameAnalysis:Object.assign({},s.frameAnalysis),keys:Object.assign({},s.keys),
   flags:Object.assign({},s.flags),hypotheses:JSON.parse(JSON.stringify(s.hypotheses))

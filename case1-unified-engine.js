@@ -14,7 +14,7 @@ function done(id){return state.done.indexOf(id)!==-1}
 function gain(id){if(evidence[id]&&!has(id)){state.evidence.push(id);toast('新增紀錄：'+evidence[id].name)}}
 function know(id){if(people[id]&&state.people.indexOf(id)===-1)state.people.push(id)}
 function unlock(id){if(locations[id]&&state.unlocked.indexOf(id)===-1)state.unlocked.push(id)}
-function hideAll(){['startScreen','gameScreen','completeScreen','failScreen'].forEach(function(id){var el=$(id);if(el)el.classList.add('hidden')})}
+function hideAll(){['startScreen','prologueScreen','gameScreen','completeScreen','failScreen'].forEach(function(id){var el=$(id);if(el)el.classList.add('hidden')})}
 
 var art={
  tea:'assets/case1/tea.webp?v=9',
@@ -61,7 +61,7 @@ var deduction=[
  {q:'第四問：哪一件東西能把找回的紙和原冊直接接回去？',opts:[['ledger','借物簿'],['pages','找回的三頁筆記'],['runner','跑腿少年的說法']],correct:'pages',need:'archive_pages',teach:'頁碼、筆跡和裂口都在同一件物證上。'}
 ];
 
-function fresh(name){return{name:(name||'林默').trim()||'林默',caseId:'case1',schema:7,location:'tea',timePhase:0,unlocked:['tea'],visited:['tea'],evidence:[],people:[],done:[],flags:{actionResults:{},visualSeen:{},mistakes:0,deductionReady:false,postmanRumor:false},focus:MAX_FOCUS,deductionStep:0,finished:false,failed:false}}
+function fresh(name){return{name:(name||'林默').trim()||'林默',caseId:'case1',schema:7,location:'tea',timePhase:0,unlocked:['tea'],visited:['tea'],evidence:[],people:[],done:[],flags:{openingSeen:false,actionResults:{},visualSeen:{},mistakes:0,deductionReady:false,postmanRumor:false},focus:MAX_FOCUS,deductionStep:0,finished:false,failed:false}}
 function normalize(v){
  if(!v||typeof v!=='object'||v.caseId!=='case1')return null;
  var n=fresh(typeof v.name==='string'?v.name:'林默');
@@ -78,10 +78,11 @@ function normalize(v){
  else if(n.visited.indexOf('print')>=0||n.visited.indexOf('market')>=0)n.timePhase=1;
  n.focus=Math.max(0,Math.min(MAX_FOCUS,Number.isFinite(Number(v.focus))?Math.floor(Number(v.focus)):MAX_FOCUS));
  n.deductionStep=Math.max(0,Math.min(deduction.length,Number.isFinite(Number(v.deductionStep))?Math.floor(Number(v.deductionStep)):0));
- n.flags={actionResults:{},visualSeen:{},mistakes:0,deductionReady:false,postmanRumor:false};
+ n.flags={openingSeen:false,actionResults:{},visualSeen:{},mistakes:0,deductionReady:false,postmanRumor:false};
  if(v.flags&&typeof v.flags==='object'){
   if(v.flags.actionResults&&typeof v.flags.actionResults==='object')n.flags.actionResults=v.flags.actionResults;
   if(v.flags.visualSeen&&typeof v.flags.visualSeen==='object')n.flags.visualSeen=v.flags.visualSeen;
+  n.flags.openingSeen=v.flags.openingSeen===true;
   n.flags.mistakes=Number.isFinite(Number(v.flags.mistakes))?Math.max(0,Math.floor(Number(v.flags.mistakes))):0;
   n.flags.postmanRumor=!!v.flags.postmanRumor;
  }
@@ -98,6 +99,7 @@ function normalize(v){
  }
  if(n.timePhase>=3&&!returnReady)n.timePhase=n.visited.indexOf('bookstall')>=0?2:1;
  n.finished=!!v.finished&&n.deductionStep>=deduction.length;
+ if(n.evidence.length||n.done.length||n.finished||n.deductionStep||n.focus<=0)n.flags.openingSeen=true;
  n.failed=!n.finished&&n.focus<=0;
  return n;
 }
@@ -105,7 +107,7 @@ function unlockFor(n,id){if(locations[id]&&n.unlocked.indexOf(id)<0)n.unlocked.p
 function load(){return normalize(parse())}
 
 function startCase(){state=fresh($('nameInput').value);save();currentTab='scene';showGame();try{window.scrollTo({top:0,behavior:'instant'})}catch(e){window.scrollTo(0,0)}}
-function showGame(){hideAll();$('gameScreen').classList.remove('hidden');$('playerLabel').textContent=state.name+'・民俗家學調查者';$('caseChip').textContent='CASE 01・失落的三頁';var build=document.querySelector('.build');if(build)build.textContent='BUILD 6.0・UNIFIED PROTAGONIST';if($('failImage'))$('failImage').src=art.failed;renderFocus();setTab(currentTab)}
+function showGame(){hideAll();if(!state.flags.openingSeen&&!state.evidence.length&&!state.done.length){$('prologueScreen').classList.remove('hidden');$('case1OpeningNext').onclick=function(){state.flags.openingSeen=true;save();showGame()};return}$('gameScreen').classList.remove('hidden');$('playerLabel').textContent=state.name+'・民俗家學調查者';$('caseChip').textContent='CASE 01・失落的三頁';var build=document.querySelector('.build');if(build)build.textContent='BUILD 6.0・UNIFIED PROTAGONIST';if($('failImage'))$('failImage').src=art.failed;renderFocus();setTab(currentTab)}
 function renderFocus(){var box=$('focusDots');box.innerHTML='';for(var i=0;i<MAX_FOCUS;i++){var d=document.createElement('i');if(i<state.focus)d.classList.add('on');if(state.focus===1&&i===0)d.classList.add('danger');box.appendChild(d)}$('focusLabel').textContent='推理專注 '+state.focus+'/'+MAX_FOCUS}
 function setTab(tab){currentTab=tab;var panels={scene:'scenePanel',map:'mapPanel',record:'recordPanel',deduction:'deductionPanel'};document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.tab===tab)});Object.keys(panels).forEach(function(k){$(panels[k]).classList.toggle('hidden',k!==tab)});if(tab==='scene')renderScene();if(tab==='map')renderMap();if(tab==='record')renderRecords();if(tab==='deduction')renderDeduction()}
 function visualFor(id){
@@ -191,7 +193,7 @@ function init(){
  document.querySelectorAll('.tab-btn').forEach(function(b){b.onclick=function(){setTab(b.dataset.tab)}});
  $('recordEvidenceBtn').onclick=showEvidence;$('recordPeopleBtn').onclick=showPeople;
  $('restartBtn').onclick=function(){if(confirm('確定重新開始案件？目前案件一進度會被清除。'))restart()};
- $('retryBtn').onclick=restart;$('failHomeBtn').onclick=restart;$('homeBtn').onclick=restart;
+ $('retryBtn').onclick=restart;$('failHomeBtn').onclick=function(){location.reload()};$('homeBtn').onclick=function(){location.reload()};
  $('nextCaseBtn').onclick=function(){toast('案件二：《雨夜敲門》')};
  var old=parse();if(old&&old.caseId==='case1'&&typeof old.name==='string'&&old.name.trim())$('nameInput').value=old.name.trim();
   var saved=load();$('loadBtn').disabled=!saved;$('bootStatus').textContent=saved?'可繼續案件一；也可以輸入姓名重新開始。':'寫下姓名，去赴阿川的約。';

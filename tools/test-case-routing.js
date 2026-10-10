@@ -11,9 +11,9 @@ function assert(ok,msg){if(!ok)throw new Error(msg)}
 const index=read('index.html');
 const router=read('case2-engine.js');
 
-assert(index.includes('<script src="case1-unified-engine.js?v=12"></script>'),'index must still load Case 1 runtime');
-assert(index.includes('<script src="case2-engine.js?v=40"></script>'),'index must still load production case router');
-assert(router.includes('case2-rain-canon-engine.js?v=16'),'Case 2 must load the updated save/Canon runtime');
+assert(index.includes('<script src="case1-unified-engine.js?v=13"></script>'),'index must still load Case 1 runtime');
+assert(index.includes('<script src="case2-engine.js?v=41"></script>'),'index must still load production case router');
+assert(router.includes('case2-rain-canon-engine.js?v=17'),'Case 2 must load the updated save/Canon runtime');
 assert(router.includes('<option value="case3">第三案｜第十三張底片</option>'),'case picker must expose Case 3');
 assert(router.includes("if(choice==='case3'){startCase3();return}"),'case picker must route Case 3');
 assert(router.includes("next.textContent='開始案件三：《第十三張底片》';next.onclick=startCase3"),'correct Case 2 ending must expose Case 3 progression');
@@ -22,10 +22,10 @@ assert(router.includes("window.Case3FilmUI.mount('case3ProductionRoot',{playerNa
 assert(!router.includes('case3-preview.html'),'production routing must not depend on the standalone preview page');
 
 const ordered=[
- 'case3-film-canon.js?v=2',
+ 'case3-film-canon.js?v=3',
  'case3-art-manifest.js?v=1',
- 'case3-film-engine.js?v=2',
- 'case3-film-ui.js?v=3'
+ 'case3-film-engine.js?v=3',
+ 'case3-film-ui.js?v=4'
 ];
 let last=-1;
 for(const asset of ordered){
@@ -47,3 +47,14 @@ for(const group of ['scenes','frames','evidence']){
 }
 
 console.log('PASS production case routing');
+
+// Loading old investigations must bypass the new first-case opening.
+const firstContext={window:{}};vm.createContext(firstContext);
+vm.runInContext(read('case1-unified-engine.js').replace('init();','window.Case1SaveTest={fresh:fresh,normalize:normalize};'),firstContext);
+const first=firstContext.window.Case1SaveTest;
+assert(first.fresh('new').flags.openingSeen===false,'new Case 1 starts with a prologue');
+let old=first.fresh('old');old.evidence=['missing_index'];delete old.flags.openingSeen;
+assert(first.normalize(old).flags.openingSeen===true,'old Case 1 progress must skip prologue');
+old=first.fresh('seen');old.flags.openingSeen=true;
+assert(first.normalize(old).flags.openingSeen===true,'opening acknowledgment must persist');
+console.log('PASS Case 1 opening migration');
